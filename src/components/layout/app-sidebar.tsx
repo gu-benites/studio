@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { LucideIcon } from 'lucide-react';
@@ -34,22 +33,12 @@ const mainNavItems: NavItem[] = [
 ];
 
 const AppSidebar: React.FC = () => {
-  const { isSidebarOpen, isSidebarPinned, toggleSidebar, openSidebar, closeSidebar } = useUIState();
+  const { isSidebarOpen, isSidebarPinned, toggleSidebar } = useUIState();
   const pathname = usePathname();
   const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
 
-  const sidebarWidth = isSidebarOpen ? 'w-[287px]' : 'w-[68px]'; // Adjusted collapsed width to fit icons + padding
+  const sidebarWidth = isSidebarOpen ? 'w-[287px]' : 'w-[68px]';
 
-  const handleSidebarAreaClick = () => {
-    if (!isSidebarPinned) {
-      if (!isSidebarOpen) {
-        openSidebar();
-      } else {
-        closeSidebar();
-      }
-    }
-  };
-  
   const handleToggleClick = () => {
     if (isSidebarOpen && isSidebarPinned) { // If open and pinned, toggle will close and unpin
       toggleSidebar(false);
@@ -64,8 +53,7 @@ const AppSidebar: React.FC = () => {
         'fixed inset-y-0 left-0 z-40 flex flex-col bg-card border-r border-app-sidebar-border transition-all duration-300 ease-in-out',
         sidebarWidth
       )}
-      onMouseEnter={() => { if (!isSidebarOpen && !isSidebarPinned) openSidebar();}}
-      onMouseLeave={() => { if (isSidebarOpen && !isSidebarPinned) closeSidebar();}}
+      // Removed onMouseEnter and onMouseLeave to prevent hover-based expansion
     >
       {/* Sidebar Content */}
       <div className="flex flex-col flex-grow">
@@ -89,7 +77,7 @@ const AppSidebar: React.FC = () => {
         </div>
         
         {/* Navigation */}
-        <nav className="flex-grow px-3 py-4 space-y-2" onClick={handleSidebarAreaClick}>
+        <nav className="flex-grow px-3 py-4 space-y-2"> {/* Removed onClick={handleSidebarAreaClick} */}
           {mainNavItems.map((item) => (
             <Link
               key={item.label}
@@ -132,13 +120,7 @@ const AppSidebar: React.FC = () => {
                 !isSidebarOpen && "justify-center"
               )}
               onClick={() => {
-                if (!isSidebarOpen) {
-                  openSidebar(); 
-                  // Defer opening menu to allow sidebar to expand
-                  setTimeout(() => setIsUserMenuOpen(true), 50);
-                } else {
-                  setIsUserMenuOpen(!isUserMenuOpen);
-                }
+                setIsUserMenuOpen(prev => !prev); // Simplified: just toggle menu, don't expand sidebar
               }}
               aria-label="User account menu"
             >
@@ -165,6 +147,7 @@ const AppSidebar: React.FC = () => {
             style={{ marginLeft: isSidebarOpen ? '10px' : '58px'}} // Adjust position based on sidebar state
             onFocusOutside={(e) => {
               // Prevent closing if the click is on the trigger itself when sidebar was collapsed
+              // This logic might still be relevant depending on exact browser behavior with focus.
               if (!isSidebarOpen && e.target instanceof HTMLElement && e.target.closest('button[aria-label="User account menu"]')) {
                 return;
               }
