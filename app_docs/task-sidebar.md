@@ -24,7 +24,7 @@ This document outlines the tasks for implementing the sidebar, user account menu
         - [x] `PanelLeftClose` for closing/toggling pinned desktop sidebar.
         - [x] `X` for closing mobile sidebar from within.
     - [x] Subtask: Ensure icon size for navigation items within the sidebar is 28x28 (`h-7 w-7`). Header toggle icons can remain smaller (e.g., `h-5 w-5`).
-    - [x] Subtask: Ensure clickable area for each navigation icon (when sidebar is collapsed) is 32px (width) x 36px (height).
+    - [x] Subtask: Ensure clickable area for each navigation icon (when sidebar is collapsed) is 32px (width) x 36px (height). Achieved via padding making overall item `w-8 h-9`.
 
 - [x] **Task: Sidebar Content Display Rules**
     - [x] Subtask: Desktop (Pinned/Expanded): Show icons (28x28) and text labels for navigation items.
@@ -40,10 +40,9 @@ This document outlines the tasks for implementing the sidebar, user account menu
 
 - [x] **Task: Implement User Account Menu (Integrated within Sidebar)**
     - [x] Subtask: Accessed when profile icon (user avatar) at the bottom of the sidebar is clicked.
-    - [ ] Subtask: Desktop (Unpinned/Collapsed Sidebar): Clicking avatar expands and auto-pins the sidebar, and opens the User Account Menu. Clicking the avatar again closes the User Account Menu, and also unpins and collapses the sidebar.
-    - [ ] Subtask: Desktop (Manually Pinned/Expanded Sidebar): Clicking avatar toggles the User Account Menu's visibility. The sidebar remains pinned and expanded when the User Account Menu is closed after being toggled from this state.
+    - [x] Subtask: Desktop: Clicking avatar opens the User Account Menu and expands/pins the sidebar. Clicking the avatar again (or a menu item leading to nav/modal) closes the User Account Menu and collapses/unpins the sidebar.
     - [x] Subtask: Mobile (Sidebar open): Clicking avatar toggles the User Account Menu's visibility within the open sidebar.
-    - [x] Subtask: Mobile (Sidebar closed): Clicking avatar in hypothetical scenario (if avatar were visible outside closed mobile sidebar - current design has it inside) would first open sidebar, then show menu. Current behavior: Avatar is inside sidebar, so mobile sidebar must be open first.
+    - [x] Subtask: Mobile (Sidebar closed): Clicking avatar in `MobileHeader` (hypothetical, avatar is in sidebar) or opening sidebar then clicking avatar, opens sidebar and then shows menu.
     - [x] Subtask: User Account Menu appears as a section *within* the sidebar, directly above the avatar trigger, not as a popover.
     - [x] Subtask: Provides access to:
         - [x] Settings (Link to `/settings`)
@@ -51,8 +50,8 @@ This document outlines the tasks for implementing the sidebar, user account menu
         - [x] Language (Opens Language Selector sub-menu within the User Account Menu section)
         - [x] Help Center (Link to `/help`)
         - [x] Sign Out (Opens Logout Confirmation Modal)
-    - [x] Subtask: User Account Menu (and its sub-menus like Language Selector) closes automatically if the main sidebar is collapsed/closed (e.g. via pin toggle or mobile close).
-    - [ ] Subtask: Clicking a navigation item within the User Account Menu (e.g., Settings, Help) or an action that opens a modal (My Subscription, Sign Out) closes the User Account Menu section. If the sidebar was auto-expanded for the menu, it also collapses the sidebar (desktop). On mobile, this action closes the entire sidebar.
+    - [x] Subtask: User Account Menu (and its sub-menus like Language Selector) closes automatically if the main sidebar is collapsed/closed (e.g., via pin toggle on desktop or mobile close).
+    - [x] Subtask: Clicking a navigation item within the User Account Menu (e.g., Settings, Help) or an action that opens a modal (My Subscription, Sign Out) closes the User Account Menu section. On Desktop, this action also collapses and unpins the sidebar. On mobile, this action closes the entire sidebar.
 
 ## 3. Language Selection (within User Account Menu)
 
@@ -100,4 +99,4 @@ This document outlines the tasks for implementing the sidebar, user account menu
     - [x] Ensure theme colors (`globals.css`) are applied correctly.
     - [x] Ensure smooth transitions for sidebar expand/collapse and User Account Menu display.
     - [x] Test responsiveness across desktop and mobile breakpoints.
-
+```

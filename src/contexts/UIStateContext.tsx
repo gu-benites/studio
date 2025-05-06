@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { ReactNode } from 'react';
@@ -5,8 +6,7 @@ import { createContext, useContext, useState, useCallback } from 'react';
 
 interface UIState {
   isSidebarOpen: boolean; // Is it visually expanded?
-  isSidebarPinned: boolean; // Desktop: is it pinned open? (implies isSidebarOpen=true)
-  sidebarAutoPinnedForMenu: boolean; // Desktop: was sidebar auto-pinned to show user menu?
+  isSidebarPinned: boolean; // Desktop: is it manually pinned open?
   isLogoutModalOpen: boolean;
   isSubscriptionModalOpen: boolean;
   activeUserMenuSubItem: string | null; // To manage which sub-menu (like language) is open
@@ -16,15 +16,20 @@ interface UIState {
 interface UIStateContextType extends UIState {
   toggleDesktopSidebarPin: () => void; // For manual pin/unpin via icon
   toggleMobileSidebar: () => void;
-  closeSidebarCompletely: () => void;
+  closeSidebarCompletely: () => void; // For navigation clicks, overlay clicks on mobile
   setLogoutModalOpen: (isOpen: boolean) => void;
   setSubscriptionModalOpen: (isOpen: boolean) => void;
   setActiveUserMenuSubItem: (item: string | null) => void;
-  openUserAccountMenu: () => void; // Simple menu opener
-  closeUserAccountMenu: () => void; // Simple menu closer
-  toggleUserAccountMenu: () => void; // Simple toggle, mainly for mobile or when sidebar state is managed independently
-  openUserMenuAndExpandSidebarIfNeeded: () => void; // For avatar click on desktop
-  closeUserMenuAndCollapseSidebarIfAutoExpanded: () => void; // For avatar click or navigation from menu on desktop
+  
+  // Primary handler for avatar clicks (desktop/mobile) 
+  // and for actions originating from an open user menu on desktop (e.g., navigation, modal triggers)
+  handleUserMenuToggle: () => void; 
+  
+  // Simpler actions, for specific cases e.g. mobile sidebar internal menu toggle
+  // where sidebar state is managed independently.
+  openUserAccountMenuSimple: () => void; 
+  closeUserAccountMenuSimple: () => void; 
+  toggleUserAccountMenuSimple: () => void;
 }
 
 const UIStateContext = createContext<UIStateContextType | undefined>(undefined);
@@ -32,7 +37,6 @@ const UIStateContext = createContext<UIStateContextType | undefined>(undefined);
 const initialState: UIState = {
   isSidebarOpen: false, 
   isSidebarPinned: false,
-  sidebarAutoPinnedForMenu: false,
   isLogoutModalOpen: false,
   isSubscriptionModalOpen: false,
   activeUserMenuSubItem: null,
@@ -42,41 +46,40 @@ const initialState: UIState = {
 export function UIStateProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<UIState>(initialState);
 
-  const toggleDesktopSidebarPin = useCallback(() => { // Manual pin toggle
+  const toggleDesktopSidebarPin = useCallback(() => { // Manual pin toggle via icon
     setState((s) => {
       const newIsSidebarPinned = !s.isSidebarPinned;
-      const newIsSidebarOpen = newIsSidebarPinned; // Pinning opens, unpinning collapses
+      const newIsSidebarOpen = newIsSidebarPinned; // Pinning opens, unpinning via icon collapses
       return {
         ...s,
         isSidebarOpen: newIsSidebarOpen,
         isSidebarPinned: newIsSidebarPinned,
-        sidebarAutoPinnedForMenu: false, // Manual pin action clears auto-pin flag
-        isUserAccountMenuExpanded: newIsSidebarOpen ? s.isUserAccountMenuExpanded : false, // Close menu if sidebar collapses
+        // If sidebar collapses due to unpinning, close user menu
+        isUserAccountMenuExpanded: newIsSidebarOpen ? s.isUserAccountMenuExpanded : false,
         activeUserMenuSubItem: newIsSidebarOpen ? s.activeUserMenuSubItem : null,
       };
     });
   }, []);
 
-  const toggleMobileSidebar = useCallback(() => {
+  const toggleMobileSidebar = useCallback(() => { // For mobile drawer
     setState((s) => {
       const newIsSidebarOpen = !s.isSidebarOpen;
       return {
         ...s,
         isSidebarOpen: newIsSidebarOpen,
-        isSidebarPinned: false, 
-        sidebarAutoPinnedForMenu: false,
+        isSidebarPinned: false, // Pinning is a desktop concept
+        // If mobile drawer closes, ensure menu section and sub-items are also closed
         activeUserMenuSubItem: newIsSidebarOpen ? s.activeUserMenuSubItem : null,
         isUserAccountMenuExpanded: newIsSidebarOpen ? s.isUserAccountMenuExpanded : false,
       };
     });
   }, []);
   
-  const closeSidebarCompletely = useCallback(() => {
+  const closeSidebarCompletely = useCallback(() => { // For nav clicks on mobile, overlay click etc.
     setState((s) => ({ 
       ...s, 
       isSidebarOpen: false, 
       isSidebarPinned: false, 
-      sidebarAutoPinnedForMenu: false,
       activeUserMenuSubItem: null,
       isUserAccountMenuExpanded: false, 
     }));
@@ -97,15 +100,17 @@ export function UIStateProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
-  const openUserAccountMenu = useCallback(() => { // Simple open, assumes sidebar is handled
+  // Simple actions for direct menu state control, without complex sidebar logic.
+  // Used when sidebar state is managed independently (e.g., mobile drawer already open).
+  const openUserAccountMenuSimple = useCallback(() => {
     setState(s => ({ ...s, isUserAccountMenuExpanded: true }));
   }, []);
 
-  const closeUserAccountMenu = useCallback(() => { // Simple close
+  const closeUserAccountMenuSimple = useCallback(() => {
     setState(s => ({ ...s, isUserAccountMenuExpanded: false, activeUserMenuSubItem: null }));
   }, []);
 
-  const toggleUserAccountMenu = useCallback(() => { // Simple toggle for mobile or specific cases
+  const toggleUserAccountMenuSimple = useCallback(() => {
     setState(s => ({ 
       ...s, 
       isUserAccountMenuExpanded: !s.isUserAccountMenuExpanded,
@@ -113,47 +118,45 @@ export function UIStateProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
-  const openUserMenuAndExpandSidebarIfNeeded = useCallback(() => {
+  // Unified handler for avatar click, or for menu item click causing menu/sidebar close on desktop.
+  const handleUserMenuToggle = useCallback(() => {
     setState(s => {
-      if (s.isUserAccountMenuExpanded) return s; // Already open
+      const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
 
-      // Desktop, sidebar is collapsed and unpinned: auto-expand and pin for menu
-      if (!s.isSidebarPinned && !s.isSidebarOpen && !(typeof window !== 'undefined' && window.innerWidth < 768)) {
-        return {
-          ...s,
-          isSidebarOpen: true,
-          isSidebarPinned: true, // Auto-pin
-          sidebarAutoPinnedForMenu: true,
-          isUserAccountMenuExpanded: true,
-        };
+      if (s.isUserAccountMenuExpanded) { // Menu is currently open, so action is to close it
+        if (isDesktop) {
+          // Close menu AND collapse/unpin sidebar
+          return {
+            ...s,
+            isUserAccountMenuExpanded: false,
+            activeUserMenuSubItem: null,
+            isSidebarOpen: false,
+            isSidebarPinned: false,
+          };
+        } else { // Mobile: just close menu section, sidebar drawer state is separate
+          return {
+            ...s,
+            isUserAccountMenuExpanded: false,
+            activeUserMenuSubItem: null,
+          };
+        }
+      } else { // Menu is currently closed, so action is to open it
+        if (isDesktop) {
+          // Open menu AND expand/pin sidebar
+          return {
+            ...s,
+            isUserAccountMenuExpanded: true,
+            isSidebarOpen: true,
+            isSidebarPinned: true, // Sidebar becomes "pinned" while menu is open
+          };
+        } else { // Mobile: just open menu section.
+                 // Caller (handleAvatarClick in app-sidebar) ensures mobile drawer is open first if needed.
+          return {
+            ...s,
+            isUserAccountMenuExpanded: true,
+          };
+        }
       }
-      // Sidebar is already pinned/open, or on mobile: just open menu
-      return {
-        ...s,
-        isUserAccountMenuExpanded: true,
-      };
-    });
-  }, []);
-
-  const closeUserMenuAndCollapseSidebarIfAutoExpanded = useCallback(() => {
-    setState(s => {
-      if (!s.isUserAccountMenuExpanded) return s; // Already closed
-
-      const newState = {
-        ...s,
-        isUserAccountMenuExpanded: false,
-        activeUserMenuSubItem: null,
-      };
-
-      // If sidebar was auto-pinned for the menu (desktop only behavior)
-      if (s.sidebarAutoPinnedForMenu && !(typeof window !== 'undefined' && window.innerWidth < 768)) {
-        newState.isSidebarOpen = false;
-        newState.isSidebarPinned = false;
-        newState.sidebarAutoPinnedForMenu = false;
-      }
-      // If sidebar was manually pinned, it remains open and pinned.
-      // On mobile, this action just closes the menu, sidebar state managed by toggleMobileSidebar or closeSidebarCompletely.
-      return newState;
     });
   }, []);
 
@@ -168,11 +171,10 @@ export function UIStateProvider({ children }: { children: ReactNode }) {
         setLogoutModalOpen,
         setSubscriptionModalOpen,
         setActiveUserMenuSubItem,
-        openUserAccountMenu,
-        closeUserAccountMenu,
-        toggleUserAccountMenu,
-        openUserMenuAndExpandSidebarIfNeeded,
-        closeUserMenuAndCollapseSidebarIfAutoExpanded,
+        openUserAccountMenuSimple,
+        closeUserAccountMenuSimple,
+        toggleUserAccountMenuSimple,
+        handleUserMenuToggle,
       }}
     >
       {children}

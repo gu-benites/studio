@@ -1,7 +1,7 @@
+
 "use client";
 
 import {
-  UserCircle,
   Settings,
   Globe,
   HelpCircle,
@@ -32,7 +32,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon: Icon, label, href, onClick, h
     onClick={onClick}
     className={cn(
       'flex w-full items-center justify-between px-4 py-2.5 text-sm text-left hover:bg-muted rounded-md',
-      isActive && 'font-semibold bg-muted'
+      isActive && 'font-semibold bg-muted' // Active state for Language when its sub-menu is open
     )}
   >
     <div className="flex items-center gap-3">
@@ -49,8 +49,8 @@ export const UserAccountMenu: React.FC = () => {
     setSubscriptionModalOpen,
     activeUserMenuSubItem,
     setActiveUserMenuSubItem,
-    closeSidebarCompletely, // For mobile navigation
-    closeUserMenuAndCollapseSidebarIfAutoExpanded, // For desktop navigation/modal actions
+    closeSidebarCompletely, // For mobile navigation/modal actions
+    handleUserMenuToggle, // For desktop navigation/modal actions (closes menu & sidebar)
   } = useUIState();
   const [isClientMobile, setIsClientMobile] = React.useState(false);
 
@@ -66,21 +66,22 @@ export const UserAccountMenu: React.FC = () => {
     setActiveUserMenuSubItem(activeUserMenuSubItem === 'language' ? null : 'language');
   };
 
-  const handleNavigationOrModal = () => {
+  // This function is called when a menu item leading to navigation or a modal is clicked.
+  const handleNavigationOrModalAction = () => {
     if (isClientMobile) {
-        closeSidebarCompletely(); 
+        closeSidebarCompletely(); // Close mobile drawer
     } else {
-        closeUserMenuAndCollapseSidebarIfAutoExpanded();
+        handleUserMenuToggle(); // Close user menu and collapse/unpin sidebar on desktop
     }
   };
   
 
   const menuItems: MenuItemProps[] = [
-    { href: '/settings', icon: Settings, label: 'Settings', onClick: handleNavigationOrModal }, 
-    { icon: CreditCard, label: 'My Subscription', onClick: () => { setSubscriptionModalOpen(true); handleNavigationOrModal(); } },
+    { href: '/settings', icon: Settings, label: 'Settings', onClick: handleNavigationOrModalAction }, 
+    { icon: CreditCard, label: 'My Subscription', onClick: () => { setSubscriptionModalOpen(true); handleNavigationOrModalAction(); } },
     { icon: Globe, label: 'Language', onClick: handleLanguageClick, hasSubMenu: true, isActive: activeUserMenuSubItem === 'language' },
-    { href: '/help', icon: HelpCircle, label: 'Help Center', onClick: handleNavigationOrModal }, 
-    { icon: LogOut, label: 'Sign Out', onClick: () => { setLogoutModalOpen(true); handleNavigationOrModal(); }
+    { href: '/help', icon: HelpCircle, label: 'Help Center', onClick: handleNavigationOrModalAction }, 
+    { icon: LogOut, label: 'Sign Out', onClick: () => { setLogoutModalOpen(true); handleNavigationOrModalAction(); }
     },
   ];
 
@@ -102,8 +103,10 @@ export const UserAccountMenu: React.FC = () => {
           {menuItems.map((item, index) => 
             item.href ? (
               <Link href={item.href} key={index} passHref legacyBehavior>
-                <a onClick={handleNavigationOrModal} className="block"> {/* Link needs an 'a' tag for legacyBehavior + onClick */}
-                  <MenuItem {...item} onClick={undefined} /> {/* Pass undefined onClick to MenuItem as Link handles it */}
+                {/* The 'a' tag is necessary for legacyBehavior to correctly pass onClick */}
+                <a onClick={item.onClick} className="block">
+                  {/* Pass undefined for onClick to MenuItem as the 'a' tag handles it */}
+                  <MenuItem {...item} onClick={undefined} /> 
                 </a>
               </Link>
             ) : (
