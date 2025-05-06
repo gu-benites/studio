@@ -7,7 +7,7 @@ import {
   HelpCircle,
   LogOut,
   ChevronRight,
-  CreditCard, // Added for My Subscription
+  CreditCard,
 } from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';
@@ -15,6 +15,8 @@ import * as React from 'react';
 import { useUIState } from '@/contexts/UIStateContext';
 import { cn } from '@/lib/utils';
 import { LanguageSelector } from './language-selector';
+import { Separator } from '@/components/ui/separator';
+
 
 interface MenuItemProps {
   icon: React.ElementType;
@@ -29,7 +31,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon: Icon, label, href, onClick, h
   <button
     onClick={onClick}
     className={cn(
-      'flex w-full items-center justify-between px-4 py-2.5 text-sm text-left hover:bg-muted',
+      'flex w-full items-center justify-between px-4 py-2.5 text-sm text-left hover:bg-muted rounded-md',
       isActive && 'font-semibold bg-muted'
     )}
   >
@@ -44,53 +46,57 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon: Icon, label, href, onClick, h
 export const UserAccountMenu: React.FC = () => {
   const { 
     setLogoutModalOpen, 
-    setSubscriptionModalOpen, // For My Subscription
+    setSubscriptionModalOpen,
     activeUserMenuSubItem,
     setActiveUserMenuSubItem,
-    closeSidebarCompletely // To close the popover when sidebar closes
+    closeUserAccountMenu, // To close the whole menu when navigating
+    closeSidebarCompletely // To close sidebar and menu
   } = useUIState();
 
   const handleLanguageClick = () => {
     setActiveUserMenuSubItem(activeUserMenuSubItem === 'language' ? null : 'language');
   };
 
-  const handleSettingsClick = () => {
-    // Example: Close popover after navigating or opening modal
-    // If settings opens a modal, you might do it there.
-    // For a page navigation, Link handles it.
-    closeSidebarCompletely(); // Close the popover
+  const handleNavigationOrModal = () => {
+    // This function can be called by items that navigate or open modals
+    // to ensure the menu structure behaves as expected.
+    // For page navigation via Link, the sidebar's useEffect for pathname changes handles full closure.
+    // For modals, we might want to close the sub-menu or the entire user menu.
+    if (isClientMobile()) { // Helper to check if mobile
+        closeSidebarCompletely(); // On mobile, usually close everything
+    } else {
+        closeUserAccountMenu(); // On desktop, just close the user menu section
+    }
   };
   
-  const handleSubscriptionClick = () => {
-    setSubscriptionModalOpen(true);
-    // Consider if the popover should close here too.
-    // For now, let's assume it stays open or Popover handles onOpenChange correctly.
-    // If user menu should close after this, call:
-    // setActiveUserMenuSubItem(null); // and ensure Popover onOpenChange updates isUserMenuOpen in sidebar
-  };
+  // Helper function to determine if on mobile, assuming window is available
+  const isClientMobile = () => typeof window !== 'undefined' && window.innerWidth < 768;
 
 
   const menuItems: MenuItemProps[] = [
-    { href: '/account', icon: UserCircle, label: 'Account', onClick: handleSettingsClick }, 
-    { href: '/settings', icon: Settings, label: 'Settings', onClick: handleSettingsClick },
-    { icon: CreditCard, label: 'My Subscription', onClick: handleSubscriptionClick },
+    { href: '/settings', icon: Settings, label: 'Settings', onClick: handleNavigationOrModal }, // Removed /account, use /settings
+    { icon: CreditCard, label: 'My Subscription', onClick: () => { setSubscriptionModalOpen(true); handleNavigationOrModal(); } },
     { icon: Globe, label: 'Language', onClick: handleLanguageClick, hasSubMenu: true, isActive: activeUserMenuSubItem === 'language' },
-    { href: '/help', icon: HelpCircle, label: 'Help Center', onClick: handleSettingsClick }, 
-    { icon: LogOut, label: 'Sign Out', onClick: () => {
-        setLogoutModalOpen(true);
-        // Consider closing popover here as well.
-        // setActiveUserMenuSubItem(null); 
-      }
+    { href: '/help', icon: HelpCircle, label: 'Help Center', onClick: handleNavigationOrModal }, 
+    { icon: LogOut, label: 'Sign Out', onClick: () => { setLogoutModalOpen(true); handleNavigationOrModal(); }
     },
   ];
 
+  if (activeUserMenuSubItem === 'language') {
+    return (
+      <div className="w-full bg-card text-card-foreground p-1"> {/* Adjusted padding */}
+         <LanguageSelector onBack={() => setActiveUserMenuSubItem(null)} />
+      </div>
+    );
+  }
+
   return (
-    <div className="relative">
-      <div className={cn("bg-popover text-popover-foreground rounded-md shadow-lg transition-all duration-200 ease-in-out", activeUserMenuSubItem === 'language' ? 'opacity-0 -translate-x-full pointer-events-none' : 'opacity-100 translate-x-0')}>
-        <div className="p-2">
-          <p className="px-3 py-2 text-xs font-semibold text-muted-foreground">My Account</p>
+    <div className="w-full bg-card text-card-foreground p-2"> {/* Adjusted padding */}
+        <div className="px-2 py-1.5"> {/* Adjusted padding */}
+          <p className="text-xs font-semibold text-muted-foreground">My Account</p>
         </div>
-        <div className="flex flex-col">
+        <Separator className="my-1" /> {/* Added separator */}
+        <div className="flex flex-col space-y-0.5"> {/* Adjusted spacing */}
           {menuItems.map((item, index) => 
             item.href ? (
               <Link href={item.href} key={index} passHref legacyBehavior>
@@ -101,12 +107,6 @@ export const UserAccountMenu: React.FC = () => {
             )
           )}
         </div>
-      </div>
-      {activeUserMenuSubItem === 'language' && (
-        <div className="absolute top-0 left-0 w-full bg-popover text-popover-foreground rounded-md shadow-lg">
-           <LanguageSelector onBack={() => setActiveUserMenuSubItem(null)} />
-        </div>
-      )}
     </div>
   );
 };
