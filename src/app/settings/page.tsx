@@ -1,7 +1,7 @@
 
 "use client";
 
-import { User, Shield, CreditCard, Bell, X, Save } from 'lucide-react';
+import { User, Shield, CreditCard, Bell, X, Save, Settings as SettingsIcon } from 'lucide-react'; // Added SettingsIcon alias
 import { useRouter } from 'next/navigation'; // if needed for close
 import * as React from 'react';
 
@@ -218,7 +218,7 @@ export default function SettingsPage() {
   const { toast } = useToast();
 
   const tabs: Tab[] = [
-    { id: 'general', label: 'General', icon: Settings, content: <GeneralSettings /> },
+    { id: 'general', label: 'General', icon: SettingsIcon, content: <GeneralSettings /> },
     { id: 'profile', label: 'Profile', icon: User, content: <ProfileSettings /> },
     { id: 'security', label: 'Security', icon: Shield, content: <SecuritySettings /> },
     { id: 'billing', label: 'Billing', icon: CreditCard, content: <BillingSettings /> },
