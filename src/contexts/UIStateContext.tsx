@@ -1,35 +1,32 @@
-
 "use client";
 
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useCallback } from 'react';
 
 interface UIState {
-  isSidebarOpen: boolean;
-  isSidebarPinned: boolean;
+  isSidebarOpen: boolean; // Is it visually expanded?
+  isSidebarPinned: boolean; // Desktop: is it pinned open? (implies isSidebarOpen=true)
   isLogoutModalOpen: boolean;
   isSubscriptionModalOpen: boolean;
-  isLanguageSelectorOpen: boolean;
+  isLanguageSelectorOpen: boolean; // Kept for explicitness, though activeUserMenuSubItem covers it
   activeUserMenuSubItem: string | null; // To manage which sub-menu (like language) is open
 }
 
 interface UIStateContextType extends UIState {
-  toggleSidebar: (pin?: boolean) => void;
-  openSidebar: () => void;
-  closeSidebar: (force?: boolean) => void;
-  pinSidebar: () => void;
-  unpinSidebar: () => void;
+  toggleDesktopSidebarPin: () => void;
+  toggleMobileSidebar: () => void;
+  closeSidebarCompletely: () => void; // New: to fully close sidebar and sub-menus
   setLogoutModalOpen: (isOpen: boolean) => void;
   setSubscriptionModalOpen: (isOpen: boolean) => void;
-  setLanguageSelectorOpen: (isOpen: boolean) => void;
+  setLanguageSelectorOpen: (isOpen: boolean) => void; // May be deprecated if activeUserMenuSubItem is sole controller
   setActiveUserMenuSubItem: (item: string | null) => void;
 }
 
 const UIStateContext = createContext<UIStateContextType | undefined>(undefined);
 
 const initialState: UIState = {
-  isSidebarOpen: false, // Default to collapsed
-  isSidebarPinned: false,
+  isSidebarOpen: false, 
+  isSidebarPinned: false, // Desktop sidebar starts collapsed and unpinned
   isLogoutModalOpen: false,
   isSubscriptionModalOpen: false,
   isLanguageSelectorOpen: false,
@@ -39,38 +36,33 @@ const initialState: UIState = {
 export function UIStateProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<UIState>(initialState);
 
-  const openSidebar = useCallback(() => {
-    setState((s) => ({ ...s, isSidebarOpen: true }));
-  }, []);
-
-  const closeSidebar = useCallback((force = false) => {
+  const toggleDesktopSidebarPin = useCallback(() => {
     setState((s) => {
-      if (s.isSidebarPinned && !force) return s; // Don't close if pinned unless forced
-      return { ...s, isSidebarOpen: false, isSidebarPinned: force ? false : s.isSidebarPinned };
+      if (s.isSidebarOpen && s.isSidebarPinned) { // Open & Pinned -> Close & Unpin
+        return { ...s, isSidebarOpen: false, isSidebarPinned: false, activeUserMenuSubItem: null };
+      } else { // Closed (or unpinned but open, though current logic avoids this state) -> Open & Pin
+        return { ...s, isSidebarOpen: true, isSidebarPinned: true };
+      }
     });
   }, []);
 
-  const pinSidebar = useCallback(() => {
-    setState((s) => ({ ...s, isSidebarPinned: true, isSidebarOpen: true }));
+  const toggleMobileSidebar = useCallback(() => {
+    setState((s) => ({
+      ...s,
+      isSidebarOpen: !s.isSidebarOpen,
+      isSidebarPinned: false, // Mobile sidebar is an overlay, not "pinned"
+      activeUserMenuSubItem: !s.isSidebarOpen ? s.activeUserMenuSubItem : null, // Close sub-menu if sidebar is closing
+    }));
   }, []);
   
-  const unpinSidebar = useCallback(() => {
-    setState((s) => ({ ...s, isSidebarPinned: false, isSidebarOpen: false }));
-  }, []);
-
-  const toggleSidebar = useCallback((pin?: boolean) => {
-    setState((s) => {
-      const newIsOpen = !s.isSidebarOpen;
-      if (pin !== undefined) { // Explicit pinning instruction
-        return { ...s, isSidebarOpen: newIsOpen, isSidebarPinned: newIsOpen && pin };
-      }
-      // Default toggle behavior
-      if (newIsOpen) { // Opening
-        return { ...s, isSidebarOpen: true, isSidebarPinned: true }; // Pin when opening with toggle
-      } else { // Closing
-        return { ...s, isSidebarOpen: false, isSidebarPinned: false }; // Unpin when closing with toggle
-      }
-    });
+  const closeSidebarCompletely = useCallback(() => {
+    setState((s) => ({ 
+      ...s, 
+      isSidebarOpen: false, 
+      isSidebarPinned: false, 
+      activeUserMenuSubItem: null,
+      isLanguageSelectorOpen: false // ensure language selector also closes
+    }));
   }, []);
 
 
@@ -83,22 +75,31 @@ export function UIStateProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setLanguageSelectorOpen = useCallback((isOpen: boolean) => {
-    setState((s) => ({ ...s, isLanguageSelectorOpen: isOpen, activeUserMenuSubItem: isOpen ? 'language' : null }));
+    // This directly controls the language selector if needed,
+    // but setActiveUserMenuSubItem is preferred for generic sub-menus.
+    setState(s => ({ 
+      ...s, 
+      isLanguageSelectorOpen: isOpen, 
+      activeUserMenuSubItem: isOpen ? 'language' : (s.activeUserMenuSubItem === 'language' ? null : s.activeUserMenuSubItem)
+    }));
   }, []);
 
   const setActiveUserMenuSubItem = useCallback((item: string | null) => {
-    setState(s => ({ ...s, activeUserMenuSubItem: item }));
+    setState(s => ({ 
+      ...s, 
+      activeUserMenuSubItem: item,
+      // If language selector is being closed via this, update its specific state too
+      isLanguageSelectorOpen: item === 'language' ? s.isLanguageSelectorOpen : false 
+    }));
   }, []);
 
   return (
     <UIStateContext.Provider
       value={{
         ...state,
-        toggleSidebar,
-        openSidebar,
-        closeSidebar,
-        pinSidebar,
-        unpinSidebar,
+        toggleDesktopSidebarPin,
+        toggleMobileSidebar,
+        closeSidebarCompletely,
         setLogoutModalOpen,
         setSubscriptionModalOpen,
         setLanguageSelectorOpen,

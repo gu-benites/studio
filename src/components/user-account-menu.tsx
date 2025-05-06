@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -8,6 +7,7 @@ import {
   HelpCircle,
   LogOut,
   ChevronRight,
+  CreditCard, // Added for My Subscription
 } from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';
@@ -44,23 +44,44 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon: Icon, label, href, onClick, h
 export const UserAccountMenu: React.FC = () => {
   const { 
     setLogoutModalOpen, 
-    isLanguageSelectorOpen, 
-    setLanguageSelectorOpen,
+    setSubscriptionModalOpen, // For My Subscription
     activeUserMenuSubItem,
-    setActiveUserMenuSubItem
+    setActiveUserMenuSubItem,
+    closeSidebarCompletely // To close the popover when sidebar closes
   } = useUIState();
 
   const handleLanguageClick = () => {
     setActiveUserMenuSubItem(activeUserMenuSubItem === 'language' ? null : 'language');
-    // This will be handled by Popover's open state in LanguageSelector
   };
 
+  const handleSettingsClick = () => {
+    // Example: Close popover after navigating or opening modal
+    // If settings opens a modal, you might do it there.
+    // For a page navigation, Link handles it.
+    closeSidebarCompletely(); // Close the popover
+  };
+  
+  const handleSubscriptionClick = () => {
+    setSubscriptionModalOpen(true);
+    // Consider if the popover should close here too.
+    // For now, let's assume it stays open or Popover handles onOpenChange correctly.
+    // If user menu should close after this, call:
+    // setActiveUserMenuSubItem(null); // and ensure Popover onOpenChange updates isUserMenuOpen in sidebar
+  };
+
+
   const menuItems: MenuItemProps[] = [
-    { href: '/account', icon: UserCircle, label: 'Account' }, // Placeholder link
-    { href: '/settings', icon: Settings, label: 'Settings' },
+    { href: '/account', icon: UserCircle, label: 'Account', onClick: handleSettingsClick }, 
+    { href: '/settings', icon: Settings, label: 'Settings', onClick: handleSettingsClick },
+    { icon: CreditCard, label: 'My Subscription', onClick: handleSubscriptionClick },
     { icon: Globe, label: 'Language', onClick: handleLanguageClick, hasSubMenu: true, isActive: activeUserMenuSubItem === 'language' },
-    { href: '/help', icon: HelpCircle, label: 'Help Center' }, // Placeholder link
-    { icon: LogOut, label: 'Sign Out', onClick: () => setLogoutModalOpen(true) },
+    { href: '/help', icon: HelpCircle, label: 'Help Center', onClick: handleSettingsClick }, 
+    { icon: LogOut, label: 'Sign Out', onClick: () => {
+        setLogoutModalOpen(true);
+        // Consider closing popover here as well.
+        // setActiveUserMenuSubItem(null); 
+      }
+    },
   ];
 
   return (

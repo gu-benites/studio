@@ -1,0 +1,47 @@
+"use client";
+
+import { PanelLeft, ChefHat } from 'lucide-react';
+import Link from 'next/link';
+import * as React from 'react';
+
+import { useUIState } from '@/contexts/UIStateContext';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+
+export const MobileHeader: React.FC = () => {
+  const { toggleMobileSidebar, isSidebarOpen } = useUIState();
+  const [isClientMobile, setIsClientMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => setIsClientMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Only render header on mobile
+  if (!isClientMobile) {
+    return null;
+  }
+
+  return (
+    <header className={cn(
+        "sticky top-0 z-30 flex items-center justify-between h-[60px] px-4 border-b bg-background/80 backdrop-blur-sm",
+        "md:hidden" // Ensure it's hidden on desktop
+    )}>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={toggleMobileSidebar}
+        aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
+      >
+        <PanelLeft className="h-6 w-6" />
+      </Button>
+      <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-primary">
+        <ChefHat className="h-7 w-7" />
+        <span className="sr-only">RecipeSage</span> {/* Show full name in sidebar */}
+      </Link>
+      <div className="w-9 h-9" /> {/* Spacer to balance the hamburger icon */}
+    </header>
+  );
+};
