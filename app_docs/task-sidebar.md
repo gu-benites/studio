@@ -6,7 +6,7 @@ This document outlines the tasks for implementing the sidebar, user account menu
 
 - [x] **Task: Implement Collapsible Left Sidebar Core Functionality**
     - [x] Subtask: Desktop: Default to collapsed state (target: 48px width, 1px right border).
-    - [x] Subtask: Desktop: Expanded state when pinned (target: 287px width, 1px right border).
+    - [x] Subtask: Desktop: Expanded state when pinned or user menu open (target: 287px width, 1px right border).
     - [x] Subtask: Mobile: Sidebar acts as an overlay drawer (target: 287px width).
     - [x] Subtask: Sidebar contains a user profile/account trigger element at the bottom.
     - [x] Subtask: Sidebar contains a toggle icon in its header area for expand/collapse/pin actions.
@@ -23,16 +23,16 @@ This document outlines the tasks for implementing the sidebar, user account menu
         - [x] `PanelLeft` for opening/toggling unpinned desktop sidebar and mobile sidebar.
         - [x] `PanelLeftClose` for closing/toggling pinned desktop sidebar.
         - [x] `X` for closing mobile sidebar from within.
-    - [x] Subtask: Ensure icon size for navigation items within the sidebar is 28x28 (`h-7 w-7`). Header toggle icons can remain smaller (e.g., `h-5 w-5`).
+    - [x] Subtask: Ensure icon size for navigation items, app logo, and profile image within the sidebar is 28x28 (`h-7 w-7`). Header toggle icons (`PanelLeft`, `PanelLeftClose`, `X`) can remain smaller (e.g., `h-5 w-5`).
     - [x] Subtask: Ensure clickable area for each navigation icon (when sidebar is collapsed) is 32px (width) x 36px (height). Achieved via padding making overall item `w-8 h-9`.
 
 - [x] **Task: Sidebar Content Display Rules**
-    - [x] Subtask: Desktop (Pinned/Expanded): Show icons (28x28) and text labels for navigation items.
-    - [x] Subtask: Desktop (Unpinned/Collapsed): Show only icons (28x28) for navigation items, centered in their 32x36 clickable area. Labels appear as tooltips or are accessible via `title` attribute.
-    - [x] Subtask: Mobile (Open): Show icons (28x28) and text labels for navigation items.
+    - [x] Subtask: Desktop (Pinned/Expanded or User Menu Open): Show icons (28x28) and text labels for navigation items. App icon (ChefHat) 28x28. Profile image 28x28.
+    - [x] Subtask: Desktop (Unpinned/Collapsed): Show only icons (28x28) for navigation items, centered in their 32x36 clickable area. Profile image 28x28. Labels appear as tooltips or are accessible via `title` attribute.
+    - [x] Subtask: Mobile (Open): Show icons (28x28) and text labels for navigation items. App icon (ChefHat) 28x28. Profile image 28x28.
 
 - [x] **Task: Sidebar Toggle/Close Icon Positioning in Header**
-    - [x] Subtask: Desktop (Pinned/Expanded): `PanelLeftClose` icon positioned to the right of the logo/title area in the sidebar header.
+    - [x] Subtask: Desktop (Pinned/Expanded or User Menu Open): `PanelLeftClose` icon positioned to the right of the logo/title area in the sidebar header.
     - [x] Subtask: Desktop (Unpinned/Collapsed): `PanelLeft` icon is the primary toggle, centered within the header's width (48px).
     - [x] Subtask: Mobile (Open): `X` icon positioned to the right of the logo/title area in the sidebar header.
 
@@ -40,9 +40,9 @@ This document outlines the tasks for implementing the sidebar, user account menu
 
 - [x] **Task: Implement User Account Menu (Integrated within Sidebar)**
     - [x] Subtask: Accessed when profile icon (user avatar) at the bottom of the sidebar is clicked.
-    - [x] Subtask: Desktop: Clicking avatar opens the User Account Menu and expands/pins the sidebar. Clicking the avatar again (or a menu item leading to nav/modal) closes the User Account Menu and collapses/unpins the sidebar.
+    - [x] Subtask: Desktop: Clicking avatar opens the User Account Menu AND expands/pins the sidebar. Clicking the avatar again (or a menu item leading to nav/modal) closes the User Account Menu AND collapses/unpins the sidebar. If sidebar was already expanded & pinned before avatar click, clicking avatar again to close menu will also collapse & unpin sidebar.
     - [x] Subtask: Mobile (Sidebar open): Clicking avatar toggles the User Account Menu's visibility within the open sidebar.
-    - [x] Subtask: Mobile (Sidebar closed): Clicking avatar in `MobileHeader` (hypothetical, avatar is in sidebar) or opening sidebar then clicking avatar, opens sidebar and then shows menu.
+    - [x] Subtask: Mobile (Sidebar closed): Clicking avatar in `MobileHeader` (avatar is actually in main sidebar, so user must open sidebar first) or opening sidebar then clicking avatar, opens sidebar and then shows menu.
     - [x] Subtask: User Account Menu appears as a section *within* the sidebar, directly above the avatar trigger, not as a popover.
     - [x] Subtask: Provides access to:
         - [x] Settings (Link to `/settings`)
@@ -52,6 +52,7 @@ This document outlines the tasks for implementing the sidebar, user account menu
         - [x] Sign Out (Opens Logout Confirmation Modal)
     - [x] Subtask: User Account Menu (and its sub-menus like Language Selector) closes automatically if the main sidebar is collapsed/closed (e.g., via pin toggle on desktop or mobile close).
     - [x] Subtask: Clicking a navigation item within the User Account Menu (e.g., Settings, Help) or an action that opens a modal (My Subscription, Sign Out) closes the User Account Menu section. On Desktop, this action also collapses and unpins the sidebar. On mobile, this action closes the entire sidebar.
+    - [x] Subtask: Ensure icons within the User Account Menu items are 28x28 (`h-7 w-7`).
 
 ## 3. Language Selection (within User Account Menu)
 
@@ -62,6 +63,7 @@ This document outlines the tasks for implementing the sidebar, user account menu
     - [x] Subtask: Current language selection is visually indicated (e.g., checkmark, bold font).
     - [x] Subtask: Flag icons/emojis are displayed next to language names.
     - [x] Subtask: Includes a "back" button or similar mechanism to return to the main User Account Menu items from the language list.
+    - [x] Subtask: Icons within the Language Selector (e.g., back arrow, checkmark) should be appropriately sized (e.g. `h-5 w-5` or `h-4 w-4`), not necessarily 28x28.
 
 ## 4. Modals Triggered from User Account Menu
 

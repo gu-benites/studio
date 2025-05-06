@@ -36,7 +36,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon: Icon, label, href, onClick, h
     )}
   >
     <div className="flex items-center gap-3">
-      <Icon className="h-5 w-5 text-muted-foreground" />
+      <Icon className="h-7 w-7 text-muted-foreground" /> {/* User Menu Icon 28x28 */}
       <span>{label}</span>
     </div>
     {hasSubMenu && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
@@ -49,8 +49,8 @@ export const UserAccountMenu: React.FC = () => {
     setSubscriptionModalOpen,
     activeUserMenuSubItem,
     setActiveUserMenuSubItem,
-    closeSidebarCompletely, // For mobile navigation/modal actions
-    handleUserMenuToggle, // For desktop navigation/modal actions (closes menu & sidebar)
+    closeSidebarCompletely, 
+    handleUserMenuToggle, 
   } = useUIState();
   const [isClientMobile, setIsClientMobile] = React.useState(false);
 
@@ -66,12 +66,11 @@ export const UserAccountMenu: React.FC = () => {
     setActiveUserMenuSubItem(activeUserMenuSubItem === 'language' ? null : 'language');
   };
 
-  // This function is called when a menu item leading to navigation or a modal is clicked.
   const handleNavigationOrModalAction = () => {
     if (isClientMobile) {
-        closeSidebarCompletely(); // Close mobile drawer
+        closeSidebarCompletely(); 
     } else {
-        handleUserMenuToggle(); // Close user menu and collapse/unpin sidebar on desktop
+        handleUserMenuToggle(); 
     }
   };
   
@@ -103,9 +102,7 @@ export const UserAccountMenu: React.FC = () => {
           {menuItems.map((item, index) => 
             item.href ? (
               <Link href={item.href} key={index} passHref legacyBehavior>
-                {/* The 'a' tag is necessary for legacyBehavior to correctly pass onClick */}
                 <a onClick={item.onClick} className="block">
-                  {/* Pass undefined for onClick to MenuItem as the 'a' tag handles it */}
                   <MenuItem {...item} onClick={undefined} /> 
                 </a>
               </Link>

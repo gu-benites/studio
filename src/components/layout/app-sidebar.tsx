@@ -40,10 +40,9 @@ const AppSidebar: React.FC = () => {
     toggleMobileSidebar,
     closeSidebarCompletely,
     isUserAccountMenuExpanded,
-    // User Account Menu specific actions for avatar click:
-    handleUserMenuToggle, // Used for desktop avatar click
-    openUserAccountMenuSimple, // Used for mobile avatar click when drawer is opening
-    toggleUserAccountMenuSimple, // Used for mobile avatar click when drawer is already open
+    handleUserMenuToggle, 
+    openUserAccountMenuSimple, 
+    toggleUserAccountMenuSimple, 
   } = useUIState();
   const pathname = usePathname();
   const [isClientMobile, setIsClientMobile] = React.useState(false);
@@ -55,23 +54,26 @@ const AppSidebar: React.FC = () => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsClientMobile(mobile);
+      if (!mobile && isSidebarOpen && !isSidebarPinned && !isUserAccountMenuExpanded) { // Desktop, unpinned, open (likely due to hover)
+        // This scenario should not persist if hover-to-open is removed.
+        // For now, if it occurs, and menu is not open, it implies an old hover state.
+        // closeSidebarCompletely(); // Re-evaluating this based on hover only darkening
+      }
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  }, [isSidebarOpen, isSidebarPinned, isUserAccountMenuExpanded, closeSidebarCompletely]);
+
 
   React.useEffect(() => {
     if (isClientMobile && isSidebarOpen && pathname) {
-      // Close mobile sidebar on navigation
-      // Note: This might be handled by individual Link onClick handlers as well.
-      // closeSidebarCompletely(); // Keeping this to ensure robust closure.
+      // Mobile sidebar closes on navigation handled by individual link clicks
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, isClientMobile]); // Removed isSidebarOpen from deps to avoid loop if closeSidebarCompletely changes it.
+  }, [pathname, isClientMobile, isSidebarOpen]);
 
   const handleMouseEnter = () => {
-    if (!isClientMobile && !isSidebarPinned && !isSidebarOpen) { // Only darken if fully collapsed and unpinned
+    if (!isClientMobile && !isSidebarPinned && !isSidebarOpen) { 
       if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
       setIsHovering(true);
     }
@@ -91,30 +93,28 @@ const AppSidebar: React.FC = () => {
 
   const handleAvatarClick = () => {
     if (isClientMobile) {
-      if (!isSidebarOpen) { // Mobile sidebar (drawer) is closed
-        toggleMobileSidebar(); // This will open the sidebar drawer
-        openUserAccountMenuSimple(); // And open the menu section within it
-      } else { // Mobile sidebar (drawer) is already open
-        toggleUserAccountMenuSimple(); // Just toggle the menu section visibility
+      if (!isSidebarOpen) { 
+        toggleMobileSidebar(); 
+        openUserAccountMenuSimple(); 
+      } else { 
+        toggleUserAccountMenuSimple(); 
       }
-    } else { // Desktop
-      handleUserMenuToggle(); // Unified handler for desktop: opens menu & sidebar, or closes menu & sidebar
+    } else { 
+      handleUserMenuToggle(); 
     }
   };
   
-  const showText = isSidebarPinned || (isClientMobile && isSidebarOpen);
-  const desktopSidebarWidth = isSidebarPinned ? 'md:w-[287px]' : 'md:w-[48px]';
+  const effectiveIsSidebarOpenForTextAndHeader = isClientMobile ? isSidebarOpen : isSidebarPinned || isUserAccountMenuExpanded;
+  const desktopSidebarWidth = (isSidebarPinned || isUserAccountMenuExpanded) ? 'md:w-[287px]' : 'md:w-[48px]';
   const mobileSidebarTranslate = isSidebarOpen ? 'translate-x-0' : '-translate-x-full';
 
   const sidebarClasses = cn(
     'fixed inset-y-0 left-0 z-40 flex flex-col bg-[hsl(var(--app-sidebar-background))] border-r border-[hsl(var(--app-sidebar-border))] transition-all duration-300 ease-in-out shadow-lg',
     isClientMobile ? 'w-full max-w-[287px]' : desktopSidebarWidth,
     isClientMobile ? mobileSidebarTranslate : 'md:translate-x-0 md:relative',
-    (isHovering && !isSidebarPinned && !isClientMobile && !isSidebarOpen) && 'bg-[hsl(var(--app-sidebar-hover-background))]'
+    (isHovering && !isSidebarPinned && !isClientMobile && !isSidebarOpen && !isUserAccountMenuExpanded) && 'bg-[hsl(var(--app-sidebar-hover-background))]'
   );
   
-  const effectiveIsSidebarOpenForTextAndHeader = isClientMobile ? isSidebarOpen : isSidebarPinned;
-
 
   return (
     <>
@@ -131,32 +131,30 @@ const AppSidebar: React.FC = () => {
             "flex items-center border-b border-[hsl(var(--app-sidebar-border))] h-[60px] shrink-0",
             effectiveIsSidebarOpenForTextAndHeader ? "px-4 justify-between" : "px-[calc((48px-28px)/2)] justify-center md:justify-start md:px-0" 
           )}>
-            {effectiveIsSidebarOpenForTextAndHeader && (
+            {(effectiveIsSidebarOpenForTextAndHeader) && (
               <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-primary shrink-0">
-                  <ChefHat className="h-7 w-7" />
+                  <ChefHat className="h-7 w-7" /> {/* App Icon 28x28 */}
                   <span>RecipeSage</span>
               </Link>
             )}
-             {/* Desktop Pin/Unpin Toggle */}
             <Button
               variant="ghost"
               size="icon"
               onClick={toggleDesktopSidebarPin}
               className={cn(
                 "hidden md:inline-flex transition-colors hover:bg-[hsl(var(--app-sidebar-hover-background))]",
-                effectiveIsSidebarOpenForTextAndHeader ? "ml-auto" : "mx-auto w-full h-full flex items-center justify-center rounded-none"
+                effectiveIsSidebarOpenForTextAndHeader ? "ml-auto" : "mx-auto w-full h-full flex items-center justify-center rounded-none" 
               )}
               aria-label={isSidebarPinned ? 'Unpin and collapse sidebar' : 'Pin and expand sidebar'}
             >
               {isSidebarPinned ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeft className="h-5 w-5" />}
             </Button>
 
-            {/* Mobile Close (X) Icon - appears inside open mobile sidebar header */}
             {isClientMobile && isSidebarOpen && (
               <Button
                   variant="ghost"
                   size="icon"
-                  onClick={toggleMobileSidebar} // This will close the mobile drawer
+                  onClick={toggleMobileSidebar} 
                   className="md:hidden ml-auto" 
                   aria-label="Close sidebar"
               >
@@ -172,20 +170,19 @@ const AppSidebar: React.FC = () => {
                 href={item.href}
                 onClick={() => { 
                   if (isClientMobile && isSidebarOpen) {
-                    closeSidebarCompletely(); // Close mobile drawer on nav click
+                    closeSidebarCompletely(); 
                   }
-                  // On desktop, main nav clicks do not affect sidebar pin state or user menu.
                 }}
                 className={cn(
                   'flex items-center gap-3 rounded-lg text-sm font-medium transition-all',
-                  effectiveIsSidebarOpenForTextAndHeader ? 'px-3 py-2.5 w-[263px] h-[46px]' : 'justify-center w-8 h-9 p-0.5', // 32x36 click area, 28x28 icon
+                  effectiveIsSidebarOpenForTextAndHeader ? 'px-3 py-2.5 w-full' : 'justify-center w-8 h-9 p-0.5', // Collapsed: 32x36 clickable area
                   pathname === item.href
                     ? 'bg-[hsl(var(--app-sidebar-active-background))] text-[hsl(var(--app-sidebar-active-foreground))]'
                     : 'text-[hsl(var(--app-sidebar-foreground))] hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-primary'
                 )}
-                title={effectiveIsSidebarOpenForTextAndHeader ? "" : item.label} // Tooltip for collapsed icons
+                title={effectiveIsSidebarOpenForTextAndHeader ? "" : item.label} 
               >
-                <item.icon className="h-7 w-7 shrink-0" /> {/* 28x28 icon */}
+                <item.icon className="h-7 w-7 shrink-0" /> {/* Nav Icon 28x28 */}
                 {effectiveIsSidebarOpenForTextAndHeader && <span>{item.label}</span>}
               </Link>
             ))}
@@ -194,7 +191,7 @@ const AppSidebar: React.FC = () => {
 
         <div className="mt-auto border-t border-[hsl(var(--app-sidebar-border))]">
           {isUserAccountMenuExpanded && effectiveIsSidebarOpenForTextAndHeader && (
-            <div className="bg-card"> {/* Background for the menu itself */}
+            <div className="bg-card"> 
               <UserAccountMenu />
             </div>
           )}
@@ -202,16 +199,16 @@ const AppSidebar: React.FC = () => {
             onClick={handleAvatarClick}
             className={cn(
               "flex w-full items-center gap-3 text-left text-sm font-medium transition-colors hover:bg-[hsl(var(--app-sidebar-hover-background))]",
-              effectiveIsSidebarOpenForTextAndHeader ? "p-3 h-[60px]" : "justify-center p-[calc((48px-28px)/2)] h-[60px]", // Consistent height for avatar section
-              isUserAccountMenuExpanded && effectiveIsSidebarOpenForTextAndHeader && 'bg-muted' // Indicate active avatar when menu is open and sidebar expanded
+              effectiveIsSidebarOpenForTextAndHeader ? "p-3 h-[60px]" : "justify-center h-[60px] p-[calc((48px-28px)/2)]", 
+              isUserAccountMenuExpanded && effectiveIsSidebarOpenForTextAndHeader && 'bg-muted' 
             )}
             aria-label="User account menu"
           >
             <Image
               src="https://picsum.photos/seed/useravatar/40/40"
               alt="User Avatar"
-              width={effectiveIsSidebarOpenForTextAndHeader ? 32 : 28} // Icon size 28x28
-              height={effectiveIsSidebarOpenForTextAndHeader ? 32 : 28}
+              width={28} // Profile Image 28x28
+              height={28} // Profile Image 28x28
               className="rounded-full shrink-0"
               data-ai-hint="profile avatar"
             />
