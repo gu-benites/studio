@@ -31,15 +31,19 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon: Icon, label, href, onClick, h
   <button
     onClick={onClick}
     className={cn(
-      'flex w-full items-center justify-between px-4 py-2.5 text-sm text-left hover:bg-muted rounded-md',
-      isActive && 'font-semibold bg-muted' // Active state for Language when its sub-menu is open
+      'flex w-full items-center justify-between px-4 py-2.5 text-sm text-left rounded-md transition-colors',
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card', // Card is the background for user menu
+      isActive 
+        ? 'font-semibold bg-[hsl(var(--app-sidebar-active-background))] text-[hsl(var(--app-sidebar-active-foreground))]' 
+        : 'text-[hsl(var(--app-sidebar-foreground))] hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))]'
     )}
   >
     <div className="flex items-center gap-3">
-      <Icon className="h-7 w-7 text-muted-foreground" /> {/* User Menu Icon 28x28 */}
+      {/* Icon color will be inherited from button's text color */}
+      <Icon className="h-7 w-7 shrink-0" /> 
       <span>{label}</span>
     </div>
-    {hasSubMenu && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+    {hasSubMenu && <ChevronRight className="h-4 w-4" />}
   </button>
 );
 
@@ -102,7 +106,8 @@ export const UserAccountMenu: React.FC = () => {
           {menuItems.map((item, index) => 
             item.href ? (
               <Link href={item.href} key={index} passHref legacyBehavior>
-                <a onClick={item.onClick} className="block">
+                {/* The <a> tag will not be directly styled for hover/focus; the MenuItem button inside will */}
+                <a onClick={item.onClick} className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card">
                   <MenuItem {...item} onClick={undefined} /> 
                 </a>
               </Link>
@@ -114,3 +119,5 @@ export const UserAccountMenu: React.FC = () => {
     </div>
   );
 };
+
+    
