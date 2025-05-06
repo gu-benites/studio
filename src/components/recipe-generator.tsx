@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Search, PaperPlane, Zap, TriangleAlert, Loader2, Sparkles } from 'lucide-react';
+import { Search, SendHorizonal, Zap, TriangleAlert, Loader2, Sparkles } from 'lucide-react';
 import * as React from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -128,7 +128,7 @@ export const RecipeGenerator: React.FC = () => {
             {isGeneratingRecipe ? (
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
             ) : (
-              <PaperPlane className="mr-2 h-5 w-5" />
+              <SendHorizonal className="mr-2 h-5 w-5" />
             )}
             Criar Receita
           </Button>
