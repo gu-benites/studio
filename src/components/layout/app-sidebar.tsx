@@ -6,6 +6,8 @@ import {
   PanelLeftClose,
   Home,
   ChefHat,
+  Settings, // Keep for direct nav example if any
+  CreditCard, // Keep for direct nav example if any
   X, 
 } from 'lucide-react';
 import Link from 'next/link';
@@ -22,10 +24,12 @@ interface NavItem {
   href: string;
   icon: LucideIcon;
   label: string;
+  isUserMenuRelated?: boolean; // Flag to identify items that are part of user menu
 }
 
 const mainNavItems: NavItem[] = [
   { href: '/', icon: Home, label: 'Recipe Generator' },
+  // Settings and Billing are now exclusively in UserAccountMenu, not main nav.
 ];
 
 const AppSidebar: React.FC = () => {
@@ -36,8 +40,11 @@ const AppSidebar: React.FC = () => {
     toggleMobileSidebar,
     closeSidebarCompletely,
     isUserAccountMenuExpanded,
-    openUserAccountMenu,
-    closeUserAccountMenu,
+    // User Account Menu specific actions for avatar click:
+    openUserMenuAndExpandSidebarIfNeeded,
+    closeUserMenuAndCollapseSidebarIfAutoExpanded,
+    // Simpler actions for other cases (e.g. mobile menu toggle within already open sidebar)
+    openUserAccountMenu, 
     toggleUserAccountMenu,
   } = useUIState();
   const pathname = usePathname();
@@ -47,16 +54,22 @@ const AppSidebar: React.FC = () => {
 
 
   React.useEffect(() => {
-    const checkMobile = () => setIsClientMobile(window.innerWidth < 768);
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsClientMobile(mobile);
+      if (!mobile && isSidebarOpen && !isSidebarPinned && !isUserAccountMenuExpanded) {
+         // If transitioning from mobile to desktop, and sidebar was open (mobile drawer)
+         // but not pinned and no user menu, collapse it.
+         // This case might be too specific, primary logic is for clicks and pins.
+      }
+    };
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  }, [isSidebarOpen, isSidebarPinned, isUserAccountMenuExpanded]);
 
   React.useEffect(() => {
-    if (isClientMobile && isSidebarOpen && pathname) { // Added pathname to dependencies
-      // Check if user account menu should also close or if navigation implies it
-      // For now, closeSidebarCompletely handles user menu closure too
+    if (isClientMobile && isSidebarOpen && pathname) {
       closeSidebarCompletely();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -71,7 +84,7 @@ const AppSidebar: React.FC = () => {
 
   const handleMouseLeave = () => {
     if (!isClientMobile && !isSidebarPinned) {
-      hoverTimeoutRef.current = setTimeout(() => setIsHovering(false), 300);
+      hoverTimeoutRef.current = setTimeout(() => setIsHovering(false), 100); // Shorter delay
     }
   };
   
@@ -83,32 +96,34 @@ const AppSidebar: React.FC = () => {
 
   const handleAvatarClick = () => {
     if (isClientMobile) {
-      if (!isSidebarOpen) {
-        toggleMobileSidebar(); // This will open the sidebar
-        openUserAccountMenu(); // And open the menu
-      } else { // Mobile sidebar is already open
-        toggleUserAccountMenu();
+      if (!isSidebarOpen) { // Mobile sidebar (drawer) is closed
+        toggleMobileSidebar(); // This will open the sidebar drawer
+        openUserAccountMenu(); // And open the menu section within it
+      } else { // Mobile sidebar (drawer) is already open
+        toggleUserAccountMenu(); // Just toggle the menu section visibility
       }
     } else { // Desktop
-      if (!isSidebarPinned) { 
-        toggleDesktopSidebarPin(); // This pins and expands the sidebar
-        openUserAccountMenu();     // And open the menu
-      } else { // Desktop sidebar is pinned and expanded
-        toggleUserAccountMenu();
+      if (isUserAccountMenuExpanded) {
+        closeUserMenuAndCollapseSidebarIfAutoExpanded();
+      } else {
+        openUserMenuAndExpandSidebarIfNeeded();
       }
     }
   };
-
-  const showText = isSidebarPinned || (isClientMobile && isSidebarOpen);
+  
+  const showText = (isSidebarPinned || (isClientMobile && isSidebarOpen)) ;
   const desktopSidebarWidth = isSidebarPinned ? 'md:w-[287px]' : 'md:w-[48px]';
   const mobileSidebarTranslate = isSidebarOpen ? 'translate-x-0' : '-translate-x-full';
 
   const sidebarClasses = cn(
-    'fixed inset-y-0 left-0 z-40 flex flex-col bg-card border-r border-app-sidebar-border transition-all duration-300 ease-in-out',
+    'fixed inset-y-0 left-0 z-40 flex flex-col bg-app-sidebar-background border-r border-app-sidebar-border transition-all duration-300 ease-in-out shadow-lg',
     isClientMobile ? 'w-full max-w-[287px]' : desktopSidebarWidth,
     isClientMobile ? mobileSidebarTranslate : 'md:translate-x-0 md:relative',
-    (isHovering && !isSidebarPinned && !isClientMobile) && 'bg-app-sidebar-hover-background'
+    (isHovering && !isSidebarPinned && !isClientMobile && !isSidebarOpen) && 'bg-app-sidebar-hover-background'
   );
+  
+  const effectiveIsSidebarOpenForText = isClientMobile ? isSidebarOpen : isSidebarPinned;
+
 
   return (
     <>
@@ -120,25 +135,24 @@ const AppSidebar: React.FC = () => {
           />
       )}
       <aside className={sidebarClasses} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-        <div className="flex flex-col flex-grow overflow-y-auto"> {/* Added overflow-y-auto */}
+        <div className="flex flex-col flex-grow overflow-y-auto">
           <div className={cn(
             "flex items-center border-b border-app-sidebar-border h-[60px] shrink-0",
-            showText ? "px-4 justify-between" : "px-[10px] justify-center md:justify-start md:px-0" // adjust px for collapsed desktop
+            effectiveIsSidebarOpenForText ? "px-4 justify-between" : "px-[calc((48px-32px)/2)] justify-center md:justify-start md:px-0" 
           )}>
-            {showText && (
+            {effectiveIsSidebarOpenForText && (
               <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-primary shrink-0">
                   <ChefHat className="h-7 w-7" />
                   <span>RecipeSage</span>
               </Link>
             )}
-             {/* Desktop Pin/Unpin: Aligned to the right when text is shown, centered otherwise OR at start */}
             <Button
               variant="ghost"
               size="icon"
-              onClick={toggleDesktopSidebarPin}
+              onClick={toggleDesktopSidebarPin} // Manual pin action
               className={cn(
                 "hidden md:inline-flex transition-colors hover:bg-app-sidebar-hover-background",
-                showText ? "ml-auto" : "mx-auto w-full h-full flex items-center justify-center rounded-none" // Centered if collapsed
+                effectiveIsSidebarOpenForText ? "ml-auto" : "mx-auto w-full h-full flex items-center justify-center rounded-none" 
               )}
               aria-label={isSidebarPinned ? 'Unpin and collapse sidebar' : 'Pin and expand sidebar'}
             >
@@ -150,7 +164,7 @@ const AppSidebar: React.FC = () => {
                   variant="ghost"
                   size="icon"
                   onClick={toggleMobileSidebar}
-                  className="md:hidden"
+                  className="md:hidden ml-auto" // Ensure it's on the right if logo is also shown
                   aria-label="Close sidebar"
               >
                   <X className="h-5 w-5" />
@@ -158,7 +172,7 @@ const AppSidebar: React.FC = () => {
             )}
           </div>
           
-          <nav className={cn("flex-grow py-4 space-y-1", showText ? "px-3" : "px-[calc((48px-32px)/2)]")}>
+          <nav className={cn("flex-grow py-4 space-y-1", effectiveIsSidebarOpenForText ? "px-3" : "px-[calc((48px-32px)/2)]")}>
             {mainNavItems.map((item) => (
               <Link
                 key={item.label}
@@ -166,24 +180,23 @@ const AppSidebar: React.FC = () => {
                 onClick={() => { if (isClientMobile && isSidebarOpen) toggleMobileSidebar(); }}
                 className={cn(
                   'flex items-center gap-3 rounded-lg text-sm font-medium transition-all',
-                  showText ? 'px-3 py-2.5' : 'justify-center w-8 h-9 p-0.5', // w-8 (32px), h-9 (36px), p-0.5 for icon centering
+                  effectiveIsSidebarOpenForText ? 'px-3 py-2.5' : 'justify-center w-8 h-9 p-0.5', 
                   pathname === item.href
                     ? 'bg-app-sidebar-active-background text-app-sidebar-active-foreground'
                     : 'text-app-sidebar-foreground hover:bg-app-sidebar-hover-background hover:text-primary'
                 )}
-                title={showText ? "" : item.label}
+                title={effectiveIsSidebarOpenForText ? "" : item.label}
               >
-                <item.icon className="h-7 w-7 shrink-0" /> {/* Icon size 28x28 */}
-                {showText && <span>{item.label}</span>}
+                <item.icon className="h-7 w-7 shrink-0" />
+                {effectiveIsSidebarOpenForText && <span>{item.label}</span>}
               </Link>
             ))}
           </nav>
         </div>
 
-        {/* User Account Section - Integrated */}
         <div className="mt-auto border-t border-app-sidebar-border">
-          {isUserAccountMenuExpanded && showText && ( // Only show if sidebar is expanded enough for text
-            <div className="bg-card"> {/* UserAccountMenu content will be styled by itself */}
+          {isUserAccountMenuExpanded && effectiveIsSidebarOpenForText && (
+            <div className="bg-card">
               <UserAccountMenu />
             </div>
           )}
@@ -191,19 +204,20 @@ const AppSidebar: React.FC = () => {
             onClick={handleAvatarClick}
             className={cn(
               "flex w-full items-center gap-3 text-left text-sm font-medium transition-colors hover:bg-app-sidebar-hover-background",
-              showText ? "p-3" : "justify-center p-[10px] h-[48px]" // p-2.5 for 28px avatar in 48px, (48-28)/2 = 10px => p-[10px]
+              effectiveIsSidebarOpenForText ? "p-3" : "justify-center p-[calc((48px-28px)/2)] h-[48px]",
+              isUserAccountMenuExpanded && effectiveIsSidebarOpenForText && 'bg-muted' // Indicate active avatar
             )}
             aria-label="User account menu"
           >
             <Image
               src="https://picsum.photos/seed/useravatar/40/40"
               alt="User Avatar"
-              width={showText ? 32 : 28} // Avatar 28x28 when collapsed
-              height={showText ? 32 : 28}
+              width={effectiveIsSidebarOpenForText ? 32 : 28}
+              height={effectiveIsSidebarOpenForText ? 32 : 28}
               className="rounded-full shrink-0"
               data-ai-hint="profile avatar"
             />
-            {showText && (
+            {effectiveIsSidebarOpenForText && (
               <div className="flex flex-col overflow-hidden">
                 <span className="text-app-sidebar-foreground truncate">User Name</span>
                 <span className="text-xs text-muted-foreground truncate">user@example.com</span>

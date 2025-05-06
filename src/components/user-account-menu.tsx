@@ -49,32 +49,34 @@ export const UserAccountMenu: React.FC = () => {
     setSubscriptionModalOpen,
     activeUserMenuSubItem,
     setActiveUserMenuSubItem,
-    closeUserAccountMenu, // To close the whole menu when navigating
-    closeSidebarCompletely // To close sidebar and menu
+    closeSidebarCompletely, // For mobile navigation
+    closeUserMenuAndCollapseSidebarIfAutoExpanded, // For desktop navigation/modal actions
   } = useUIState();
+  const [isClientMobile, setIsClientMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => setIsClientMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
 
   const handleLanguageClick = () => {
     setActiveUserMenuSubItem(activeUserMenuSubItem === 'language' ? null : 'language');
   };
 
   const handleNavigationOrModal = () => {
-    // This function can be called by items that navigate or open modals
-    // to ensure the menu structure behaves as expected.
-    // For page navigation via Link, the sidebar's useEffect for pathname changes handles full closure.
-    // For modals, we might want to close the sub-menu or the entire user menu.
-    if (isClientMobile()) { // Helper to check if mobile
-        closeSidebarCompletely(); // On mobile, usually close everything
+    if (isClientMobile) {
+        closeSidebarCompletely(); 
     } else {
-        closeUserAccountMenu(); // On desktop, just close the user menu section
+        closeUserMenuAndCollapseSidebarIfAutoExpanded();
     }
   };
   
-  // Helper function to determine if on mobile, assuming window is available
-  const isClientMobile = () => typeof window !== 'undefined' && window.innerWidth < 768;
-
 
   const menuItems: MenuItemProps[] = [
-    { href: '/settings', icon: Settings, label: 'Settings', onClick: handleNavigationOrModal }, // Removed /account, use /settings
+    { href: '/settings', icon: Settings, label: 'Settings', onClick: handleNavigationOrModal }, 
     { icon: CreditCard, label: 'My Subscription', onClick: () => { setSubscriptionModalOpen(true); handleNavigationOrModal(); } },
     { icon: Globe, label: 'Language', onClick: handleLanguageClick, hasSubMenu: true, isActive: activeUserMenuSubItem === 'language' },
     { href: '/help', icon: HelpCircle, label: 'Help Center', onClick: handleNavigationOrModal }, 
@@ -84,23 +86,25 @@ export const UserAccountMenu: React.FC = () => {
 
   if (activeUserMenuSubItem === 'language') {
     return (
-      <div className="w-full bg-card text-card-foreground p-1"> {/* Adjusted padding */}
+      <div className="w-full bg-card text-card-foreground p-1">
          <LanguageSelector onBack={() => setActiveUserMenuSubItem(null)} />
       </div>
     );
   }
 
   return (
-    <div className="w-full bg-card text-card-foreground p-2"> {/* Adjusted padding */}
-        <div className="px-2 py-1.5"> {/* Adjusted padding */}
+    <div className="w-full bg-card text-card-foreground p-2">
+        <div className="px-2 py-1.5">
           <p className="text-xs font-semibold text-muted-foreground">My Account</p>
         </div>
-        <Separator className="my-1" /> {/* Added separator */}
-        <div className="flex flex-col space-y-0.5"> {/* Adjusted spacing */}
+        <Separator className="my-1" />
+        <div className="flex flex-col space-y-0.5">
           {menuItems.map((item, index) => 
             item.href ? (
               <Link href={item.href} key={index} passHref legacyBehavior>
-                <MenuItem {...item} />
+                <a onClick={handleNavigationOrModal} className="block"> {/* Link needs an 'a' tag for legacyBehavior + onClick */}
+                  <MenuItem {...item} onClick={undefined} /> {/* Pass undefined onClick to MenuItem as Link handles it */}
+                </a>
               </Link>
             ) : (
               <MenuItem key={index} {...item} />
