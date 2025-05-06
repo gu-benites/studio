@@ -32,8 +32,8 @@ This document outlines the tasks for implementing the sidebar, user account menu
     - [x] Subtask: Mobile (Open): Show icons (28x28) and text labels for navigation items. App icon (ChefHat) 28x28. Profile image 28x28.
 
 - [x] **Task: Sidebar Toggle/Close Icon Positioning in Header**
-    - [x] Subtask: Desktop (Pinned/Expanded or User Menu Open): `PanelLeftClose` icon positioned to the right of the logo/title area in the sidebar header.
-    - [x] Subtask: Desktop (Unpinned/Collapsed): `PanelLeft` icon is the primary toggle, centered within the header's width (48px).
+    - [x] Subtask: Desktop (Pinned/Expanded or User Menu Open): The `PanelLeftClose` or `PanelLeft` toggle icon is positioned to the left of (or as the first element before) the logo/title area in the sidebar header.
+    - [x] Subtask: Desktop (Unpinned/Collapsed): The `PanelLeft` icon is the primary toggle, centered within the header's width (48px).
     - [x] Subtask: Mobile (Open): `X` icon positioned to the right of the logo/title area in the sidebar header.
 
 ## 2. User Account Menu
@@ -101,4 +101,3 @@ This document outlines the tasks for implementing the sidebar, user account menu
     - [x] Ensure theme colors (`globals.css`) are applied correctly.
     - [x] Ensure smooth transitions for sidebar expand/collapse and User Account Menu display.
     - [x] Test responsiveness across desktop and mobile breakpoints.
-```
