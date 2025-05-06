@@ -33,6 +33,8 @@ interface NavItem {
 
 const mainNavItems: NavItem[] = [
   { href: '/', icon: Home, label: 'Recipe Generator' },
+  // { href: '/create-recipe', icon: FlaskConical, label: 'Create Recipe' }, // Example
+  // { href: '/my-recipes', icon: List, label: 'My Recipes' }, // Example
 ];
 
 const AppSidebar: React.FC = () => {
@@ -57,11 +59,17 @@ const AppSidebar: React.FC = () => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsClientMobile(mobile);
+      if (!mobile && isSidebarOpen && !isSidebarPinned && !isUserAccountMenuExpanded) {
+        // If transitioning from mobile (where sidebar might be open but not pinned)
+        // to desktop, and menu is not open, ensure sidebar is collapsed if not pinned.
+        // This prevents an unpinned open sidebar on desktop if it was open on mobile.
+        // closeSidebarCompletely(); // This might be too aggressive, let UIState handle it.
+      }
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  }, [isSidebarOpen, isSidebarPinned, isUserAccountMenuExpanded]);
 
 
   React.useEffect(() => {
@@ -132,11 +140,8 @@ const AppSidebar: React.FC = () => {
           {/* Sidebar Header */}
           <div className={cn(
             "flex items-center border-b border-[hsl(var(--app-sidebar-border))] h-[60px] shrink-0",
-            // Desktop Expanded: Icon on left (part of normal flow), then Logo.
-            // Desktop Collapsed: Icon centered.
-            // Mobile Open: Logo on left, X on right.
-            isEffectivelyExpanded ? "px-3 gap-3" : "justify-center",
-            isMobileExpanded && "justify-between" // Override for mobile open
+            isEffectivelyExpanded ? "px-3 gap-3" : "px-[calc((48px-32px)/2)] justify-start", // For collapsed, use padding to align toggle icon
+            isMobileExpanded && "justify-between !px-3" // Override for mobile open, ensure padding and space-between
           )}>
 
             {/* Desktop/Mobile Toggle Button (PanelLeft/PanelLeftClose/X) */}
@@ -147,8 +152,8 @@ const AppSidebar: React.FC = () => {
                     onClick={toggleDesktopSidebarPin}
                     className={cn(
                         "h-9 w-9 hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))]",
-                        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--app-sidebar-background))]",
-                        !isEffectivelyExpanded && "mx-auto" // Center when collapsed and no logo
+                        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--app-sidebar-background))]"
+                        // Removed mx-auto, alignment handled by parent's justify-start/center or px
                     )}
                     aria-label={isSidebarPinned ? 'Unpin and collapse sidebar' : 'Pin and expand sidebar'}
                 >
@@ -163,7 +168,7 @@ const AppSidebar: React.FC = () => {
                 className="flex items-center gap-2 text-lg font-semibold text-primary"
                 onClick={() => { if (isClientMobile) closeSidebarCompletely();}}
               >
-                <ChefHat className="h-7 w-7" />
+                <ChefHat className="h-4 w-4" /> {/* Icon size change */}
                 <span>RecipeSage</span>
               </Link>
             )}
@@ -191,6 +196,7 @@ const AppSidebar: React.FC = () => {
                     if (isClientMobile && isSidebarOpen) {
                       closeSidebarCompletely(); 
                     }
+                    // No need to handle desktop sidebar collapse here, UserAccountMenu context handles it if a menu item is clicked from there
                   }}
                   className={cn(
                     'flex items-center gap-3 rounded-lg text-sm font-medium transition-all',
@@ -200,8 +206,9 @@ const AppSidebar: React.FC = () => {
                       ? 'bg-[hsl(var(--app-sidebar-active-background))] text-[hsl(var(--app-sidebar-active-foreground))]'
                       : 'text-[hsl(var(--app-sidebar-foreground))] hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))]'
                   )}
+                  title={isEffectivelyExpanded ? undefined : item.label} // Add title for tooltip on collapsed
                 >
-                  <item.icon className="h-7 w-7 shrink-0" />
+                  <item.icon className="h-4 w-4 shrink-0" /> {/* Icon size change */}
                   {isEffectivelyExpanded && <span>{item.label}</span>}
                 </Link>
               );
@@ -226,7 +233,6 @@ const AppSidebar: React.FC = () => {
 
         <div className="mt-auto border-t border-[hsl(var(--app-sidebar-border))]">
           {isUserAccountMenuExpanded && isEffectivelyExpanded && (
-            // UserAccountMenu bg is handled internally by its own Card component
             <UserAccountMenu />
           )}
           <Tooltip>
@@ -236,7 +242,7 @@ const AppSidebar: React.FC = () => {
                 className={cn(
                   "flex w-full items-center gap-3 text-left text-sm font-medium transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 focus-visible:ring-offset-[hsl(var(--app-sidebar-background))]",
-                  isEffectivelyExpanded ? "p-3 h-[60px]" : "justify-center h-[60px] w-full p-[calc((48px-28px)/2)]", 
+                  isEffectivelyExpanded ? "p-3 h-[60px]" : "justify-center h-[60px] w-full p-4", // Adjusted padding for collapsed
                   isUserAccountMenuExpanded && isEffectivelyExpanded 
                     ? 'bg-[hsl(var(--app-sidebar-active-background))] text-[hsl(var(--app-sidebar-active-foreground))]'
                     : 'hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))]'
@@ -246,9 +252,9 @@ const AppSidebar: React.FC = () => {
                 <Image
                   src="https://picsum.photos/seed/useravatar/40/40"
                   alt="User Avatar"
-                  width={28}
-                  height={28}
-                  className="rounded-full shrink-0"
+                  width={16} // Icon size change
+                  height={16} // Icon size change
+                  className="rounded-full shrink-0 h-4 w-4" // Explicit h-4 w-4 for Image
                   data-ai-hint="profile avatar"
                 />
                 {isEffectivelyExpanded && (
@@ -277,5 +283,3 @@ const AppSidebar: React.FC = () => {
 };
 
 export default AppSidebar;
-
-    

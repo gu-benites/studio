@@ -40,7 +40,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon: Icon, label, href, onClick, h
   >
     <div className="flex items-center gap-3">
       {/* Icon color will be inherited from button's text color */}
-      <Icon className="h-7 w-7 shrink-0" /> 
+      <Icon className="h-4 w-4 shrink-0" /> {/* Icon size change */}
       <span>{label}</span>
     </div>
     {hasSubMenu && <ChevronRight className="h-4 w-4" />}
@@ -119,5 +119,3 @@ export const UserAccountMenu: React.FC = () => {
     </div>
   );
 };
-
-    

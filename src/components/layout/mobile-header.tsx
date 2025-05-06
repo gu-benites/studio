@@ -1,3 +1,4 @@
+
 "use client";
 
 import { PanelLeft, ChefHat } from 'lucide-react';
@@ -34,11 +35,12 @@ export const MobileHeader: React.FC = () => {
         size="icon"
         onClick={toggleMobileSidebar}
         aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
+        className="h-9 w-9 hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
-        <PanelLeft className="h-6 w-6" />
+        <PanelLeft className="h-5 w-5" />
       </Button>
       <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-primary">
-        <ChefHat className="h-7 w-7" />
+        <ChefHat className="h-4 w-4" /> {/* Icon size change */}
         <span className="sr-only">RecipeSage</span> {/* Show full name in sidebar */}
       </Link>
       <div className="w-9 h-9" /> {/* Spacer to balance the hamburger icon */}

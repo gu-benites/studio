@@ -23,17 +23,17 @@ This document outlines the tasks for implementing the sidebar, user account menu
         - [x] `PanelLeft` for opening/toggling unpinned desktop sidebar and mobile sidebar.
         - [x] `PanelLeftClose` for closing/toggling pinned desktop sidebar.
         - [x] `X` for closing mobile sidebar from within.
-    - [x] Subtask: Ensure icon size for navigation items, app logo, and profile image within the sidebar is 28x28 (`h-7 w-7`). Header toggle icons (`PanelLeft`, `PanelLeftClose`, `X`) can remain smaller (e.g., `h-5 w-5`).
+    - [x] Subtask: Ensure icon size for navigation items, app logo, and profile image within the sidebar is 16x16 (`h-4 w-4`). Header toggle icons (`PanelLeft`, `PanelLeftClose`, `X`) can remain smaller (e.g., `h-5 w-5`).
     - [x] Subtask: Ensure clickable area for each navigation icon (when sidebar is collapsed) is 32px (width) x 36px (height). Achieved via padding making overall item `w-8 h-9`.
 
 - [x] **Task: Sidebar Content Display Rules**
-    - [x] Subtask: Desktop (Pinned/Expanded or User Menu Open): Show icons (28x28) and text labels for navigation items. App icon (ChefHat) 28x28. Profile image 28x28.
-    - [x] Subtask: Desktop (Unpinned/Collapsed): Show only icons (28x28) for navigation items, centered in their 32x36 clickable area. Profile image 28x28. Labels appear as tooltips or are accessible via `title` attribute.
-    - [x] Subtask: Mobile (Open): Show icons (28x28) and text labels for navigation items. App icon (ChefHat) 28x28. Profile image 28x28.
+    - [x] Subtask: Desktop (Pinned/Expanded or User Menu Open): Show icons (16x16) and text labels for navigation items. App icon (ChefHat) 16x16. Profile image 16x16.
+    - [x] Subtask: Desktop (Unpinned/Collapsed): Show only icons (16x16) for navigation items, centered in their 32x36 clickable area. Profile image 16x16. Labels appear as tooltips or are accessible via `title` attribute.
+    - [x] Subtask: Mobile (Open): Show icons (16x16) and text labels for navigation items. App icon (ChefHat) 16x16. Profile image 16x16.
 
 - [x] **Task: Sidebar Toggle/Close Icon Positioning in Header**
     - [x] Subtask: Desktop (Pinned/Expanded or User Menu Open): The `PanelLeftClose` or `PanelLeft` toggle icon is positioned to the left of (or as the first element before) the logo/title area in the sidebar header.
-    - [x] Subtask: Desktop (Unpinned/Collapsed): The `PanelLeft` icon is the primary toggle, centered within the header's width (48px).
+    - [x] Subtask: Desktop (Unpinned/Collapsed): The `PanelLeft` icon is the primary toggle, aligned to the start of the header area (effectively centered within the 32x36 icon clickable area if padding is applied, or simply at the start if no extra title/logo).
     - [x] Subtask: Mobile (Open): `X` icon positioned to the right of the logo/title area in the sidebar header.
 
 ## 2. User Account Menu
@@ -52,7 +52,7 @@ This document outlines the tasks for implementing the sidebar, user account menu
         - [x] Sign Out (Opens Logout Confirmation Modal)
     - [x] Subtask: User Account Menu (and its sub-menus like Language Selector) closes automatically if the main sidebar is collapsed/closed (e.g., via pin toggle on desktop or mobile close).
     - [x] Subtask: Clicking a navigation item within the User Account Menu (e.g., Settings, Help) or an action that opens a modal (My Subscription, Sign Out) closes the User Account Menu section. On Desktop, this action also collapses and unpins the sidebar. On mobile, this action closes the entire sidebar.
-    - [x] Subtask: Ensure icons within the User Account Menu items are 28x28 (`h-7 w-7`).
+    - [x] Subtask: Ensure icons within the User Account Menu items are 16x16 (`h-4 w-4`).
 
 ## 3. Language Selection (within User Account Menu)
 
@@ -63,7 +63,7 @@ This document outlines the tasks for implementing the sidebar, user account menu
     - [x] Subtask: Current language selection is visually indicated (e.g., checkmark, bold font).
     - [x] Subtask: Flag icons/emojis are displayed next to language names.
     - [x] Subtask: Includes a "back" button or similar mechanism to return to the main User Account Menu items from the language list.
-    - [x] Subtask: Icons within the Language Selector (e.g., back arrow, checkmark) should be appropriately sized (e.g. `h-5 w-5` or `h-4 w-4`), not necessarily 28x28.
+    - [x] Subtask: Icons within the Language Selector (e.g., back arrow, checkmark) should be appropriately sized (e.g. `h-5 w-5` or `h-4 w-4`), not necessarily 16x16.
 
 ## 4. Modals Triggered from User Account Menu
 
