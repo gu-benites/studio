@@ -4,7 +4,7 @@
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import React from 'react'; 
-import { ArrowRight, AlertTriangle, ArrowUp, Search, SendHorizonal, Sparkles } from 'lucide-react'; // Removed Plus, FileEdit, added SendHorizonal
+import { ArrowRight, AlertTriangle, ArrowUp, Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
@@ -13,17 +13,17 @@ import { Label } from "@/components/ui/label";
 // Define colors from the AromaChat design system for this page specifically
 // These would ideally come from a theme context or CSS variables if used app-wide
 const aromaColors = {
-  primary: '#7a5cff',
-  secondary: '#FF7A5C',
-  accent: '#5CFF7A',
-  text: '#4B4763',
-  textMuted: '#6f6b89',
-  gradStart: '#7b61ff',
-  gradEnd: '#ff5fa1',
-  alertBg: 'rgba(255, 244, 229, 0.8)', // For demonstration, direct values are used.
-  alertText: '#d97706',
-  alertBorder: 'rgba(245, 158, 11, 0.5)',
-  alertIcon: '#d97706',
+  primary: 'hsl(var(--aroma-primary-hsl))',
+  secondary: 'hsl(var(--aroma-secondary-hsl))',
+  accent: 'hsl(var(--aroma-accent-hsl))',
+  text: 'hsl(var(--aroma-text-hsl))',
+  textMuted: 'hsl(var(--aroma-text-muted-hsl))',
+  gradStart: 'hsl(var(--aroma-grad-start-hsl))',
+  gradEnd: 'hsl(var(--aroma-grad-end-hsl))',
+  alertBg: 'hsl(var(--alert-bg-hsl))', 
+  alertText: 'hsl(var(--alert-text-hsl))',
+  alertBorder: 'hsl(var(--alert-border-hsl))',
+  alertIcon: 'hsl(var(--alert-icon-hsl))',
 };
 
 
@@ -55,7 +55,7 @@ const DesignSystemPage: NextPage = () => {
 
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4 text-aroma-text">Color Palette (PRD 4.1.1)</h2>
-          <div className="rounded-lg border bg-card text-card-foreground shadow-card">
+          <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
             <div className="p-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
               <div className="flex flex-col gap-2 items-center">
                 <div className="h-20 w-full rounded-md bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end"></div>
@@ -78,7 +78,7 @@ const DesignSystemPage: NextPage = () => {
                 <p className="text-xs text-aroma-text-muted">#5CFF7A (Green)</p>
               </div>
               <div className="flex flex-col gap-2 items-center">
-                <div className="h-20 w-full rounded-md flex items-center justify-center text-primary-foreground font-semibold bg-aroma-text">Text</div>
+                <div className="h-20 w-full rounded-md flex items-center justify-center text-white font-semibold bg-aroma-text">Text</div>
                 <p className="text-sm font-medium text-aroma-text">Text</p>
                 <p className="text-xs text-aroma-text-muted">#4B4763</p>
               </div>
@@ -88,7 +88,7 @@ const DesignSystemPage: NextPage = () => {
 
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4 text-aroma-text">Typography (Poppins)</h2>
-          <div className="rounded-lg border bg-card text-card-foreground shadow-card">
+          <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
             <div className="p-6 space-y-4">
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold">Heading 1 (Poppins Bold)</h1>
@@ -130,7 +130,7 @@ const DesignSystemPage: NextPage = () => {
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4 text-aroma-text">Loading & Progress</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="rounded-lg border bg-card text-card-foreground shadow-card">
+            <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
               <h3 className="text-xl font-medium p-6 pb-0">Loading Indicator</h3>
               <div className="p-6 pt-6 flex justify-center items-center min-h-[150px]">
                 <div className="w-20 h-20 relative">
@@ -147,7 +147,7 @@ const DesignSystemPage: NextPage = () => {
               </div>
               <p className="text-sm p-6 pt-0 text-center text-aroma-text-muted">Represents: Custom loading component or styled &lt;CircularProgress&gt;.</p>
             </div>
-            <div className="rounded-lg border bg-card text-card-foreground shadow-card">
+            <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
               <h3 className="text-xl font-medium p-6 pb-0">Progress Steps</h3>
               <div className="p-6 space-y-6">
                 <div>
@@ -183,13 +183,13 @@ const DesignSystemPage: NextPage = () => {
 
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4 text-aroma-text">Buttons</h2>
-          <div className="rounded-lg border bg-card text-card-foreground shadow-card">
+          <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
             <div className="p-6 space-y-8">
               <div>
                 <h3 className="text-lg font-medium mb-3">Main Action Button</h3>
                 <div className="flex flex-wrap gap-4">
                   <Button 
-                    className="font-semibold py-3.5 px-8 rounded-3xl shadow-sm hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end text-primary-foreground focus:ring-aroma-primary hover:shadow-button-focus" // Tailwind's shadow-button-focus needs definition or use existing like shadow-lg
+                    className="font-semibold py-3.5 px-8 rounded-3xl shadow-button-normal hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end text-primary-foreground focus:ring-aroma-primary hover:shadow-button-focus"
                   >
                     Criar Receita
                     <ArrowRight strokeWidth={2.5} className="w-4 h-4" />
@@ -228,7 +228,7 @@ const DesignSystemPage: NextPage = () => {
 
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4 text-aroma-text">Input Fields</h2>
-          <div className="rounded-lg border bg-card text-card-foreground shadow-card">
+          <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
             <div className="p-6">
               <div className="max-w-2xl mx-auto space-y-8">
                 <div>
@@ -253,9 +253,9 @@ const DesignSystemPage: NextPage = () => {
                 <div>
                   <Label htmlFor="chat-input-example" className="block text-sm font-medium text-aroma-text mb-2">Chat Input (New Style)</Label>
                   <form onSubmit={handleFormSubmit} className="space-y-2">
-                    <div className="group relative rounded-xl border-input p-px hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end transition-all duration-200 ease-in-out">
+                    <div className="group relative rounded-xl border border-input p-px hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end transition-all duration-200 ease-in-out">
                        <div className="flex items-center w-full bg-card rounded-[calc(theme(borderRadius.xl)-1px)] p-1 pr-1.5 shadow-sm">
-                        <Search className="h-5 w-5 text-muted-foreground mx-2 pointer-events-none" />
+                        <Search className="h-5 w-5 text-muted-foreground mx-3 pointer-events-none" />
                         <Separator orientation="vertical" className="h-6 mr-2 bg-border" />
                         <Input
                           type="text"
@@ -274,7 +274,6 @@ const DesignSystemPage: NextPage = () => {
                         </Button>
                       </div>
                     </div>
-                     <p className="text-xs text-muted-foreground text-center">Claude 3.7 Sonnet ✓</p>
                   </form>
                   <p className="text-sm mt-2 text-aroma-text-muted">Represents: New chat-style input with action button. Gradient border on focus/hover.</p>
                 </div>
@@ -286,11 +285,11 @@ const DesignSystemPage: NextPage = () => {
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4 text-aroma-text">Alerts & Badges</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="rounded-lg border bg-card text-card-foreground shadow-card">
+            <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
               <h3 className="text-xl font-medium p-6 pb-0">Alert Example</h3>
               <div className="p-6">
                 <div 
-                  className="relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 bg-alert-bg border-alert-border text-alert-text"
+                  className="relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 bg-alert-bg/80 border-alert-border text-alert-text"
                 >
                   <AlertTriangle className="h-4 w-4 text-alert-icon" />
                   <div className="text-sm [&_p]:leading-relaxed">
@@ -300,15 +299,15 @@ const DesignSystemPage: NextPage = () => {
                 <p className="text-sm mt-2 text-aroma-text-muted">Represents: &lt;Alert severity="warning"&gt;.</p>
               </div>
             </div>
-            <div className="rounded-lg border bg-card text-card-foreground shadow-card">
+            <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
               <h3 className="text-xl font-medium p-6 pb-0">Relevancy Badges</h3>
               <div className="p-6">
                 <div className="flex flex-wrap gap-3">
                   <span className="inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold text-primary-foreground bg-aroma-primary/80">Relevância: 5/5</span>
                   <span className="inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold text-aroma-text bg-aroma-accent/80">Relevância: 4/5</span>
-                  <span className="inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold text-primary-foreground bg-yellow-500">Relevância: 3/5</span> {/* Assuming yellow-500 defined or replace */}
+                  <span className="inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold text-primary-foreground bg-yellow-500">Relevância: 3/5</span> 
                   <span className="inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold text-primary-foreground bg-aroma-secondary/80">Relevância: 2/5</span>
-                  <span className="inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold text-primary-foreground bg-red-500">Relevância: 1/5</span> {/* Assuming red-500 defined or replace */}
+                  <span className="inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold text-primary-foreground bg-red-500">Relevância: 1/5</span>
                 </div>
                 <p className="text-sm mt-2 text-aroma-text-muted">Represents: &lt;Chip size="small"&gt;.</p>
               </div>
@@ -318,7 +317,7 @@ const DesignSystemPage: NextPage = () => {
 
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4 text-aroma-text">Layout Components (Conceptual)</h2>
-          <div className="rounded-lg border bg-card text-card-foreground shadow-card">
+          <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
             <div className="p-6 space-y-4">
               <p>Layout structure will follow `01_saas_template.md` using components:</p>
               <ul className="list-disc pl-5 space-y-1 text-sm">
@@ -338,4 +337,3 @@ const DesignSystemPage: NextPage = () => {
 };
 
 export default DesignSystemPage;
-
