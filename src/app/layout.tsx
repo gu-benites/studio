@@ -30,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={cn(fontPoppins.variable)} > {/* Add Poppins variable here */}
+    <html lang="en" suppressHydrationWarning className={cn(fontPoppins.variable)}>
       <body
         className={cn(
           'min-h-screen bg-background font-sans antialiased', // Default to font-sans (Inter)
