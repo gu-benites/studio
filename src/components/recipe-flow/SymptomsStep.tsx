@@ -6,14 +6,16 @@ import { useRouter } from 'next/navigation';
 import { useRecipeForm } from '@/contexts/RecipeFormContext';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { getMedicalProperties } from '@/services/aromarx-api-client';
 import type { RecipeFormData } from '@/contexts/RecipeFormContext';
+import { cn } from '@/lib/utils';
 
 interface PotentialSymptom {
   symptom_name: string;
   symptom_suggestion: string;
   explanation: string;
-  id?: string; 
+  id?: string;
 }
 
 const SymptomsStep: React.FC = () => {
@@ -23,10 +25,16 @@ const SymptomsStep: React.FC = () => {
   const [selectedSymptomsState, setSelectedSymptomsState] = useState<Pick<PotentialSymptom, 'symptom_name'>[]>(
     formData.selectedSymptoms || []
   );
+  const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([]);
 
   useEffect(() => {
     if (formData.selectedSymptoms) {
       setSelectedSymptomsState(formData.selectedSymptoms);
+      const preSelectedSymptomNames = formData.selectedSymptoms.map(s => s.symptom_name);
+      setOpenAccordionItems(prevOpen => {
+        const newOpen = new Set([...prevOpen, ...preSelectedSymptomNames]);
+        return Array.from(newOpen);
+      });
     }
   }, [formData.selectedSymptoms]);
 
@@ -34,15 +42,21 @@ const SymptomsStep: React.FC = () => {
     updateFormValidity(selectedSymptomsState.length > 0);
   }, [selectedSymptomsState, updateFormValidity]);
 
-  const handleToggleSymptom = (symptom: PotentialSymptom) => {
-    setSelectedSymptomsState((prevSelected) => {
-      const isSelected = prevSelected.some(s => s.symptom_name === symptom.symptom_name);
-      if (isSelected) {
-        return prevSelected.filter(s => s.symptom_name !== symptom.symptom_name);
-      } else {
-        return [...prevSelected, { symptom_name: symptom.symptom_name }];
-      }
-    });
+  const handleToggleSymptomSelection = (symptom: PotentialSymptom) => {
+    const symptomId = symptom.symptom_name;
+    const isCurrentlySelected = selectedSymptomsState.some(s => s.symptom_name === symptomId);
+
+    let newSelectedSymptoms: Pick<PotentialSymptom, 'symptom_name'>[];
+    if (isCurrentlySelected) {
+      newSelectedSymptoms = selectedSymptomsState.filter(s => s.symptom_name !== symptomId);
+    } else {
+      newSelectedSymptoms = [...selectedSymptomsState, { symptom_name: symptom.symptom_name }];
+    }
+    setSelectedSymptomsState(newSelectedSymptoms);
+
+    if (!isCurrentlySelected && !openAccordionItems.includes(symptomId)) {
+      setOpenAccordionItems(prev => [...prev, symptomId]);
+    }
   };
 
   const handleSubmitSymptoms = async (event?: React.FormEvent<HTMLFormElement>) => {
@@ -85,41 +99,77 @@ const SymptomsStep: React.FC = () => {
   }
 
   return (
-    <form id="current-step-form" onSubmit={handleSubmitSymptoms} className="space-y-6 overflow-hidden">
-      <p className="text-muted-foreground">
-        Selecione os sintomas que você está experienciando.
+    <form id="current-step-form" onSubmit={handleSubmitSymptoms} className="space-y-3">
+      <p className="text-muted-foreground text-sm">
+        Selecione os sintomas que você está experienciando. Clique no título para ver mais detalhes.
       </p>
-      <div className="space-y-4">
+      <Accordion 
+        type="multiple" 
+        value={openAccordionItems} 
+        onValueChange={setOpenAccordionItems} 
+        className="w-full space-y-2"
+      >
         {formData.potentialSymptomsResult.map((symptom) => {
-          const symptomId = symptom.id || symptom.symptom_name;
-          const isChecked = selectedSymptomsState.some(s => s.symptom_name === symptom.symptom_name);
+          const symptomId = symptom.symptom_name; // Using symptom_name as unique ID
+          const isChecked = selectedSymptomsState.some(s => s.symptom_name === symptomId);
           return (
-            <div key={symptomId} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-              <div className="flex items-start space-x-3">
-                <Checkbox
-                  id={`symptom-${symptomId}`}
-                  checked={isChecked}
-                  onCheckedChange={() => handleToggleSymptom(symptom)}
-                  className="mt-1"
-                />
-                <div className="grid gap-1.5 leading-none">
+            <AccordionItem 
+              value={symptomId} 
+              key={symptomId} 
+              className={cn(
+                "border rounded-lg overflow-hidden shadow-sm transition-all",
+                isChecked ? "border-primary bg-primary/5" : "bg-card",
+                openAccordionItems.includes(symptomId) && !isChecked ? "bg-muted/20" : ""
+              )}
+            >
+              <AccordionTrigger 
+                className={cn(
+                  "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card transition-colors",
+                  openAccordionItems.includes(symptomId) ? "hover:bg-muted/30" : "hover:bg-muted/20",
+                  isChecked && openAccordionItems.includes(symptomId) ? "bg-primary/10 hover:bg-primary/15" : "",
+                  isChecked && !openAccordionItems.includes(symptomId) ? "hover:bg-primary/10" : ""
+                )}
+              >
+                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                  <Checkbox
+                    id={`symptom-checkbox-${symptomId}`}
+                    checked={isChecked}
+                    onCheckedChange={() => handleToggleSymptomSelection(symptom)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="shrink-0 border-muted-foreground data-[state=checked]:border-primary"
+                    aria-labelledby={`symptom-label-${symptomId}`}
+                  />
                   <Label
-                    htmlFor={`symptom-${symptomId}`}
-                    className="text-base font-medium cursor-pointer"
+                    htmlFor={`symptom-checkbox-${symptomId}`}
+                    id={`symptom-label-${symptomId}`}
+                    className="font-medium text-base cursor-pointer flex-1 truncate"
+                     onClick={(e) => {
+                        e.stopPropagation();
+                        const checkbox = document.getElementById(`symptom-checkbox-${symptomId}`) as HTMLButtonElement | null;
+                        if(checkbox) {
+                            checkbox.click(); // Toggles checkbox
+                            // If selecting and accordion is closed, open it.
+                            if (!isChecked && !openAccordionItems.includes(symptomId)) {
+                                setOpenAccordionItems(prev => [...prev, symptomId]);
+                            }
+                        }
+                    }}
                   >
                     {symptom.symptom_name}
                   </Label>
-                  <p className="text-sm text-muted-foreground">{symptom.symptom_suggestion}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{symptom.explanation}</p>
                 </div>
-              </div>
-            </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4 pt-1 space-y-1">
+                <p className="text-sm text-muted-foreground">{symptom.symptom_suggestion}</p>
+                <p className="text-xs text-muted-foreground/80">{symptom.explanation}</p>
+              </AccordionContent>
+            </AccordionItem>
           );
         })}
-      </div>
-      {/* The actual submit button is in RecipeStepLayout. This form will be submitted by it. */}
+      </Accordion>
     </form>
   );
 };
 
 export default SymptomsStep;
+
