@@ -15,15 +15,15 @@ This document outlines the tasks for implementing the sidebar, user account menu
     - [x] Subtask: Desktop: Clicking the toggle icon (`PanelLeft` when collapsed, `PanelLeftClose` when pinned) pins/unpins and expands/collapses the sidebar. Manual pinning action.
     - [x] Subtask: Desktop: Hovering over the unpinned collapsed sidebar slightly darkens its background but does NOT open or close it.
     - [x] Subtask: Mobile: Clicking the header toggle icon (`PanelLeft` in `MobileHeader`) opens the sidebar as an overlay.
-    - [x] Subtask: Mobile: Clicking the close icon (`X`) within the open mobile sidebar closes it.
+    - [x] Subtask: Mobile: Clicking the close icon (`PanelLeftClose`) within the open mobile sidebar closes it.
     - [x] Subtask: Mobile: Clicking the overlay behind an open mobile sidebar closes it.
 
 - [x] **Task: Styling and Iconography for Sidebar**
     - [x] Subtask: Use Lucide React Icons for all sidebar-related icons.
-        - [x] `PanelLeft` for opening/toggling unpinned desktop sidebar and mobile sidebar.
-        - [x] `PanelLeftClose` for closing/toggling pinned desktop sidebar.
-        - [x] `X` for closing mobile sidebar from within.
-    - [x] Subtask: Ensure icon size for navigation items and app logo (ChefHat) within the sidebar is 16x16 (`h-4 w-4`). Profile image in sidebar bottom is 32x32 (`h-8 w-8`). Header toggle icons (`PanelLeft`, `PanelLeftClose`, `X`) are `h-5 w-5`.
+        - [x] `PanelLeft` for opening/toggling unpinned desktop sidebar and mobile sidebar (when accessed from `MobileHeader`).
+        - [x] `PanelLeftClose` for closing/toggling pinned desktop sidebar AND for closing mobile sidebar from within (when sidebar is open).
+        - [ ] `X` for closing mobile sidebar from within. (Superseded by `PanelLeftClose`)
+    - [x] Subtask: Ensure icon size for navigation items and app logo (ChefHat) within the sidebar is 16x16 (`h-4 w-4`). Profile image in sidebar bottom is 32x32 (`h-8 w-8`). Header toggle icons (`PanelLeft`, `PanelLeftClose`) are `h-5 w-5`.
     - [x] Subtask: Ensure clickable area for each navigation icon (when sidebar is collapsed) is 32px (width) x 36px (height). Achieved via padding making overall item `w-8 h-9`. Profile avatar area when collapsed is full sidebar width (48px) and `h-[60px]` with avatar centered.
 
 - [x] **Task: Sidebar Content Display Rules**
@@ -34,7 +34,7 @@ This document outlines the tasks for implementing the sidebar, user account menu
 - [x] **Task: Sidebar Toggle/Close Icon Positioning in Header**
     - [x] Subtask: Desktop (Pinned/Expanded or User Menu Open): The `PanelLeftClose` or `PanelLeft` toggle icon is positioned to the left of (or as the first element before) the logo/title area in the sidebar header, aligned with other collapsed icons.
     - [x] Subtask: Desktop (Unpinned/Collapsed): The `PanelLeft` icon is the primary toggle, aligned to the start of the header area (centered within the 48px width if no other elements).
-    - [x] Subtask: Mobile (Open): `X` icon positioned to the right of the logo/title area in the sidebar header.
+    - [x] Subtask: Mobile (Open): `PanelLeftClose` icon positioned to the left of the logo/title area in the sidebar header, consistent with desktop expanded behavior.
 
 ## 2. User Account Menu
 
@@ -102,4 +102,3 @@ This document outlines the tasks for implementing the sidebar, user account menu
     - [x] Ensure smooth transitions for sidebar expand/collapse and User Account Menu display.
     - [x] Test responsiveness across desktop and mobile breakpoints.
     - [x] Ensure consistent styling (hover, focus, active states) for all clickable elements in the sidebar and user account menu.
-

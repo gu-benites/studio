@@ -8,7 +8,7 @@ import {
   ChefHat,
   // Settings, // No longer in main nav
   // List,     // No longer in main nav
-  X, 
+  // X, // No longer needed as PanelLeftClose will be used for mobile close
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -142,12 +142,12 @@ const AppSidebar: React.FC = () => {
           {/* Sidebar Header */}
           <div className={cn(
             "flex items-center border-b border-[hsl(var(--app-sidebar-border))] h-[60px] shrink-0",
-            // Case 1: Mobile and Open
-            isMobileExpanded ? "justify-between px-3" : 
+            // Case 1: Mobile and Open - Use same layout as Desktop Expanded
+            isMobileExpanded ? "items-center px-3 gap-3" : 
             // Case 2: Desktop and Expanded (isSidebarPinned or isUserAccountMenuExpanded)
             (!isClientMobile && isEffectivelyExpanded) ? "items-center px-3 gap-3" : 
             // Case 3: Desktop and Collapsed
-            (!isClientMobile && !isEffectivelyExpanded) ? "justify-center px-[6px]" : // Centers the w-9 (36px) button in 48px
+            (!isClientMobile && !isEffectivelyExpanded) ? "justify-center px-[6px]" : 
             "" // Fallback
           )}>
 
@@ -156,10 +156,10 @@ const AppSidebar: React.FC = () => {
               <>
                 <Button
                     variant="ghost"
-                    size="icon" // Uses h-10 w-10 from variant, override with className
+                    size="icon" 
                     onClick={toggleDesktopSidebarPin}
                     className={cn(
-                        "h-9 w-9 shrink-0", // Explicitly h-9 w-9
+                        "h-9 w-9 shrink-0", 
                         "hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))]",
                         "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--app-sidebar-background))]"
                     )}
@@ -167,7 +167,7 @@ const AppSidebar: React.FC = () => {
                 >
                     {isSidebarPinned ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeft className="h-5 w-5" />}
                 </Button>
-                {isEffectivelyExpanded && ( /* This is true if isSidebarPinned or isUserAccountMenuExpanded (on desktop) */
+                {isEffectivelyExpanded && ( 
                   <Link 
                     href="/" 
                     className="flex items-center gap-2 text-lg font-semibold text-primary overflow-hidden"
@@ -179,9 +179,18 @@ const AppSidebar: React.FC = () => {
               </>
             )}
 
-            {/* MOBILE: Logo is to the left, Close (X) icon is to the right. (Only when sidebar is open) */}
+            {/* MOBILE (when sidebar is open): Close icon is to the left, Logo is to the right. */}
             {isMobileExpanded && (
               <>
+                <Button
+                    variant="ghost"
+                    size="icon" 
+                    onClick={toggleMobileSidebar} 
+                    className="h-9 w-9 hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--app-sidebar-background))]"
+                    aria-label="Close sidebar"
+                >
+                    <PanelLeftClose className="h-5 w-5" />
+                </Button>
                 <Link 
                   href="/" 
                   className="flex items-center gap-2 text-lg font-semibold text-primary overflow-hidden"
@@ -190,15 +199,6 @@ const AppSidebar: React.FC = () => {
                   <ChefHat className="h-4 w-4 shrink-0" /> 
                   <span className="truncate">RecipeSage</span>
                 </Link>
-                <Button
-                    variant="ghost"
-                    size="icon" // uses h-10 w-10, override with className
-                    onClick={toggleMobileSidebar} 
-                    className="h-9 w-9 hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--app-sidebar-background))]"
-                    aria-label="Close sidebar"
-                >
-                    <X className="h-5 w-5" />
-                </Button>
               </>
             )}
           </div>
@@ -263,7 +263,8 @@ const AppSidebar: React.FC = () => {
                 ? 'bg-[hsl(var(--app-sidebar-active-background))] text-[hsl(var(--app-sidebar-active-foreground))]'
                 : 'hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))]'
             )}
-            aria-label="User account menu"
+            // Tooltip for avatar is intentionally removed based on previous feedback.
+            // title="User account" 
           >
             <Image
               src="https://picsum.photos/seed/useravatar/64/64" 
