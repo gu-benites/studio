@@ -9,14 +9,13 @@ import { cn } from '@/lib/utils';
 
 export function AppLayoutClient({ children }: { children: ReactNode }) {
   const { 
-    isSidebarOpen: contextSidebarOpen, // Renamed from isSidebarOpen
+    isSidebarOpen: contextSidebarOpen,
     activeUserMenuSubItem, 
     setActiveUserMenuSubItem, 
     isUserAccountMenuExpanded, 
     closeUserAccountMenuSimple 
   } = useUIState();
 
-  // Use contextSidebarOpen for the check
   React.useEffect(() => {
     if (!contextSidebarOpen) {
       if (activeUserMenuSubItem) {
@@ -28,35 +27,39 @@ export function AppLayoutClient({ children }: { children: ReactNode }) {
     }
   }, [contextSidebarOpen, activeUserMenuSubItem, setActiveUserMenuSubItem, isUserAccountMenuExpanded, closeUserAccountMenuSimple]);
 
-  const [isMobile, setIsMobile] = React.useState(false);
+  const [isClientMobile, setIsClientMobile] = React.useState(false);
   const [hasMounted, setHasMounted] = React.useState(false);
 
   React.useEffect(() => {
     setHasMounted(true);
-    const checkMobile = () => setIsMobile(window.innerWidth < 768); 
+    const checkMobile = () => setIsClientMobile(window.innerWidth < 768); 
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Determine sidebar visibility based on mounted state for initial render consistency
-  const sidebarVisibleOnClient = hasMounted ? contextSidebarOpen : false;
-
-
   return (
-    <div className="flex h-screen overflow-hidden bg-background"> {/* Consistent layout */}
+    // Main flex container: h-full to take parent's height (body min-h-screen).
+    // Added overflow-hidden to ensure this container itself does not scroll.
+    <div className="flex h-full bg-background overflow-hidden"> 
       <AppSidebar /> 
-      {/* Main content wrapper: flex-1 to take remaining space, scrollable */}
+      
+      {/* Main content wrapper: 
+          - flex-1 to take remaining space.
+          - flex-col for stacking MobileHeader and main.
+          - overflow-y-auto to allow its own content to scroll.
+          - min-h-0 is important for flex children with overflow to ensure they don't expand their parent indefinitely.
+      */}
       <div className={cn(
-        "flex flex-col flex-1 overflow-x-hidden overflow-y-auto transition-all duration-300 ease-in-out",
-        // Apply margin-left adjustment only on desktop and when sidebar is not mobile overlay
-        // No dynamic margin needed if AppSidebar is part of flex layout and resizes itself
+        "flex flex-col flex-1 overflow-y-auto min-h-0",
       )}> 
-        {hasMounted && isMobile && <MobileHeader />}
-        <main className="flex-1 p-4 sm:p-6 md:p-8"> {/* Added padding to main */}
+        {hasMounted && isClientMobile && <MobileHeader />}
+        {/* Main content area itself: flex-1 to fill the scrollable wrapper. */}
+        <main className="flex-1 p-4 sm:p-6 md:p-8">
           {children}
         </main>
       </div>
     </div>
   );
 }
+
