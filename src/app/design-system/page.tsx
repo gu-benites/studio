@@ -32,8 +32,8 @@ const DesignSystemPage: React.FC = () => {
 
   return (
     <div 
-      className="container mx-auto py-10 px-4 bg-gray-100" 
-      style={{ fontFamily: "var(--font-poppins)", color: aromaColors.text }}
+      className="container mx-auto py-10 px-4 bg-gray-100 font-poppins" 
+      style={{ color: aromaColors.text }}
     >
       <h1 className="text-3xl md:text-4xl font-bold mb-2" style={{ color: aromaColors.text }}>AromaChat Design System</h1>
       <p className="mb-10" style={{ color: aromaColors.textMuted }}>Showcasing styles for Material UI React components based on PRD guidelines (v2).</p>
@@ -303,4 +303,3 @@ const DesignSystemPage: React.FC = () => {
 };
 
 export default DesignSystemPage;
-

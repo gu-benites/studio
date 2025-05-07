@@ -12,6 +12,7 @@ export default {
   	extend: {
       fontFamily: { // Add this to correctly use the CSS variable for Inter
         sans: ["var(--font-geist-sans)", ...defaultFontFamily.sans],
+        poppins: ["var(--font-poppins)", ...defaultFontFamily.sans], // Added Poppins
       },
   		colors: {
   			background: 'hsl(var(--background))',
