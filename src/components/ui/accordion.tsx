@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -14,7 +15,7 @@ const AccordionItem = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AccordionPrimitive.Item
     ref={ref}
-    className={cn("border-b last:border-b-0", className)} // Keep border-b but ensure last item doesn't have it if parent has border
+    className={cn("border-b last:border-b-0", className)} 
     {...props}
   />
 ))
@@ -24,18 +25,27 @@ const AccordionTrigger = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
 >(({ className, children, ...props }, ref) => (
-  <AccordionPrimitive.Header className="flex">
+  <AccordionPrimitive.Header className="flex"> {/* Default is <h3> */}
     <AccordionPrimitive.Trigger
       ref={ref}
-      className={cn(
-        "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background", // Ensure consistent focus
-        className
+      asChild // Render as its child, which will be a div
+      className={cn( // These classes will be applied to the child <div>
+        // Base styles for the trigger area (now a div)
+        "flex flex-1 items-center justify-between py-4 font-medium transition-all",
+        // Specific interaction styles
+        "hover:no-underline", // Remove underline from the div itself, children can have their own
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+        // Chevron rotation, targeting a class on the chevron
+        "[&[data-state=open]>svg.accordion-chevron]:rotate-180",
+        className // Allow overriding classes from usage
       )}
       {...props}
     >
-      {children}
-      <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 text-muted-foreground group-hover:text-accent-foreground" />
+      {/* Explicit child div that is not a button. This div receives the classes from AccordionPrimitive.Trigger via asChild */}
+      <div className="flex flex-1 items-center justify-between w-full"> 
+        <div className="flex-1">{children}</div> {/* Content passed to AccordionTrigger (e.g., checkbox, label) */}
+        <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 text-muted-foreground group-hover:text-accent-foreground accordion-chevron" />
+      </div>
     </AccordionPrimitive.Trigger>
   </AccordionPrimitive.Header>
 ))
