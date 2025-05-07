@@ -1,4 +1,3 @@
-
 // src/app/design-system/page.tsx
 "use client";
 
@@ -32,7 +31,10 @@ const DesignSystemPage: React.FC = () => {
   ];
 
   return (
-    <div className="container mx-auto py-10 px-4 bg-gray-100 font-['Poppins', sans-serif]" style={{ color: aromaColors.text }}>
+    <div 
+      className="container mx-auto py-10 px-4 bg-gray-100" 
+      style={{ fontFamily: "var(--font-poppins), sans-serif", color: aromaColors.text }}
+    >
       <h1 className="text-3xl md:text-4xl font-bold mb-2" style={{ color: aromaColors.text }}>AromaChat Design System</h1>
       <p className="mb-10" style={{ color: aromaColors.textMuted }}>Showcasing styles for Material UI React components based on PRD guidelines (v2).</p>
 
@@ -224,7 +226,6 @@ const DesignSystemPage: React.FC = () => {
                 className="border border-gray-300 p-px rounded-[1.75rem] group-hover:border-transparent group-focus-within:border-transparent transition-all duration-200"
                 style={{
                   backgroundImage: 'var(--input-gradient, none)',
-                  // '--input-gradient': `linear-gradient(to right, ${aromaColors.gradStart}, ${aromaColors.gradEnd})` // This will be controlled by JS
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundImage = `linear-gradient(to right, ${aromaColors.gradStart}, ${aromaColors.gradEnd})`}
                 onMouseLeave={(e) => {if (!e.currentTarget.querySelector('input:focus')) e.currentTarget.style.backgroundImage = 'none'}}
@@ -302,4 +303,3 @@ const DesignSystemPage: React.FC = () => {
 };
 
 export default DesignSystemPage;
-
