@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { ReactNode } from 'react';
@@ -6,26 +5,29 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
 import { useRecipeForm } from '@/contexts/RecipeFormContext';
+import { Progress } from '@/components/ui/progress'; // ShadCN progress component
+import { cn } from '@/lib/utils';
 
 interface RecipeStepLayoutProps {
   stepTitle: string;
   children: ReactNode;
-  formId?: string; // ID of the form in the child component
+  formId?: string; 
   onNext?: () => Promise<void> | void; 
   nextButtonText?: string;
-  // nextRoute is removed, navigation is handled by onNext or form submission
   onPrevious?: () => void;
   previousRoute?: string;
   isNextDisabled?: boolean;
-  // isNextLoading is replaced by global isLoading from context
   hideNextButton?: boolean;
   hidePreviousButton?: boolean;
 }
 
+const FLOW_STEPS = ['demographics', 'causes', 'symptoms', 'properties'];
+
+
 const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   stepTitle,
   children,
-  formId = "current-step-form", // Default form ID
+  formId = "current-step-form",
   onNext,
   nextButtonText = "Próximo",
   onPrevious,
@@ -35,13 +37,12 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   hidePreviousButton = false,
 }) => {
   const router = useRouter();
-  const { isLoading: globalIsLoading, error } = useRecipeForm(); 
+  const { isLoading: globalIsLoading, error, currentStep } = useRecipeForm(); 
 
   const handleNextClick = async () => {
     if (onNext) {
       await onNext();
     }
-    // If onNext is not provided, the button's type="submit" will handle it.
   };
 
   const handlePrevious = () => {
@@ -54,8 +55,30 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
     }
   };
 
+  const currentStepIndex = currentStep ? FLOW_STEPS.indexOf(currentStep) : -1;
+  const progressPercentage = currentStepIndex >= 0 ? ((currentStepIndex + 1) / FLOW_STEPS.length) * 100 : 0;
+
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8 max-w-3xl">
+      <div className="mb-6">
+        <div className="bg-muted rounded-full h-2.5 w-full overflow-hidden">
+          <div 
+            className="h-full rounded-full bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end transition-all duration-500 ease-out" 
+            style={{ width: `${progressPercentage}%` }}
+            role="progressbar"
+            aria-valuenow={progressPercentage}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          ></div>
+        </div>
+        {currentStepIndex >= 0 && (
+          <div className="flex justify-between text-xs text-muted-foreground mt-2 px-1">
+            <span>Passo {currentStepIndex + 1} de {FLOW_STEPS.length}</span>
+            <span>{Math.round(progressPercentage)}% Completo</span>
+          </div>
+        )}
+      </div>
+      
       <h1 className="text-3xl font-bold mb-2 text-center text-primary">{stepTitle}</h1>
       <p className="text-muted-foreground text-center mb-8">
         Preencha as informações abaixo para continuar.
