@@ -10,13 +10,14 @@ import { useRecipeForm } from '@/contexts/RecipeFormContext';
 interface RecipeStepLayoutProps {
   stepTitle: string;
   children: ReactNode;
-  onNext?: () => Promise<void> | void; // Optional: if next action is complex (e.g. API call)
+  formId?: string; // ID of the form in the child component
+  onNext?: () => Promise<void> | void; 
   nextButtonText?: string;
-  nextRoute?: string; // Optional: if simple navigation
+  // nextRoute is removed, navigation is handled by onNext or form submission
   onPrevious?: () => void;
   previousRoute?: string;
   isNextDisabled?: boolean;
-  isNextLoading?: boolean; // Added for loading state on Next button
+  // isNextLoading is replaced by global isLoading from context
   hideNextButton?: boolean;
   hidePreviousButton?: boolean;
 }
@@ -24,25 +25,23 @@ interface RecipeStepLayoutProps {
 const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   stepTitle,
   children,
+  formId = "current-step-form", // Default form ID
   onNext,
   nextButtonText = "Próximo",
-  nextRoute,
   onPrevious,
   previousRoute,
   isNextDisabled = false,
-  isNextLoading = false,
   hideNextButton = false,
   hidePreviousButton = false,
 }) => {
   const router = useRouter();
-  const { isLoading: isFormLoading, error } = useRecipeForm(); // Get global loading state
+  const { isLoading: globalIsLoading, error } = useRecipeForm(); 
 
-  const handleNext = async () => {
+  const handleNextClick = async () => {
     if (onNext) {
       await onNext();
-    } else if (nextRoute) {
-      router.push(nextRoute);
     }
+    // If onNext is not provided, the button's type="submit" will handle it.
   };
 
   const handlePrevious = () => {
@@ -51,11 +50,9 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
     } else if (previousRoute) {
       router.push(previousRoute);
     } else {
-      router.back(); // Default previous action
+      router.back(); 
     }
   };
-
-  const effectiveIsLoading = isFormLoading || isNextLoading;
 
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8 max-w-3xl">
@@ -77,15 +74,20 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
 
       <div className="mt-8 flex justify-between items-center">
         {!hidePreviousButton ? (
-          <Button variant="outline" onClick={handlePrevious} disabled={effectiveIsLoading}>
+          <Button variant="outline" onClick={handlePrevious} disabled={globalIsLoading}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Anterior
           </Button>
         ) : <div />}
         
         {!hideNextButton ? (
-          <Button onClick={handleNext} disabled={isNextDisabled || effectiveIsLoading}>
-            {effectiveIsLoading ? (
+          <Button 
+            type={onNext ? "button" : "submit"}
+            form={onNext ? undefined : formId}
+            onClick={onNext ? handleNextClick : undefined}
+            disabled={isNextDisabled || globalIsLoading}
+          >
+            {globalIsLoading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <ArrowRight className="mr-2 h-4 w-4" />

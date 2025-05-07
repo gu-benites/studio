@@ -1,34 +1,36 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRecipeForm } from '@/contexts/RecipeFormContext';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button'; // For layout
 import { getPotentialSymptoms } from '@/services/aromarx-api-client';
 import type { RecipeFormData } from '@/contexts/RecipeFormContext';
 
-// Define PotentialCause directly if not imported or to ensure shape
 interface PotentialCause {
   cause_name: string;
   cause_suggestion: string;
   explanation: string;
-  id?: string; // Using cause_name as ID if id is not present
+  id?: string; 
 }
 
 const CausesStep: React.FC = () => {
   const router = useRouter();
-  const { formData, updateFormData, setCurrentStep, setIsLoading, setError } = useRecipeForm();
+  const { formData, updateFormData, setCurrentStep, setIsLoading, setError, updateFormValidity } = useRecipeForm();
   const [selectedCausesState, setSelectedCausesState] = useState<PotentialCause[]>(formData.selectedCauses || []);
 
   useEffect(() => {
-    // Initialize selectedCausesState from formData if it exists
     if (formData.selectedCauses) {
       setSelectedCausesState(formData.selectedCauses);
     }
   }, [formData.selectedCauses]);
+
+  useEffect(() => {
+    // Update form validity in context based on whether at least one cause is selected
+    updateFormValidity(selectedCausesState.length > 0);
+  }, [selectedCausesState, updateFormValidity]);
 
   const handleToggleCause = (cause: PotentialCause) => {
     setSelectedCausesState((prevSelected) => {
@@ -42,7 +44,14 @@ const CausesStep: React.FC = () => {
     });
   };
 
-  const handleSubmit = async () => {
+  const handleSubmitCauses = async (event?: React.FormEvent<HTMLFormElement>) => {
+    if (event) event.preventDefault(); // Prevent default if called by form submission
+    
+    if (selectedCausesState.length === 0) {
+        setError("Por favor, selecione ao menos uma causa.");
+        return;
+    }
+    
     updateFormData({ selectedCauses: selectedCausesState });
     
     setIsLoading(true);
@@ -74,15 +83,8 @@ const CausesStep: React.FC = () => {
     return <p>Carregando causas... Se demorar, volte e tente novamente.</p>;
   }
   
-  // This component will be wrapped by RecipeStepLayout, which provides nav buttons.
-  // The 'Next' button in RecipeStepLayout needs to trigger `handleSubmit`.
-  // We can achieve this by making this component's content a form and having layout's button submit it.
-  // Or, more flexibly, pass handleSubmit to the layout's onNext prop.
-  // For simplicity, we'll assume RecipeStepLayout's onNext can be configured to call this.
-  // The RecipeStepLayout needs to be modified to accept an onNext prop.
-
   return (
-    <div className="space-y-6">
+    <form id="current-step-form" onSubmit={handleSubmitCauses} className="space-y-6">
       <p className="text-muted-foreground">
         Selecione as causas que você acredita estarem relacionadas ao seu problema de saúde.
       </p>
@@ -114,11 +116,8 @@ const CausesStep: React.FC = () => {
           );
         })}
       </div>
-      {/* This button is illustrative; RecipeStepLayout's onNext will call handleSubmit */}
-       <button onClick={handleSubmit} className="hidden" aria-hidden="true">
-        Internal Submit Trigger
-      </button>
-    </div>
+      {/* The actual submit button is in RecipeStepLayout. This form will be submitted by it. */}
+    </form>
   );
 };
 

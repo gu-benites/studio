@@ -1,6 +1,7 @@
+
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm, Controller, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,11 +18,11 @@ const ageCategories = [
   { value: "child", label: "Criança (3-9 anos)", min: 3, max: 9, unit: "anos" },
   { value: "teen", label: "Adolescente (10-17 anos)", min: 10, max: 17, unit: "anos" },
   { value: "adult", label: "Adulto (18-64 anos)", min: 18, max: 64, unit: "anos" },
-  { value: "senior", label: "Idoso (65+ anos)", min: 65, max: 120, unit: "anos" }, // Assuming 120 as a practical upper limit
+  { value: "senior", label: "Idoso (65+ anos)", min: 65, max: 120, unit: "anos" },
 ];
 
 const demographicsSchema = z.object({
-  gender: z.string().min(1, "Gênero é obrigatório."),
+  gender: z.enum(["male", "female"], { required_error: "Gênero é obrigatório." }),
   ageCategory: z.string().min(1, "Categoria de idade é obrigatória."),
   ageSpecific: z.string().min(1, "Idade específica é obrigatória."),
 }).superRefine((data, ctx) => {
@@ -37,8 +38,6 @@ const demographicsSchema = z.object({
 
   const categoryInfo = ageCategories.find(cat => cat.value === data.ageCategory);
   if (!categoryInfo) {
-    // This case should ideally not be reached if ageCategory is correctly selected from the dropdown.
-    // If it occurs, it might indicate an issue with ageCategory value itself.
     ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Categoria de idade inválida selecionada.",
@@ -60,17 +59,21 @@ type DemographicsFormData = z.infer<typeof demographicsSchema>;
 
 const DemographicsStep: React.FC = () => {
   const router = useRouter();
-  const { formData, updateFormData, setCurrentStep, setIsLoading, setError } = useRecipeForm();
+  const { formData, updateFormData, setCurrentStep, setIsLoading, setError, updateFormValidity } = useRecipeForm();
 
   const { control, handleSubmit, formState: { errors, isValid, isSubmitting }, watch } = useForm<DemographicsFormData>({
     resolver: zodResolver(demographicsSchema),
     defaultValues: {
-      gender: formData.gender || '',
+      gender: formData.gender as "male" | "female" || undefined,
       ageCategory: formData.ageCategory || '',
       ageSpecific: formData.ageSpecific || '',
     },
     mode: 'onChange', 
   });
+
+  useEffect(() => {
+    updateFormValidity(isValid);
+  }, [isValid, updateFormValidity]);
 
   const watchedAgeCategory = watch("ageCategory");
   const currentCategoryInfo = ageCategories.find(cat => cat.value === watchedAgeCategory);
@@ -78,23 +81,18 @@ const DemographicsStep: React.FC = () => {
   const ageSpecificPlaceholder = currentCategoryInfo ? `Ex: ${Math.floor((currentCategoryInfo.min + currentCategoryInfo.max) / 2)}` : "Ex: 30";
 
 
-  const onSubmit: SubmitHandler<DemographicsFormData> = async (data) => {
+  const onSubmitDemographics: SubmitHandler<DemographicsFormData> = async (data) => {
     let apiAgeCategoryValue = data.ageCategory;
     let apiAgeSpecificValue = data.ageSpecific;
 
     if (data.ageCategory === 'baby') {
-      apiAgeCategoryValue = 'child'; // Map 'baby' to 'child' for the API
+      apiAgeCategoryValue = 'child'; 
       const months = parseInt(data.ageSpecific, 10);
-      if (months < 12) {
-        apiAgeSpecificValue = '0';
-      } else if (months < 24) {
-        apiAgeSpecificValue = '1';
-      } else {
-        apiAgeSpecificValue = '2';
-      }
+      if (months < 12) apiAgeSpecificValue = '0';
+      else if (months < 24) apiAgeSpecificValue = '1';
+      else apiAgeSpecificValue = '2';
     }
     
-    // Store user's actual input in context/session storage
     updateFormData({
       gender: data.gender,
       ageCategory: data.ageCategory,
@@ -110,8 +108,8 @@ const DemographicsStep: React.FC = () => {
       const apiPayload = {
         healthConcern: formData.healthConcern,
         gender: data.gender,
-        ageCategory: apiAgeCategoryValue, // Use mapped category for API
-        ageSpecific: apiAgeSpecificValue,   // Use mapped age for API
+        ageCategory: apiAgeCategoryValue,
+        ageSpecific: apiAgeSpecificValue,
       };
       const potentialCauses = await getPotentialCauses(apiPayload);
       updateFormData({ potentialCausesResult: potentialCauses });
@@ -126,7 +124,8 @@ const DemographicsStep: React.FC = () => {
   };
   
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    // The form ID matches the default in RecipeStepLayout, or can be passed as a prop
+    <form id="current-step-form" onSubmit={handleSubmit(onSubmitDemographics)} className="space-y-6">
       <div>
         <Label htmlFor="gender">Gênero</Label>
         <Controller
@@ -178,9 +177,7 @@ const DemographicsStep: React.FC = () => {
         {errors.ageSpecific && <p className="text-sm text-destructive mt-1">{errors.ageSpecific.message}</p>}
       </div>
       
-       <button type="submit" disabled={!isValid || isSubmitting} className="hidden" aria-hidden="true">
-        Internal Submit
-      </button>
+       {/* The actual submit button is in RecipeStepLayout. This form will be submitted by it. */}
     </form>
   );
 };

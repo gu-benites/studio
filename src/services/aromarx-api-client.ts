@@ -1,24 +1,63 @@
 
 import type { RecipeFormData } from '@/contexts/RecipeFormContext';
 
-const BASE_URL = process.env.AROMARX_BASE_URL;
-const API_KEY = process.env.AROMARX_API_KEY;
+// Use NEXT_PUBLIC_ prefixed environment variables for client-side access
+const BASE_URL = process.env.NEXT_PUBLIC_AROMARX_BASE_URL;
+const API_KEY = process.env.NEXT_PUBLIC_AROMARX_API_KEY;
 
-interface ApiRequestPayload {
-  health_concern?: string | null;
-  gender?: string | null;
-  age_category?: string | null;
-  age_specific?: string | null;
-  selected_causes?: RecipeFormData['selectedCauses'];
-  selected_symptoms?: RecipeFormData['selectedSymptoms'];
-  therapeutic_properties?: RecipeFormData['selectedTherapeuticProperties']; // For SuggestedOils step
-  step: "PotentialCauses" | "PotentialSymptoms" | "MedicalProperties" | "SuggestedOils"; // Add more steps as needed
-  user_language: string; // e.g., "PT_BR"
+// Explicitly type the parts of the payload that vary by step
+interface PotentialCausesPayload {
+  health_concern: string;
+  gender: string;
+  age_category: string;
+  age_specific: string;
+  step: "PotentialCauses";
+  user_language: string;
 }
+
+interface PotentialSymptomsPayload {
+  health_concern: string;
+  gender: string;
+  age_category: string;
+  age_specific: string;
+  selected_causes: NonNullable<RecipeFormData['selectedCauses']>; // Ensure it's the full PotentialCause object
+  step: "PotentialSymptoms";
+  user_language: string;
+}
+
+interface MedicalPropertiesPayload {
+  health_concern: string;
+  gender: string;
+  age_category: string;
+  age_specific: string;
+  selected_causes: NonNullable<RecipeFormData['selectedCauses']>;
+  selected_symptoms: NonNullable<RecipeFormData['selectedSymptoms']>; // Array of { symptom_name: string }
+  step: "MedicalProperties";
+  user_language: string;
+}
+
+interface SuggestedOilsPayload {
+  health_concern: string;
+  gender: string;
+  age_category: string;
+  age_specific: string;
+  selected_causes: NonNullable<RecipeFormData['selectedCauses']>;
+  selected_symptoms: NonNullable<RecipeFormData['selectedSymptoms']>;
+  therapeutic_properties: [NonNullable<RecipeFormData['selectedTherapeuticProperties']>[0]]; // API expects an array of one property
+  step: "SuggestedOils";
+  user_language: string;
+}
+
+type ApiRequestPayload = 
+  | PotentialCausesPayload 
+  | PotentialSymptomsPayload 
+  | MedicalPropertiesPayload 
+  | SuggestedOilsPayload;
 
 // Generic fetch function
 async function fetchFromAromaRx<T>(payload: ApiRequestPayload): Promise<T> {
   if (!BASE_URL || !API_KEY) {
+    console.error("API base URL or API key is not configured. Check .env.local and ensure variables are prefixed with NEXT_PUBLIC_");
     throw new Error("API base URL or API key is not configured.");
   }
 
@@ -32,7 +71,6 @@ async function fetchFromAromaRx<T>(payload: ApiRequestPayload): Promise<T> {
   });
 
   if (!response.ok) {
-    // Try to parse error from API if available
     let errorMessage = `API request failed with status ${response.status}`;
     try {
         const errorData = await response.json();
@@ -40,19 +78,16 @@ async function fetchFromAromaRx<T>(payload: ApiRequestPayload): Promise<T> {
     } catch (e) {
         // Could not parse JSON, use default error message
     }
+    console.error("API Error:", errorMessage, "Payload:", payload);
     throw new Error(errorMessage);
   }
 
   const data = await response.json();
-  // The API wraps the actual content in an array, under message.content
-  // For example, PotentialCauses response is `[ { message: { content: { potential_causes: [...] } } } ]`
   if (Array.isArray(data) && data.length > 0 && data[0].message && data[0].message.content) {
     return data[0].message.content as T;
   }
-  // For SuggestedOils, the response structure is slightly different
-  // It's `[ { message: { content: { property_id: ..., suggested_oils: [...] } } } ]`
-  // The above check should still return the content object.
-
+  
+  console.error("Unexpected API response structure:", data, "Payload:", payload);
   throw new Error("Unexpected API response structure");
 }
 
@@ -60,25 +95,30 @@ async function fetchFromAromaRx<T>(payload: ApiRequestPayload): Promise<T> {
 export const getPotentialCauses = async (
   data: Pick<RecipeFormData, 'healthConcern' | 'gender' | 'ageCategory' | 'ageSpecific'>
 ) => {
-  const payload: ApiRequestPayload = {
+  if (!data.healthConcern || !data.gender || !data.ageCategory || !data.ageSpecific) {
+    throw new Error("Missing required data for getPotentialCauses");
+  }
+  const payload: PotentialCausesPayload = {
     health_concern: data.healthConcern,
     gender: data.gender,
     age_category: data.ageCategory,
     age_specific: data.ageSpecific,
     step: "PotentialCauses",
-    user_language: "PT_BR", // Make this configurable if needed
+    user_language: "PT_BR",
   };
-  // Type expected from API for this step's content
-  type PotentialCausesResponse = { potential_causes: RecipeFormData['potentialCausesResult'] };
+  type PotentialCausesResponse = { potential_causes: NonNullable<RecipeFormData['potentialCausesResult']> };
   const result = await fetchFromAromaRx<PotentialCausesResponse>(payload);
-  return result.potential_causes; // Extract the array
+  return result.potential_causes; 
 };
 
 
 export const getPotentialSymptoms = async (
   data: Pick<RecipeFormData, 'healthConcern' | 'gender' | 'ageCategory' | 'ageSpecific' | 'selectedCauses'>
 ) => {
-  const payload: ApiRequestPayload = {
+   if (!data.healthConcern || !data.gender || !data.ageCategory || !data.ageSpecific || !data.selectedCauses) {
+    throw new Error("Missing required data for getPotentialSymptoms");
+  }
+  const payload: PotentialSymptomsPayload = {
     health_concern: data.healthConcern,
     gender: data.gender,
     age_category: data.ageCategory,
@@ -87,7 +127,7 @@ export const getPotentialSymptoms = async (
     step: "PotentialSymptoms",
     user_language: "PT_BR",
   };
-  type PotentialSymptomsResponse = { potential_symptoms: RecipeFormData['potentialSymptomsResult'] };
+  type PotentialSymptomsResponse = { potential_symptoms: NonNullable<RecipeFormData['potentialSymptomsResult']> };
   const result = await fetchFromAromaRx<PotentialSymptomsResponse>(payload);
   return result.potential_symptoms;
 };
@@ -95,38 +135,40 @@ export const getPotentialSymptoms = async (
 export const getMedicalProperties = async (
   data: Pick<RecipeFormData, 'healthConcern' | 'gender' | 'ageCategory' | 'ageSpecific' | 'selectedCauses' | 'selectedSymptoms'>
 ) => {
-  const payload: ApiRequestPayload = {
+  if (!data.healthConcern || !data.gender || !data.ageCategory || !data.ageSpecific || !data.selectedCauses || !data.selectedSymptoms) {
+    throw new Error("Missing required data for getMedicalProperties");
+  }
+  const payload: MedicalPropertiesPayload = {
     health_concern: data.healthConcern,
     gender: data.gender,
     age_category: data.ageCategory,
     age_specific: data.ageSpecific,
     selected_causes: data.selectedCauses,
-    selected_symptoms: data.selectedSymptoms, // API expects array of { symptom_name: "..." }
+    selected_symptoms: data.selectedSymptoms, 
     step: "MedicalProperties",
     user_language: "PT_BR",
   };
-  // The response for MedicalProperties is directly the object we defined in RecipeFormData
   return fetchFromAromaRx<NonNullable<RecipeFormData['medicalPropertiesResult']>>(payload);
 };
 
 export const getSuggestedOils = async (
   data: Pick<RecipeFormData, 'healthConcern' | 'gender' | 'ageCategory' | 'ageSpecific' | 'selectedCauses' | 'selectedSymptoms'>,
-  therapeuticProperty: NonNullable<RecipeFormData['selectedTherapeuticProperties']>[0] // Single property object
+  therapeuticProperty: NonNullable<RecipeFormData['selectedTherapeuticProperties']>[0] 
 ) => {
-  const payload: ApiRequestPayload = {
+   if (!data.healthConcern || !data.gender || !data.ageCategory || !data.ageSpecific || !data.selectedCauses || !data.selectedSymptoms || !therapeuticProperty) {
+    throw new Error("Missing required data for getSuggestedOils");
+  }
+  const payload: SuggestedOilsPayload = {
     health_concern: data.healthConcern,
     gender: data.gender,
     age_category: data.ageCategory,
     age_specific: data.ageSpecific,
     selected_causes: data.selectedCauses,
     selected_symptoms: data.selectedSymptoms,
-    therapeutic_properties: [therapeuticProperty], // API expects an array of one property
+    therapeutic_properties: [therapeuticProperty], 
     step: "SuggestedOils",
     user_language: "PT_BR",
   };
-  // Response is an object with property_id, property_name, etc., and suggested_oils array
   type SuggestedOilsResponse = NonNullable<RecipeFormData['suggestedOilsByProperty']>[string];
   return fetchFromAromaRx<SuggestedOilsResponse>(payload);
 };
-
-// Add other API call functions (e.g., CreateRecipe) as needed

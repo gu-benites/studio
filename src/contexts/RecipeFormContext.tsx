@@ -10,7 +10,6 @@ interface PotentialCause {
   cause_name: string;
   cause_suggestion: string;
   explanation: string;
-  // Add id if necessary for selection, or use cause_name as key
   id?: string; 
 }
 
@@ -40,9 +39,9 @@ interface SuggestedOil {
 
 interface SuggestedOilsForProperty {
   property_id: string;
-  property_name: string; // from API response
-  property_name_in_english: string; // from API response
-  description: string; // from API response
+  property_name: string; 
+  property_name_in_english: string; 
+  description: string; 
   suggested_oils: SuggestedOil[];
 }
 
@@ -51,26 +50,24 @@ export interface RecipeFormData {
   healthConcern: string | null;
   gender: string | null;
   ageCategory: string | null;
-  ageSpecific: string | null; // Stored as string, validated as number
+  ageSpecific: string | null; 
   
   potentialCausesResult: PotentialCause[] | null;
   selectedCauses: PotentialCause[] | null;
   
   potentialSymptomsResult: PotentialSymptom[] | null;
-  selectedSymptoms: Pick<PotentialSymptom, 'symptom_name'>[] | null; // API expects only symptom_name for MedicalProperties step
+  selectedSymptoms: Pick<PotentialSymptom, 'symptom_name'>[] | null; 
   
   medicalPropertiesResult: {
     health_concern_in_english: string;
     therapeutic_properties: TherapeuticProperty[];
   } | null;
-  // For SuggestedOils, we need to store oils for each therapeutic property selected.
-  // The API is called iteratively for each property.
-  selectedTherapeuticProperties: TherapeuticProperty[] | null; // Properties for which oils will be fetched/displayed
+  selectedTherapeuticProperties: TherapeuticProperty[] | null; 
   
-  suggestedOilsByProperty: Record<string, SuggestedOilsForProperty> | null; // property_id -> SuggestedOilsForProperty
+  suggestedOilsByProperty: Record<string, SuggestedOilsForProperty> | null; 
   
-  // Final selections for recipe creation (if user can select specific oils)
   finalSelectedOils: SuggestedOil[] | null; 
+  isLoading: boolean; // Moved isLoading here to be part of formData for persistence if needed
 }
 
 interface RecipeFormContextType {
@@ -79,10 +76,12 @@ interface RecipeFormContextType {
   resetFormData: () => void;
   currentStep: string | null;
   setCurrentStep: (step: string | null) => void;
-  isLoading: boolean;
+  isLoading: boolean; // Global loading state for API calls
   setIsLoading: (loading: boolean) => void;
   error: string | null;
   setError: (error: string | null) => void;
+  isFormValid: boolean; // Represents validity of the current step's form
+  updateFormValidity: (isValid: boolean) => void;
 }
 
 const SESSION_STORAGE_KEY = 'recipeFormData';
@@ -100,6 +99,7 @@ const initialFormData: RecipeFormData = {
   selectedTherapeuticProperties: null,
   suggestedOilsByProperty: null,
   finalSelectedOils: null,
+  isLoading: false, // Initialize isLoading
 };
 
 const RecipeFormContext = createContext<RecipeFormContextType | undefined>(undefined);
@@ -107,21 +107,24 @@ const RecipeFormContext = createContext<RecipeFormContextType | undefined>(undef
 export const RecipeFormProvider = ({ children }: { children: ReactNode }) => {
   const [formData, setFormDataState] = useState<RecipeFormData>(initialFormData);
   const [currentStep, setCurrentStepState] = useState<string | null>(null);
-  const [isLoading, setIsLoadingState] = useState<boolean>(false);
+  const [isLoading, setIsLoadingState] = useState<boolean>(false); // Global API loading
   const [error, setErrorState] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isFormValid, setIsFormValid] = useState<boolean>(false); // Current step form validity
 
   useEffect(() => {
     const storedData = getItem<RecipeFormData>(SESSION_STORAGE_KEY);
     if (storedData) {
-      setFormDataState(storedData);
+      setFormDataState(prev => ({...prev, ...storedData, isLoading: false})); // Ensure isLoading resets
     }
     setIsInitialized(true);
   }, []);
 
   useEffect(() => {
     if (isInitialized) {
-      setItem(SESSION_STORAGE_KEY, formData);
+      // Do not persist isLoading state from formData to session storage
+      const { isLoading: formIsLoading, ...dataToStore } = formData;
+      setItem(SESSION_STORAGE_KEY, dataToStore);
     }
   }, [formData, isInitialized]);
 
@@ -137,24 +140,30 @@ export const RecipeFormProvider = ({ children }: { children: ReactNode }) => {
     setCurrentStepState(null);
     setIsLoadingState(false);
     setErrorState(null);
+    setIsFormValid(false);
     removeItem(SESSION_STORAGE_KEY);
   }, []);
 
   const setCurrentStep = useCallback((step: string | null) => {
     setCurrentStepState(step);
+    setIsFormValid(false); // Reset form validity when step changes
   }, []);
 
   const setIsLoading = useCallback((loading: boolean) => {
     setIsLoadingState(loading);
+    // Update formData.isLoading if you want it persisted or reacted to elsewhere
+    setFormDataState(prev => ({ ...prev, isLoading: loading }));
   }, []);
   
   const setError = useCallback((errorMsg: string | null) => {
     setErrorState(errorMsg);
   }, []);
 
+  const updateFormValidity = useCallback((isValid: boolean) => {
+    setIsFormValid(isValid);
+  }, []);
 
   if (!isInitialized) {
-    // Optionally render a loading state or null until session storage is checked
     return null; 
   }
 
@@ -165,10 +174,12 @@ export const RecipeFormProvider = ({ children }: { children: ReactNode }) => {
         resetFormData,
         currentStep,
         setCurrentStep,
-        isLoading,
+        isLoading, // This is the global API loading state
         setIsLoading,
         error,
-        setError
+        setError,
+        isFormValid,
+        updateFormValidity
          }}>
       {children}
     </RecipeFormContext.Provider>

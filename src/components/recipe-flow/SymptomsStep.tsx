@@ -13,14 +13,13 @@ interface PotentialSymptom {
   symptom_name: string;
   symptom_suggestion: string;
   explanation: string;
-  id?: string; // Using symptom_name as ID if id is not present
+  id?: string; 
 }
 
 const SymptomsStep: React.FC = () => {
   const router = useRouter();
-  const { formData, updateFormData, setCurrentStep, setIsLoading, setError } = useRecipeForm();
+  const { formData, updateFormData, setCurrentStep, setIsLoading, setError, updateFormValidity } = useRecipeForm();
   
-  // API for MedicalProperties expects an array of objects like { symptom_name: "..." }
   const [selectedSymptomsState, setSelectedSymptomsState] = useState<Pick<PotentialSymptom, 'symptom_name'>[]>(
     formData.selectedSymptoms || []
   );
@@ -31,19 +30,28 @@ const SymptomsStep: React.FC = () => {
     }
   }, [formData.selectedSymptoms]);
 
+  useEffect(() => {
+    updateFormValidity(selectedSymptomsState.length > 0);
+  }, [selectedSymptomsState, updateFormValidity]);
+
   const handleToggleSymptom = (symptom: PotentialSymptom) => {
     setSelectedSymptomsState((prevSelected) => {
       const isSelected = prevSelected.some(s => s.symptom_name === symptom.symptom_name);
       if (isSelected) {
         return prevSelected.filter(s => s.symptom_name !== symptom.symptom_name);
       } else {
-        // Store only the name as per API requirement for the next step
         return [...prevSelected, { symptom_name: symptom.symptom_name }];
       }
     });
   };
 
-  const handleSubmit = async () => {
+  const handleSubmitSymptoms = async (event?: React.FormEvent<HTMLFormElement>) => {
+    if (event) event.preventDefault();
+    
+    if (selectedSymptomsState.length === 0) {
+        setError("Por favor, selecione ao menos um sintoma.");
+        return;
+    }
     updateFormData({ selectedSymptoms: selectedSymptomsState });
     
     setIsLoading(true);
@@ -58,7 +66,7 @@ const SymptomsStep: React.FC = () => {
         ageCategory: formData.ageCategory,
         ageSpecific: formData.ageSpecific,
         selectedCauses: formData.selectedCauses,
-        selectedSymptoms: selectedSymptomsState, // This is already in the format [{ symptom_name: "..." }]
+        selectedSymptoms: selectedSymptomsState,
       };
       const medicalProperties = await getMedicalProperties(apiPayload);
       updateFormData({ medicalPropertiesResult: medicalProperties });
@@ -77,7 +85,7 @@ const SymptomsStep: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <form id="current-step-form" onSubmit={handleSubmitSymptoms} className="space-y-6">
       <p className="text-muted-foreground">
         Selecione os sintomas que você está experienciando.
       </p>
@@ -109,10 +117,8 @@ const SymptomsStep: React.FC = () => {
           );
         })}
       </div>
-      <button onClick={handleSubmit} className="hidden" aria-hidden="true">
-        Internal Submit Trigger
-      </button>
-    </div>
+      {/* The actual submit button is in RecipeStepLayout. This form will be submitted by it. */}
+    </form>
   );
 };
 
