@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { ReactNode } from 'react';
@@ -93,11 +94,17 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   const showStartOverButton = currentStep && FLOW_STEPS.includes(currentStep);
 
   return (
-    <div className={cn("flex flex-col flex-1", CONTENT_PADDING_BOTTOM_CLASS)}>
-      <div className="flex-grow overflow-y-auto">
-        <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8 max-w-3xl">
+    <div className="flex flex-col flex-1 min-h-0"> {/* Ensure parent flex container can shrink */}
+      <div className="flex-grow overflow-y-auto"> {/* Content area scrolls */}
+        <div className={cn(
+            "container mx-auto py-8 px-4 sm:px-6 lg:px-8 max-w-3xl",
+            CONTENT_PADDING_BOTTOM_CLASS // Add padding to prevent content from being hidden by fixed footer
+        )}>
           <div className="mb-6">
-            <Progress value={progressPercentage} className="h-2.5 w-full [&>div]:bg-gradient-to-r [&>div]:from-aroma-grad-start [&>div]:to-aroma-grad-end" />
+            <Progress 
+              value={progressPercentage} 
+              className="h-2.5 w-full bg-muted [&>div]:bg-gradient-to-r [&>div]:from-aroma-grad-start [&>div]:to-aroma-grad-end" 
+            />
           </div>
           
           <h1 className="text-3xl font-bold mb-2 text-center text-primary">{stepTitle}</h1>
@@ -123,7 +130,7 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
           className={cn(
             "fixed bottom-0 z-10 bg-background border-t border-border",
             FOOTER_HEIGHT_CLASS, 
-            "flex items-center justify-between px-4 sm:px-6", // py-2 removed to rely on button height and items-center
+            "flex items-center justify-between px-4 sm:px-6",
             "right-0", 
             isDesktopClientView 
               ? (desktopSidebarIsEffectivelyExpanded ? "md:left-[287px]" : "md:left-[48px]") 
@@ -169,3 +176,4 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
 };
 
 export default RecipeStepLayout;
+
