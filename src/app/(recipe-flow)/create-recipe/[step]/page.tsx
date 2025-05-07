@@ -90,13 +90,13 @@ const CreateRecipeStepPage = () => {
         return {
           previousRoute: `${basePath}/demographics`,
           onNext: undefined, // Form submission handled by CausesStep
-          isNextDisabled: !formData.selectedCauses || formData.selectedCauses.length === 0, // Example: disable if no causes selected
+          isNextDisabled: !isFormValid, // Use isFormValid from context
         };
       case 'symptoms':
         return {
           previousRoute: `${basePath}/causes`,
           onNext: undefined, // Form submission handled by SymptomsStep
-          isNextDisabled: !formData.selectedSymptoms || formData.selectedSymptoms.length === 0, // Example
+          isNextDisabled: !isFormValid, // Use isFormValid from context
         }
       case 'properties':
         return {
@@ -111,7 +111,7 @@ const CreateRecipeStepPage = () => {
             isNextDisabled: true,
         };
     }
-  }, [step, isFormValid, formData.selectedCauses, formData.selectedSymptoms, formData.isLoading, onNextProperties]);
+  }, [step, isFormValid, formData.isLoading, onNextProperties]);
 
   if (!step || !StepComponent) {
     return <p className="text-center mt-10">Passo inválido ou não encontrado.</p>;
