@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -29,6 +28,7 @@ const CausesStep: React.FC = () => {
       setSelectedCausesState(formData.selectedCauses);
       const preSelectedCauseNames = formData.selectedCauses.map(c => c.cause_name);
       setOpenAccordionItems(prevOpen => {
+        // Open accordions for already selected causes
         const newOpen = new Set([...prevOpen, ...preSelectedCauseNames]);
         return Array.from(newOpen);
       });
