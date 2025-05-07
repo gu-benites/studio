@@ -1,0 +1,104 @@
+flowchart TD
+    %% Main entry points
+    Start([User Enters Application]) --> HomeScreen
+    
+    %% Home Screen with initial options
+    subgraph "Entry Flow"
+        HomeScreen[Home Screen] --> |"Enter Health Concern"| InitiateFlow
+        HomeScreen --> |"Login"| Login
+        HomeScreen --> |"Register"| Register
+    end
+    
+    %% Authentication flow
+    subgraph "Authentication"
+        Login --> |"Valid Credentials"| AuthSuccess
+        Login --> |"Invalid Credentials"| LoginError[Error Message]
+        LoginError --> Login
+        
+        Register --> |"Submit Form"| ValidateReg[Validate Registration]
+        ValidateReg --> |"Valid"| CreateUser["Create User Record<br>(User Table)"]
+        ValidateReg --> |"Invalid"| RegError[Error Message]
+        RegError --> Register
+        CreateUser --> SendVerification["Send Verification Email"]
+        SendVerification --> AuthSuccess
+    end
+    
+    %% Recipe Creation Flow
+    subgraph "Recipe Creation Flow"
+        InitiateFlow[Start Recipe Creation] --> HealthConcern["Step 1: Health Concern Selection<br>(HealthConcern Table)"]
+        HealthConcern --> Demographics["Step 2: Demographics<br>(User Table - gender, ageCategory, specificAge)"]
+        Demographics --> |"API Call: PotentialCauses"| LoadingCauses[Loading State]
+        LoadingCauses --> CausesSelection["Step 3: Causes Selection<br>(Cause Table)"]
+        CausesSelection --> |"API Call: PotentialSymptoms"| LoadingSymptoms[Loading State]
+        LoadingSymptoms --> SymptomsSelection["Step 4: Symptoms Selection<br>(Symptom Table)"]
+        SymptomsSelection --> |"API Call: MedicalProperties"| LoadingProperties[Loading State]
+        LoadingProperties --> TherapeuticProperties["Step 5: Therapeutic Properties Display<br>(TherapeuticProperty Table)"]
+        TherapeuticProperties --> |"API Calls: SuggestedOils"| LoadingOils[Loading State]
+        LoadingOils --> EssentialOilSuggestions["Step 6: Essential Oil Suggestions<br>(EssentialOil Table)"]
+        EssentialOilSuggestions --> GuestCheck{Is User Logged In?}
+        GuestCheck --> |"Yes"| ApplicationMethodSelection
+        GuestCheck --> |"No"| LoginPrompt[Login/Register Prompt]
+        LoginPrompt --> Login
+        LoginPrompt --> Register
+        
+        ApplicationMethodSelection["Step 7: Application Method Selection<br>(ApplicationMethod Table)"] --> |"For Topical Methods"| DilutionCalculator["Dilution Calculator<br>(Calculate Safe Dilution)"]
+        ApplicationMethodSelection --> |"For Other Methods"| SafetyCheck
+        DilutionCalculator --> CarrierOilSelection["Carrier Oil Selection<br>(CarrierOil Table)"]
+        CarrierOilSelection --> SafetyCheck["Safety Check"]
+        SafetyCheck --> |"API Call: CreateRecipe"| LoadingRecipe[Loading State]
+        LoadingRecipe --> FinalRecipe["Step 8: Final Recipe Generation<br>(Recipe Table)"]
+        FinalRecipe --> RecipeSave["Save Recipe<br>(Recipe, EssentialOilOnRecipe, CarrierOilOnRecipe Tables)"]
+    end
+    
+    %% My Recipes Flow
+    subgraph "Recipe Management"
+        AuthSuccess --> MyRecipes[My Recipes Dashboard]
+        RecipeSave --> MyRecipes
+        MyRecipes --> ViewRecipe["View Recipe Details<br>(Recipe, EssentialOil, CarrierOil, ApplicationMethod)"]
+        ViewRecipe --> EditRecipe["Edit Recipe<br>(Update Recipe Tables)"]
+        ViewRecipe --> DeleteRecipe["Delete Recipe<br>(Set isDeleted = true)"]
+        ViewRecipe --> RecordUsage["Record Usage<br>(UsageRecord Table)"]
+        RecordUsage --> TrackEffectiveness["Track Effectiveness<br>(0-10 Rating)"]
+        ViewRecipe --> ViewUsageHistory["View Usage History<br>(UsageRecord Table)"]
+        ViewUsageHistory --> UsageTrends["View Effectiveness Trends<br>(Chart Visualization)"]
+    end
+    
+    %% Account Management
+    subgraph "Account Management"
+        AuthSuccess --> AccountSettings[Account Settings]
+        AccountSettings --> UpdateProfile["Update Profile<br>(User Table)"]
+        AccountSettings --> ChangePassword["Change Password<br>(User Table)"]
+        AccountSettings --> ChangeLanguage["Change Language<br>(User.language)"]
+        AccountSettings --> SensitivityTracker["Manage Sensitivities<br>(UserSensitivity Table)"]
+    end
+    
+    %% Feedback Flow
+    subgraph "Feedback System"
+        FinalRecipe --> ProvideRecipeFeedback["Provide Recipe Feedback<br>(RecipeFeedback Table)"]
+        AuthSuccess --> SystemFeedbackOption["Submit System Feedback<br>(SystemFeedback Table)"]
+    end
+    
+    %% Safety System Integration
+    subgraph "Safety Integration"
+        EssentialOilSuggestions --> |"Check"| SafetyDatabase["Safety Database<br>(EssentialOil.safetyInfo)"]
+        SafetyDatabase --> |"Verify"| UserDemographics["User Demographics<br>(age, pregnancy status)"]
+        SafetyDatabase --> |"Check"| UserSensitivities["User Sensitivities<br>(UserSensitivity Table)"]
+        SafetyDatabase --> SafetyWarnings["Display Safety Warnings"]
+        SafetyWarnings --> EssentialOilSuggestions
+    end
+    
+    %% Styling with the brand colors
+    classDef primary fill:#7a5cff,stroke:#333,stroke-width:1px,color:white;
+    classDef secondary fill:#FF7A5C,stroke:#333,stroke-width:1px,color:white;
+    classDef accent fill:#5CFF7A,stroke:#333,stroke-width:1px,color:white;
+    classDef neutral fill:#4B4763,stroke:#333,stroke-width:1px,color:white;
+    classDef loading fill:#f9a8d4,stroke:#333,stroke-width:1px,color:white;
+    classDef error fill:#ef4444,stroke:#333,stroke-width:1px,color:white;
+    
+    %% Apply styling
+    class HomeScreen,HealthConcern,ApplicationMethodSelection,FinalRecipe,MyRecipes primary;
+    class Demographics,CausesSelection,SymptomsSelection,CarrierOilSelection,ViewRecipe secondary;
+    class TherapeuticProperties,EssentialOilSuggestions,RecordUsage,AccountSettings accent;
+    class SafetyCheck,DilutionCalculator,SafetyDatabase,UserSensitivities neutral;
+    class LoadingCauses,LoadingSymptoms,LoadingProperties,LoadingOils,LoadingRecipe loading;
+    class LoginError,RegError error;
