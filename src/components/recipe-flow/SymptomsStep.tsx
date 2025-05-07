@@ -85,7 +85,7 @@ const SymptomsStep: React.FC = () => {
   }
 
   return (
-    <form id="current-step-form" onSubmit={handleSubmitSymptoms} className="space-y-6">
+    <form id="current-step-form" onSubmit={handleSubmitSymptoms} className="space-y-6 overflow-hidden">
       <p className="text-muted-foreground">
         Selecione os sintomas que você está experienciando.
       </p>

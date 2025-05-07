@@ -84,7 +84,7 @@ const CausesStep: React.FC = () => {
   }
   
   return (
-    <form id="current-step-form" onSubmit={handleSubmitCauses} className="space-y-6">
+    <form id="current-step-form" onSubmit={handleSubmitCauses} className="space-y-6 overflow-hidden">
       <p className="text-muted-foreground">
         Selecione as causas que você acredita estarem relacionadas ao seu problema de saúde.
       </p>
