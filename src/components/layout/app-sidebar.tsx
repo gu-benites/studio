@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { LucideIcon } from 'lucide-react';
@@ -8,10 +9,6 @@ import {
   ChefHat,
   Palette,
   LoaderCircle,
-  Settings, 
-  CreditCard, 
-  BookOpenCheck, // Example for My Recipes
-  HelpCircle as HelpIcon, // Renamed to avoid conflict
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -37,7 +34,6 @@ interface NavItem {
 
 const mainNavItems: NavItem[] = [
   { href: '/', icon: Home, label: 'Recipe Generator' },
-  // { href: '/my-recipes', icon: BookOpenCheck, label: 'My Recipes' }, // Example, can be uncommented
   { href: '/design-system', icon: Palette, label: 'Design System' },
   { href: '/loading-state', icon: LoaderCircle, label: 'Loading State' },
 ];
@@ -68,11 +64,17 @@ const AppSidebar: React.FC = () => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsClientMobile(mobile);
+      if (!mobile && contextSidebarOpen && !isSidebarPinned && !isUserAccountMenuExpanded) {
+        // If resizing from mobile to desktop, and mobile sidebar was open but not pinned (which is typical for mobile)
+        // and user menu wasn't the reason it was open, then collapse it on desktop.
+        // This handles the case where mobile drawer is open, then resize to desktop, it shouldn't remain expanded unless pinned.
+        // toggleDesktopSidebarPin(); // This would collapse it.
+      }
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  }, [contextSidebarOpen, isSidebarPinned, isUserAccountMenuExpanded, toggleDesktopSidebarPin]);
 
   const currentIsSidebarOpen = hasMounted ? contextSidebarOpen : false;
   const currentIsSidebarPinned = hasMounted ? isSidebarPinned : false;
@@ -108,19 +110,15 @@ const AppSidebar: React.FC = () => {
   const mobileSidebarTranslate = currentIsSidebarOpen ? 'translate-x-0' : '-translate-x-full';
 
   const sidebarOuterClasses = cn(
+    'fixed inset-y-0 left-0 z-40 h-screen', // Common fixed positioning and full height
     'transition-all duration-300 ease-in-out shadow-lg',
-    // Desktop: Fixed position, full height, width based on state
-    isDesktopClient && `fixed inset-y-0 left-0 z-40 h-screen ${desktopSidebarWidth}`,
-    // Mobile: Fixed position, full height, width, and translation for drawer effect
-    isClientMobile && `fixed inset-y-0 left-0 z-40 w-full max-w-[287px] ${mobileSidebarTranslate} h-screen`,
-    // Hover effect only for unpinned, collapsed desktop sidebar when user menu is NOT open
-    (isHovering && isDesktopClient && !isDesktopExpanded && !currentIsUserAccountMenuExpanded) && 'bg-[hsl(var(--app-sidebar-hover-background))]' // This hover is on the <aside>
+    isDesktopClient ? desktopSidebarWidth : `w-full max-w-[287px] ${mobileSidebarTranslate}`,
+    (isHovering && isDesktopClient && !isDesktopExpanded && !currentIsUserAccountMenuExpanded) && 'bg-[hsl(var(--app-sidebar-hover-background))]'
   );
   
   const sidebarInnerClasses = cn(
-    "flex flex-col flex-grow h-full", // h-full makes it fill the 'aside'
+    "flex flex-col h-full", 
     "bg-[hsl(var(--app-sidebar-background))] text-[hsl(var(--app-sidebar-foreground))] border-r border-[hsl(var(--app-sidebar-border))]",
-    "overflow-y-auto", // Sidebar's own content scroll
     !isClientMobile && !isEffectivelyExpanded && "overflow-x-hidden"
   );
 
@@ -141,18 +139,18 @@ const AppSidebar: React.FC = () => {
   if (!hasMounted) {
     const collapsedSidebarClasses = cn(
       'flex flex-col bg-[hsl(var(--app-sidebar-background))] text-[hsl(var(--app-sidebar-foreground))] border-r border-[hsl(var(--app-sidebar-border))] shadow-lg',
-      'fixed inset-y-0 left-0 z-40 h-screen md:w-[48px]' // Fixed for SSR consistency
+      'fixed inset-y-0 left-0 z-40 h-screen md:w-[48px]' 
     );
     return (
       <TooltipProvider delayDuration={0}>
         <aside className={collapsedSidebarClasses}>
-          <div className={sidebarInnerClasses}>
+          <div className={"flex flex-col h-full"}> {/* Ensure this inner div also takes full height */}
             <div className="flex items-center border-b border-[hsl(var(--app-sidebar-border))] h-[60px] shrink-0 justify-center px-[calc((48px-32px)/2)]">
               <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))]">
                 <PanelLeft className="h-5 w-5" />
               </Button>
             </div>
-            <nav className="flex-grow py-4 space-y-1 px-[calc((48px-32px)/2)] overflow-x-hidden">
+            <nav className="flex-grow py-4 space-y-1 px-[calc((48px-32px)/2)] overflow-y-auto overflow-x-hidden"> {/* Nav scrolls if many items */}
               {mainNavItems.map(item => (
                 <div key={item.label}>
                   <Tooltip>
@@ -171,7 +169,7 @@ const AppSidebar: React.FC = () => {
                 </div>
               ))}
             </nav>
-            <div className="mt-auto border-t border-[hsl(var(--app-sidebar-border))]">
+            <div className="mt-auto border-t border-[hsl(var(--app-sidebar-border))] shrink-0"> {/* Footer shrink-0 */}
               <button className="flex w-full items-center justify-center h-[60px] px-[calc((48px-32px)/2)] hover:bg-[hsl(var(--app-sidebar-hover-background))]">
                 <Image src="https://picsum.photos/seed/useravatar/64/64" alt="User Avatar" width={32} height={32} className="rounded-full shrink-0" data-ai-hint="profile avatar" />
               </button>
@@ -200,7 +198,7 @@ const AppSidebar: React.FC = () => {
       >
         <div className={sidebarInnerClasses}>
           <div className={cn(
-            "flex items-center border-b border-[hsl(var(--app-sidebar-border))] h-[60px] shrink-0",
+            "flex items-center border-b border-[hsl(var(--app-sidebar-border))] h-[60px] shrink-0", // Header shrink-0
             isEffectivelyExpanded 
               ? "px-3 gap-3" 
               : "justify-center px-[calc((48px-32px)/2)]" 
@@ -237,6 +235,7 @@ const AppSidebar: React.FC = () => {
           
           <nav className={cn(
             "flex-grow py-4 space-y-1", 
+            "overflow-y-auto", // Make nav scrollable
             isEffectivelyExpanded ? "px-3" : "px-[calc((48px-32px)/2)]"
             )}>
             {mainNavItems.map((item) => {
@@ -279,55 +278,54 @@ const AppSidebar: React.FC = () => {
               );
             })}
           </nav>
-        </div>
-
-        <div className="mt-auto border-t border-[hsl(var(--app-sidebar-border))]">
-          {currentIsUserAccountMenuExpanded && isEffectivelyExpanded && (
-            <UserAccountMenu />
-          )}
-          {/* Tooltip for avatar is only shown when sidebar is collapsed AND it's desktop */}
-          <TooltipProvider delayDuration={(isDesktopClient && !isEffectivelyExpanded) ? 0 : 999999}> {/* Effectively disable tooltip if expanded */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={handleAvatarClick}
-                  className={cn(
-                    "flex w-full items-center gap-3 text-left text-sm font-medium transition-colors",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 focus-visible:ring-offset-[hsl(var(--app-sidebar-background))]",
-                    isEffectivelyExpanded ? "p-3 h-[60px]" : "justify-center h-[60px] w-full px-[calc((48px-32px)/2)]", 
-                    currentIsUserAccountMenuExpanded && isEffectivelyExpanded 
-                      ? 'bg-[hsl(var(--app-sidebar-active-background))] text-[hsl(var(--app-sidebar-active-foreground))]'
-                      : 'hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))]'
-                  )}
-                  aria-label="Open user menu" 
-                >
-                  <Image
-                    src="https://picsum.photos/seed/useravatar/64/64" 
-                    alt="User Avatar"
-                    width={32} 
-                    height={32} 
-                    className="rounded-full shrink-0" 
-                    data-ai-hint="profile avatar"
-                  />
-                  {isEffectivelyExpanded && (
-                    <div className="flex flex-col overflow-hidden">
-                      <span className="truncate">User Name</span>
-                      <span className={cn(
-                        "text-xs truncate",
-                        currentIsUserAccountMenuExpanded && isEffectivelyExpanded ? 'opacity-80' : 'text-muted-foreground'
-                      )}>user@example.com</span>
-                    </div>
-                  )}
-                </button>
-              </TooltipTrigger>
-              {(isDesktopClient && !isEffectivelyExpanded) && (
-                 <TooltipContent side="right" sideOffset={8}>
-                   <p>User Name</p>
-                   <p className="text-xs text-muted-foreground">user@example.com</p>
-                 </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
+        
+          <div className="mt-auto border-t border-[hsl(var(--app-sidebar-border))] shrink-0"> {/* Footer shrink-0 */}
+            {currentIsUserAccountMenuExpanded && isEffectivelyExpanded && (
+              <UserAccountMenu />
+            )}
+            <TooltipProvider delayDuration={(isDesktopClient && !isEffectivelyExpanded) ? 0 : 999999}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleAvatarClick}
+                    className={cn(
+                      "flex w-full items-center gap-3 text-left text-sm font-medium transition-colors",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 focus-visible:ring-offset-[hsl(var(--app-sidebar-background))]",
+                      isEffectivelyExpanded ? "p-3 h-[60px]" : "justify-center h-[60px] w-full px-[calc((48px-32px)/2)]", 
+                      currentIsUserAccountMenuExpanded && isEffectivelyExpanded 
+                        ? 'bg-[hsl(var(--app-sidebar-active-background))] text-[hsl(var(--app-sidebar-active-foreground))]'
+                        : 'hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))]'
+                    )}
+                    aria-label="Open user menu" 
+                  >
+                    <Image
+                      src="https://picsum.photos/seed/useravatar/64/64" 
+                      alt="User Avatar"
+                      width={32} 
+                      height={32} 
+                      className="rounded-full shrink-0" 
+                      data-ai-hint="profile avatar"
+                    />
+                    {isEffectivelyExpanded && (
+                      <div className="flex flex-col overflow-hidden">
+                        <span className="truncate">User Name</span>
+                        <span className={cn(
+                          "text-xs truncate",
+                          currentIsUserAccountMenuExpanded && isEffectivelyExpanded ? 'opacity-80' : 'text-muted-foreground'
+                        )}>user@example.com</span>
+                      </div>
+                    )}
+                  </button>
+                </TooltipTrigger>
+                {(isDesktopClient && !isEffectivelyExpanded) && (
+                   <TooltipContent side="right" sideOffset={8}>
+                     <p>User Name</p>
+                     <p className="text-xs text-muted-foreground">user@example.com</p>
+                   </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
       </aside>
       </TooltipProvider>
@@ -336,4 +334,3 @@ const AppSidebar: React.FC = () => {
 };
 
 export default AppSidebar;
-
