@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { LucideIcon } from 'lucide-react';
@@ -8,6 +9,8 @@ import {
   ChefHat,
   Palette,
   LoaderCircle,
+  Settings, // Added for consistency, though not used in mainNavItems
+  CreditCard, // Added for consistency
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -54,9 +57,11 @@ const AppSidebar: React.FC = () => {
   const [isClientMobile, setIsClientMobile] = React.useState(false);
   const [isHovering, setIsHovering] = React.useState(false);
   const hoverTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const [hasMounted, setHasMounted] = React.useState(false);
 
 
   React.useEffect(() => {
+    setHasMounted(true);
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsClientMobile(mobile);
@@ -68,14 +73,14 @@ const AppSidebar: React.FC = () => {
 
 
   const handleMouseEnter = () => {
-    if (!isClientMobile && !isSidebarPinned && !isSidebarOpen && !isUserAccountMenuExpanded) { 
+    if (hasMounted && !isClientMobile && !isSidebarPinned && !isSidebarOpen && !isUserAccountMenuExpanded) { 
       if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
       setIsHovering(true);
     }
   };
 
   const handleMouseLeave = () => {
-    if (!isClientMobile && !isSidebarPinned && !isSidebarOpen && !isUserAccountMenuExpanded) {
+    if (hasMounted && !isClientMobile && !isSidebarPinned && !isSidebarOpen && !isUserAccountMenuExpanded) {
       hoverTimeoutRef.current = setTimeout(() => setIsHovering(false), 100);
     }
   };
@@ -86,24 +91,29 @@ const AppSidebar: React.FC = () => {
     };
   }, []);
 
-  const isDesktopExpanded = !isClientMobile && (isSidebarPinned || isUserAccountMenuExpanded);
-  const isMobileExpanded = isClientMobile && isSidebarOpen;
-  const isEffectivelyExpanded = isDesktopExpanded || isMobileExpanded;
+  const isDesktopClient = hasMounted && !isClientMobile;
+  const currentIsSidebarOpen = hasMounted ? isSidebarOpen : false; // Use UI state after mount, default to false for SSR
+  const currentIsSidebarPinned = hasMounted ? isSidebarPinned : false;
+  const currentIsUserAccountMenuExpanded = hasMounted ? isUserAccountMenuExpanded : false;
 
+  const isDesktopExpanded = isDesktopClient && (currentIsSidebarPinned || currentIsUserAccountMenuExpanded);
+  const isMobileExpanded = hasMounted && isClientMobile && currentIsSidebarOpen;
+  const isEffectivelyExpanded = isDesktopExpanded || isMobileExpanded;
+  
   const desktopSidebarWidth = isDesktopExpanded ? 'md:w-[287px]' : 'md:w-[48px]';
-  const mobileSidebarTranslate = isSidebarOpen ? 'translate-x-0' : '-translate-x-full';
+  const mobileSidebarTranslate = currentIsSidebarOpen ? 'translate-x-0' : '-translate-x-full';
 
   const sidebarClasses = cn(
-    'flex flex-col bg-[hsl(var(--app-sidebar-background))] text-[hsl(var(--app-sidebar-foreground))] border-r border-[hsl(var(--app-sidebar-border))] transition-all duration-300 ease-in-out shadow-lg', // Common styles
-    isClientMobile
-      ? `fixed inset-y-0 left-0 z-40 w-full max-w-[287px] ${mobileSidebarTranslate}` // Mobile specific: fixed, z-index, width, translation
-      : `h-full ${desktopSidebarWidth}`, // Desktop specific: height full (of flex parent), dynamic width
-    (isHovering && !isDesktopExpanded && !isClientMobile && !isUserAccountMenuExpanded) && 'bg-[hsl(var(--app-sidebar-hover-background))]' // Hover style
+    'flex flex-col bg-[hsl(var(--app-sidebar-background))] text-[hsl(var(--app-sidebar-foreground))] border-r border-[hsl(var(--app-sidebar-border))] transition-all duration-300 ease-in-out shadow-lg', 
+    (hasMounted && isClientMobile)
+      ? `fixed inset-y-0 left-0 z-40 w-full max-w-[287px] ${mobileSidebarTranslate}` 
+      : `h-full ${desktopSidebarWidth}`, 
+    (isHovering && isDesktopClient && !isDesktopExpanded && !currentIsUserAccountMenuExpanded) && 'bg-[hsl(var(--app-sidebar-hover-background))]' 
   );
   
   const handleAvatarClick = () => {
     if (isClientMobile) {
-      if (!isSidebarOpen) { 
+      if (!currentIsSidebarOpen) { 
         toggleMobileSidebar(); 
         setTimeout(() => openUserAccountMenuSimple(), 50); 
       } else { 
@@ -113,11 +123,49 @@ const AppSidebar: React.FC = () => {
       handleUserMenuToggle();
     }
   };
+
+  if (!hasMounted) {
+    // Render a static, collapsed version for SSR and initial client render
+    const collapsedSidebarClasses = cn(
+      'flex flex-col bg-[hsl(var(--app-sidebar-background))] text-[hsl(var(--app-sidebar-foreground))] border-r border-[hsl(var(--app-sidebar-border))] shadow-lg',
+      'h-full md:w-[48px]' 
+    );
+    return (
+      <TooltipProvider delayDuration={0}>
+        <aside className={collapsedSidebarClasses}>
+          <div className="flex items-center border-b border-[hsl(var(--app-sidebar-border))] h-[60px] shrink-0 justify-center px-[calc((48px-32px)/2)]">
+            <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))]">
+              <PanelLeft className="h-5 w-5" />
+            </Button>
+          </div>
+          <nav className="flex-grow py-4 space-y-1 px-[calc((48px-32px)/2)] overflow-x-hidden">
+            {mainNavItems.map(item => (
+              <div key={item.label}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link href={item.href} className="flex justify-center items-center w-8 h-9 p-0 rounded-lg text-[hsl(var(--app-sidebar-foreground))] hover:bg-[hsl(var(--app-sidebar-hover-background))]" title={item.label}>
+                      <item.icon className="h-4 w-4 shrink-0" />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" sideOffset={8}><p>{item.label}</p></TooltipContent>
+                </Tooltip>
+              </div>
+            ))}
+          </nav>
+          <div className="mt-auto border-t border-[hsl(var(--app-sidebar-border))]">
+            <button className="flex w-full items-center justify-center h-[60px] px-[calc((48px-32px)/2)] hover:bg-[hsl(var(--app-sidebar-hover-background))]">
+              <Image src="https://picsum.photos/seed/useravatar/64/64" alt="User Avatar" width={32} height={32} className="rounded-full shrink-0" data-ai-hint="profile avatar" />
+            </button>
+          </div>
+        </aside>
+      </TooltipProvider>
+    );
+  }
   
 
   return (
     <>
-      {isClientMobile && isSidebarOpen && (
+      {isClientMobile && currentIsSidebarOpen && (
           <div 
               onClick={toggleMobileSidebar} 
               className="fixed inset-0 z-30 bg-black/50 md:hidden"
@@ -151,8 +199,8 @@ const AppSidebar: React.FC = () => {
                 )}
                 aria-label={
                   isClientMobile 
-                    ? (isSidebarOpen ? 'Close sidebar' : 'Open sidebar')
-                    : (isSidebarPinned ? 'Unpin and collapse sidebar' : 'Pin and expand sidebar')
+                    ? (currentIsSidebarOpen ? 'Close sidebar' : 'Open sidebar')
+                    : (currentIsSidebarPinned ? 'Unpin and collapse sidebar' : 'Pin and expand sidebar')
                 }
             >
               {isEffectivelyExpanded ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeft className="h-5 w-5" />}
@@ -172,14 +220,15 @@ const AppSidebar: React.FC = () => {
           
           <nav className={cn(
             "flex-grow py-4 space-y-1", 
-            isEffectivelyExpanded ? "px-3" : "px-[calc((48px-32px)/2)]"
+            isEffectivelyExpanded ? "px-3" : "px-[calc((48px-32px)/2)]",
+            !isClientMobile && !isEffectivelyExpanded && "overflow-x-hidden"
             )}>
             {mainNavItems.map((item) => {
               const navLinkContent = (
                 <Link
                   href={item.href}
                   onClick={() => { 
-                    if (isClientMobile && isSidebarOpen) {
+                    if (isClientMobile && currentIsSidebarOpen) {
                       closeSidebarCompletely(); 
                     }
                   }}
@@ -217,7 +266,7 @@ const AppSidebar: React.FC = () => {
         </div>
 
         <div className="mt-auto border-t border-[hsl(var(--app-sidebar-border))]">
-          {isUserAccountMenuExpanded && isEffectivelyExpanded && (
+          {currentIsUserAccountMenuExpanded && isEffectivelyExpanded && (
             <UserAccountMenu />
           )}
           <button
@@ -226,7 +275,7 @@ const AppSidebar: React.FC = () => {
               "flex w-full items-center gap-3 text-left text-sm font-medium transition-colors",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 focus-visible:ring-offset-[hsl(var(--app-sidebar-background))]",
               isEffectivelyExpanded ? "p-3 h-[60px]" : "justify-center h-[60px] w-full px-[calc((48px-32px)/2)]", 
-              isUserAccountMenuExpanded && isEffectivelyExpanded 
+              currentIsUserAccountMenuExpanded && isEffectivelyExpanded 
                 ? 'bg-[hsl(var(--app-sidebar-active-background))] text-[hsl(var(--app-sidebar-active-foreground))]'
                 : 'hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))]'
             )}
@@ -245,7 +294,7 @@ const AppSidebar: React.FC = () => {
                 <span className="truncate">User Name</span>
                 <span className={cn(
                   "text-xs truncate",
-                  isUserAccountMenuExpanded && isEffectivelyExpanded ? 'opacity-80' : 'text-muted-foreground'
+                  currentIsUserAccountMenuExpanded && isEffectivelyExpanded ? 'opacity-80' : 'text-muted-foreground'
                 )}>user@example.com</span>
               </div>
             )}
@@ -258,3 +307,4 @@ const AppSidebar: React.FC = () => {
 };
 
 export default AppSidebar;
+

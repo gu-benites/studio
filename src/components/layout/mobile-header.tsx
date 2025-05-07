@@ -12,23 +12,25 @@ import { cn } from '@/lib/utils';
 export const MobileHeader: React.FC = () => {
   const { toggleMobileSidebar, isSidebarOpen } = useUIState();
   const [isClientMobile, setIsClientMobile] = React.useState(false);
+  const [hasMounted, setHasMounted] = React.useState(false);
 
   React.useEffect(() => {
+    setHasMounted(true);
     const checkMobile = () => setIsClientMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Only render header on mobile
-  if (!isClientMobile) {
+  // Only render header on mobile and after client has mounted
+  if (!hasMounted || !isClientMobile) {
     return null;
   }
 
   return (
     <header className={cn(
         "sticky top-0 z-30 flex items-center justify-between h-[60px] px-4 border-b bg-background/80 backdrop-blur-sm",
-        "md:hidden" // Ensure it's hidden on desktop
+        "md:hidden" // Ensure it's hidden on desktop (though isClientMobile already handles this)
     )}>
       <Button
         variant="ghost"
@@ -47,3 +49,4 @@ export const MobileHeader: React.FC = () => {
     </header>
   );
 };
+
