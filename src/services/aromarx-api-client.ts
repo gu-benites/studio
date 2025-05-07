@@ -96,7 +96,12 @@ type ApiRequestPayload =
   | SuggestedOilsPayload;
 
 // Generic fetch function
-async function fetchFromAromaRx<T>(payload: ApiRequestPayload): Promise<T | null> {
+async function fetchFromAromaRx<T>(payload: ApiRequestPayload): Promise<T> {
+  if (!payload || Object.keys(payload).length === 0) {
+    console.error("fetchFromAromaRx called with an empty or null payload. This is not allowed. Payload:", JSON.stringify(payload));
+    throw new Error("Internal error: API client called with empty payload.");
+  }
+
   if (!BASE_URL || !API_KEY) {
     console.error("API base URL or API key is not configured. Check .env.local and ensure variables are prefixed with NEXT_PUBLIC_");
     throw new Error("API base URL or API key is not configured.");
@@ -113,73 +118,90 @@ async function fetchFromAromaRx<T>(payload: ApiRequestPayload): Promise<T | null
       body: JSON.stringify(payload),
     });
   } catch (networkError: any) {
-    console.error("Network error during API request:", networkError.message, "Payload:", payload);
+    console.error("Network error during API request:", networkError.message, "Payload:", JSON.stringify(payload));
     throw new Error(`Network error: ${networkError.message}`);
   }
 
   if (!response.ok) {
     let errorMessage = `API request failed with status ${response.status}`;
     try {
-      // Attempt to parse error response as JSON
       const errorData = await response.json();
       errorMessage += `: ${errorData.message || JSON.stringify(errorData)}`;
     } catch (e) {
-      // If not JSON, try to get text
       try {
         const errorText = await response.text();
-        errorMessage += `. Response body: ${errorText.substring(0, 200)}...`; // Log a snippet
+        errorMessage += `. Response body: ${errorText.substring(0, 200)}...`;
       } catch (textErr) {
-        // If text also fails, just use the status
+        // Silent
       }
     }
-    console.error("API Error (non-200 OK):", errorMessage, "Payload:", payload);
+    console.error("API Error (non-200 OK):", errorMessage, "Payload:", JSON.stringify(payload));
     throw new Error(errorMessage);
   }
 
-  // Response is OK (2xx status)
   const contentType = response.headers.get("content-type");
-  let data;
-
-  if (contentType && contentType.includes("application/json")) {
-    try {
-      data = await response.json();
-    } catch (e: any) {
-      console.error("Failed to parse API JSON response (Status OK). Error:", e.message, "Payload:", payload);
-      // Attempt to get raw text for debugging if JSON parsing fails on a 200 OK
-      const rawTextForDebugging = await response.text(); // This re-consumes body, so do it only on error
-      console.error("Raw text of unparseable 200 OK JSON response:", rawTextForDebugging.substring(0, 500) + "...");
-      throw new Error("Failed to parse API JSON response despite Content-Type header. Check console.");
-    }
-  } else {
-    // Response is OK, but not JSON. This is unexpected for this API.
+  if (!contentType || !contentType.includes("application/json")) {
     const rawText = await response.text();
-    console.error("API response was not JSON (Status OK). Content-Type:", contentType, "Raw text:", rawText.substring(0, 500) + "...", "Payload:", payload);
+    console.error("API response was not JSON (Status OK). Content-Type:", contentType, "Raw text:", rawText.substring(0, 500) + "...", "Payload:", JSON.stringify(payload));
     throw new Error("API returned non-JSON response. Check console.");
   }
-  
-  // At this point, 'data' should be the parsed JSON from a 2xx response
-  if (Array.isArray(data)) {
-    if (data.length === 0) {
-      // API returned an empty array. This often means "no results" rather than an error.
-      console.warn("API returned an empty array (interpreted as no results found) for payload:", payload);
-      return null; 
-    }
-    // If data is an array, we expect a specific structure like [ { message: { content: { ... } } } ]
-    if (data.length > 0 && data[0] && typeof data[0] === 'object' && 
-        data[0].message && typeof data[0].message === 'object' && 
-        Object.prototype.hasOwnProperty.call(data[0].message, 'content')) {
-      // The structure data[0].message.content exists.
-      // The value of data[0].message.content is what we expect to be of type T.
-      return data[0].message.content as T;
+
+  let data: any;
+  try {
+    data = await response.json();
+  } catch (e: any) {
+    console.error("Failed to parse API JSON response (Status OK). Error:", e.message, "Payload:", JSON.stringify(payload));
+    throw new Error("Failed to parse API JSON response. Check console.");
+  }
+
+  // Primary expected structure: API returns an object like { message: { content: { ... } } }
+  if (data && typeof data === 'object' && !Array.isArray(data) &&
+      data.message && typeof data.message === 'object' && data.message !== null &&
+      Object.prototype.hasOwnProperty.call(data.message, 'content')) {
+    
+    if (data.message.content !== null && data.message.content !== undefined) {
+      // Even if content is an empty object {}, we return it. Callers must be robust.
+      if (typeof data.message.content === 'object' && Object.keys(data.message.content).length === 0) {
+         console.warn("API response 'content' is an empty object. Returning it as is. Data:", JSON.stringify(data), "Payload:", JSON.stringify(payload));
+      }
+      return data.message.content as T;
+    } else {
+      console.error("API response 'content' field is null or undefined. Data:", JSON.stringify(data), "Payload:", JSON.stringify(payload));
+      throw new Error("API response 'content' field is missing or empty. Check console.");
     }
   }
+  // Fallback for structure documented in 01_api_calls_n_responses.txt: API returns an array [ { message: { content: { ... } } } ]
+  else if (Array.isArray(data) && data.length > 0) {
+    const firstItem = data[0];
+    if (firstItem && typeof firstItem === 'object' && 
+        firstItem.message && typeof firstItem.message === 'object' && firstItem.message !== null &&
+        Object.prototype.hasOwnProperty.call(firstItem.message, 'content')) {
+      
+      if (firstItem.message.content !== null && firstItem.message.content !== undefined) {
+        if (typeof firstItem.message.content === 'object' && Object.keys(firstItem.message.content).length === 0) {
+            console.warn("API response (from array) 'content' is an empty object. Data:", JSON.stringify(data), "Payload:", JSON.stringify(payload));
+        }
+        return firstItem.message.content as T;
+      } else {
+        console.error("API response (from array) 'content' field is null or undefined. Data:", JSON.stringify(data), "Payload:", JSON.stringify(payload));
+        throw new Error("API response (from array) 'content' field is missing or empty. Check console.");
+      }
+    }
+  } else if (Array.isArray(data) && data.length === 0) {
+     console.warn("API returned an empty array. Interpreting as no data. Payload:", JSON.stringify(payload));
+     // This case is tricky. For functions expecting T that's an object with keys (e.g. { potential_causes: [] }),
+     // returning null might break them. They expect T.
+     // Let it fall through to the general error, or callers must handle Promise<T | null>.
+     // For now, let it throw, so callers expecting T must be robust or we adjust return type.
+     // Given current callers, they try to access properties on T, so null/{} without those props will fail.
+     // Better to throw here if an empty array means data is missing when T is expected.
+     // However, if T itself can represent "no data" (e.g. an object with an empty array inside), this is an issue.
+     // For now, considering an empty array as an unexpected structure if T is usually an object.
+  }
   
-  // If data is not an array with the expected structure, or not an array at all.
-  console.error("Unexpected API response JSON structure (Status OK). Actual data:", data, "Payload:", payload);
+  console.error("Unexpected API response JSON structure (Status OK). Actual data:", JSON.stringify(data), "Payload:", JSON.stringify(payload));
   throw new Error("Unexpected API response JSON structure. Check console for actual data received.");
 }
-
-// Specific API call functions
 
 // Type for the expected content structure for getPotentialCauses
 type PotentialCausesContent = { potential_causes: PotentialCause[] };
@@ -201,13 +223,10 @@ export const getPotentialCauses = async (
   
   const result = await fetchFromAromaRx<PotentialCausesContent>(payload);
 
-  if (result === null) { // API returned empty array `[]`
-    return []; 
-  }
-  if (result && Array.isArray(result.potential_causes)) {
+  if (result && result.potential_causes && Array.isArray(result.potential_causes)) {
     return result.potential_causes;
   }
-  console.warn("Potential causes key missing or not an array in API response content for getPotentialCauses. Payload:", payload, "Received content:", result);
+  console.warn("Potential causes key missing, not an array, or result was empty in API response content for getPotentialCauses. Payload:", JSON.stringify(payload), "Received content:", JSON.stringify(result));
   return [];
 };
 
@@ -231,13 +250,10 @@ export const getPotentialSymptoms = async (
   };
 
   const result = await fetchFromAromaRx<PotentialSymptomsContent>(payload);
-  if (result === null) {
-      return [];
-  }
-  if (result && Array.isArray(result.potential_symptoms)) {
+  if (result && result.potential_symptoms && Array.isArray(result.potential_symptoms)) {
       return result.potential_symptoms;
   }
-  console.warn("Potential symptoms key missing or not an array in API response content for getPotentialSymptoms. Payload:", payload, "Received content:", result);
+  console.warn("Potential symptoms key missing, not an array, or result was empty in API response content for getPotentialSymptoms. Payload:", JSON.stringify(payload), "Received content:", JSON.stringify(result));
   return [];
 };
 
@@ -262,13 +278,10 @@ export const getMedicalProperties = async (
   };
   
   const result = await fetchFromAromaRx<MedicalPropertiesContent>(payload);
-  if (result === null) {
-      return { health_concern_in_english: data.healthConcern, therapeutic_properties: [] }; // Default empty structure
-  }
   if (result && result.health_concern_in_english !== undefined && Array.isArray(result.therapeutic_properties)) {
       return result;
   }
-  console.warn("Medical properties structure incorrect in API response content for getMedicalProperties. Payload:", payload, "Received content:", result);
+  console.warn("Medical properties structure incorrect or result was empty in API response content for getMedicalProperties. Payload:", JSON.stringify(payload), "Received content:", JSON.stringify(result));
   return { health_concern_in_english: data.healthConcern, therapeutic_properties: [] };
 };
 
@@ -295,19 +308,10 @@ export const getSuggestedOils = async (
   };
 
   const result = await fetchFromAromaRx<SuggestedOilsContent>(payload);
-  if (result === null) {
-      return { 
-          property_id: therapeuticProperty.property_id, 
-          property_name: therapeuticProperty.property_name,
-          property_name_in_english: therapeuticProperty.property_name_in_english,
-          description: therapeuticProperty.description,
-          suggested_oils: [] 
-        };
-  }
   if (result && result.property_id && Array.isArray(result.suggested_oils)) {
       return result;
   }
-  console.warn("Suggested oils structure incorrect in API response content for getSuggestedOils. Payload:", payload, "Received content:", result);
+  console.warn("Suggested oils structure incorrect or result was empty in API response content for getSuggestedOils. Payload:", JSON.stringify(payload), "Received content:", JSON.stringify(result));
   return { 
       property_id: therapeuticProperty.property_id, 
       property_name: therapeuticProperty.property_name,
@@ -316,3 +320,4 @@ export const getSuggestedOils = async (
       suggested_oils: [] 
     };
 };
+
