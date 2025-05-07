@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Search, ArrowRight, Zap, TriangleAlert, Loader2, Sparkles } from 'lucide-react';
@@ -11,12 +10,9 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 
-import { generateRecipeSuggestions, type GenerateRecipeSuggestionsOutput } from '@/ai/flows/generate-suggestions';
-import { generateRecipe, type GenerateRecipeOutput, type GenerateRecipeInput } from '@/ai/flows/generate-recipe';
 import { cn } from '@/lib/utils';
 import { useRecipeForm } from '@/contexts/RecipeFormContext'; 
 
@@ -26,18 +22,15 @@ const healthConcernSchema = z.object({
 type HealthConcernFormData = z.infer<typeof healthConcernSchema>; 
 
 const suggestionChips = [
-  { label: "Relaxar", category: "comfort food" },
-  { label: "Dormir melhor", category: "light dinner" },
-  { label: "Energia", category: "high protein" },
-  { label: "Rápido", category: "quick meals" },
+  { label: "Relaxar" },
+  { label: "Dormir melhor" },
+  { label: "Energia" },
+  { label: "Rápido" },
 ];
 
 export const RecipeGenerator: React.FC = () => {
-  const [isFetchingSuggestions, setIsFetchingSuggestions] = React.useState(false);
-  const [isGeneratingFullRecipe, setIsGeneratingFullRecipe] = React.useState(false); 
+  const [isLoading, setIsLoading] = React.useState(false); // Generic loading for the main action
   const [error, setError] = React.useState<string | null>(null);
-  const [recipeSuggestions, setRecipeSuggestions] = React.useState<string[]>([]);
-  const [generatedRecipe, setGeneratedRecipe] = React.useState<GenerateRecipeOutput | null>(null);
   
   const router = useRouter(); 
   const { updateFormData, resetFormData, setCurrentStep } = useRecipeForm(); 
@@ -51,65 +44,30 @@ export const RecipeGenerator: React.FC = () => {
     resolver: zodResolver(healthConcernSchema), 
   });
 
-  const handleFetchSuggestions = async (category: string) => {
-    setIsFetchingSuggestions(true);
+  const handleStartRecipeFlow: SubmitHandler<HealthConcernFormData> = async (data) => {
+    setIsLoading(true);
     setError(null);
-    setRecipeSuggestions([]);
-    setGeneratedRecipe(null);
+
     try {
-      const result: GenerateRecipeSuggestionsOutput = await generateRecipeSuggestions({ category });
-      setRecipeSuggestions(result.suggestions);
-    } catch (err) {
-      console.error("Error fetching suggestions:", err);
-      setError("Failed to fetch recipe suggestions. Please try again.");
-    } finally {
-      setIsFetchingSuggestions(false);
+      // Simulate a brief delay if needed, or directly proceed
+      // await new Promise(resolve => setTimeout(resolve, 300)); 
+
+      resetFormData(); 
+      updateFormData({ healthConcern: data.healthConcern });
+      setCurrentStep('demographics'); 
+      router.push('/create-recipe/demographics'); 
+    } catch (err: any) {
+      console.error("Error starting recipe flow:", err);
+      setError(err.message || "Failed to start the recipe creation process. Please try again.");
+      setIsLoading(false);
     }
-  };
-
-  const handleStartRecipeFlow: SubmitHandler<HealthConcernFormData> = (data) => {
-    setIsGeneratingFullRecipe(false); 
-    setIsFetchingSuggestions(false);
-    setError(null);
-    setGeneratedRecipe(null);
-    setRecipeSuggestions([]);
-
-    resetFormData(); 
-    updateFormData({ healthConcern: data.healthConcern });
-    setCurrentStep('demographics'); 
-    router.push('/create-recipe/demographics'); 
+    // setIsLoading(false); // isLoading will be managed by the context in subsequent steps
   };
   
-  const handleGenerateDirectRecipe = async (concern: string) => {
-    setIsGeneratingFullRecipe(true);
-    setError(null);
-    setGeneratedRecipe(null);
-    setRecipeSuggestions([]);
-    try {
-      const input: GenerateRecipeInput = {
-        recipeIdea: concern, 
-        dietaryRestrictions: "None", 
-        availableIngredients: "Basic pantry staples",
-      };
-      const result: GenerateRecipeOutput = await generateRecipe(input);
-      setGeneratedRecipe(result);
-    } catch (err) {
-      console.error("Error generating direct recipe:", err);
-      setError("Failed to generate the recipe. Please try again.");
-    } finally {
-      setIsGeneratingFullRecipe(false);
-    }
-  };
-
   const handleSuggestionChipClick = (label: string) => {
     setValue("healthConcern", label); 
-    handleStartRecipeFlow({ healthConcern: label });
+    handleSubmit(handleStartRecipeFlow)(); // Programmatically submit the form
   };
-
-  const handleSuggestedRecipeClick = (suggestion: string) => {
-    setValue("healthConcern", suggestion); 
-    handleGenerateDirectRecipe(suggestion); 
-  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-full p-4 sm:p-8">
@@ -140,9 +98,9 @@ export const RecipeGenerator: React.FC = () => {
                 size="icon"
                 className="h-9 w-9 bg-aroma-secondary text-primary-foreground rounded-md hover:bg-aroma-secondary/90 focus:ring-aroma-secondary focus:ring-offset-card"
                 aria-label="Criar Receita"
-                disabled={isGeneratingFullRecipe || isFetchingSuggestions}
+                disabled={isLoading}
               >
-                {isGeneratingFullRecipe || isFetchingSuggestions ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
+                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
               </Button>
             </div>
           </div>
@@ -178,60 +136,9 @@ export const RecipeGenerator: React.FC = () => {
           </Alert>
         )}
 
-        {isFetchingSuggestions && (
-          <div className="mt-8 flex flex-col items-center text-muted-foreground">
-            <Loader2 className="h-8 w-8 animate-spin mb-2 text-primary" />
-            <p>Buscando sugestões...</p>
-          </div>
-        )}
-        
-        {recipeSuggestions.length > 0 && (
-          <Card className="mt-8 text-left shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-2xl text-primary">Sugestões de Receitas</CardTitle>
-              <CardDescription>Encontramos algumas ideias para você. Clique em uma para gerar a receita completa ou refinar sua busca.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-3">
-                {recipeSuggestions.map((suggestion, index) => (
-                  <li key={index}>
-                    <Button 
-                      variant="link" 
-                      className="p-0 h-auto text-base text-primary hover:underline"
-                      onClick={() => handleSuggestedRecipeClick(suggestion)} 
-                    >
-                      {suggestion}
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        )}
+        {/* Removed UI for displaying recipe suggestions and directly generated recipe */}
 
-        {generatedRecipe && ( 
-          <Card className="mt-8 text-left shadow-xl">
-            <CardHeader>
-              <CardTitle className="text-3xl font-bold text-primary">{generatedRecipe.recipeName}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <h3 className="text-xl font-semibold mb-2 text-foreground">Ingredientes:</h3>
-                <ul className="list-disc list-inside space-y-1 text-muted-foreground whitespace-pre-line">
-                  {generatedRecipe.ingredients.split('\n').map((item, index) => item.trim() && <li key={index}>{item.trim().replace(/^- /, '')}</li>)}
-                </ul>
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold mb-2 text-foreground">Instruções:</h3>
-                <ol className="list-decimal list-inside space-y-2 text-muted-foreground whitespace-pre-line">
-                 {generatedRecipe.instructions.split('\n').map((step, index) => step.trim() && <li key={index}>{step.trim().replace(/^\d+\.\s*/, '')}</li>)}
-                </ol>
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
   );
 };
-
