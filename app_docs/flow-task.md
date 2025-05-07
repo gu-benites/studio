@@ -3,7 +3,7 @@
 This document outlines the tasks required to implement the main feature of the AromaChat application: creating a personalized essential oil recipe based on a user's health concern. This plan is derived from `recipe_creation.md`, `01_api_calls_n_responses.txt`, and assumes a standard multi-step form flow as might be detailed in `aromachat-flowchart.mermaid`.
 
 ## Overall Goal
-Implement a multi-step, guided user flow that collects health-related information, interacts with an external API to fetch relevant data (causes, symptoms, properties, oils), and ultimately (in a future phase) generates a personalized essential oil recipe.
+Implement a multi-step, guided user flow that collects health-related information, interacts with an internal backend proxy to fetch relevant data (causes, symptoms, properties, oils) from an external API, and ultimately (in a future phase) generates a personalized essential oil recipe.
 
 ---
 
@@ -48,14 +48,13 @@ Implement a multi-step, guided user flow that collects health-related informatio
         - Implemented using Zod in `DemographicsStep.tsx`.
     - [x] Subtask 2.1.3: On "Next" button click:
         - Store demographic data in the main state (`RecipeFormContext`) and `sessionStorage`.
-        - Trigger the API call to fetch "PotentialCauses".
+        - Trigger the API call to fetch "PotentialCauses" via the internal backend proxy.
 
-- [x] **Task 2.2: API Integration - PotentialCauses**
-    - [x] Subtask 2.2.1: Create an API client/service function to call the external API (`https://webhook.daianefreitas.com/webhook/10p_build_recipe_protocols`).
-        - Implemented in `src/services/aromarx-api-client.ts`.
-    - [x] Subtask 2.2.2: Implement the "PotentialCauses" API call:
-        - Method: `POST`
-        - Request Body (as per `01_api_calls_n_responses.txt`):
+- [x] **Task 2.2: API Integration - PotentialCauses (via Backend Proxy)**
+    - [x] Subtask 2.2.1: Create an internal API route handler (e.g., `/api/aromarx/route.ts`) that acts as a proxy. This backend route will store and use the API key to call the external AromaRx API.
+        - Implemented in `src/app/api/aromarx/route.ts`.
+    - [x] Subtask 2.2.2: Update the API client/service function (`src/services/aromarx-api-client.ts`) to call this internal backend proxy endpoint for "PotentialCauses".
+        - Request Body (sent to internal proxy, then forwarded to external API as per `01_api_calls_n_responses.txt`):
             ```json
             {
               "health_concern": "...", // From Step 1
@@ -63,16 +62,16 @@ Implement a multi-step, guided user flow that collects health-related informatio
               "age_category": "...", // API expects 'child' for babies
               "age_specific": "...", // API expects age in years (0,1,2 for babies)
               "step": "PotentialCauses",
-              "user_language": "PT_BR" 
+              "user_language": "PT_BR"
             }
             ```
         - Implemented in `getPotentialCauses` in `aromarx-api-client.ts`.
-    - [x] Subtask 2.2.3: Handle API response:
-        - Parse the JSON response (expected: array of cause objects).
+    - [x] Subtask 2.2.3: Handle API response from the internal proxy:
+        - Parse the JSON response (expected: array of cause objects, proxied from external API).
         - Store the `potential_causes` array in the main state (`RecipeFormContext`) and `sessionStorage` (e.g., key: `potentialCausesResult`).
     - [x] Subtask 2.2.4: Implement loading state UI while the API call is in progress.
         - Handled by `RecipeFormContext`'s `isLoading` state and reflected in `RecipeStepLayout` and `DemographicsStep`.
-    - [x] Subtask 2.2.5: Implement error handling for the API call (network errors, non-200 responses, malformed JSON). Display user-friendly error messages.
+    - [x] Subtask 2.2.5: Implement error handling for the internal proxy API call (network errors, non-200 responses, malformed JSON). Display user-friendly error messages.
         - Handled in `aromarx-api-client.ts` and `RecipeFormContext`.
     - [x] Subtask 2.2.6: If API call is successful, transition the user to the "Causes Selection" step.
         - Router push to `/create-recipe/causes` in `DemographicsStep.tsx`.
@@ -93,12 +92,12 @@ Implement a multi-step, guided user flow that collects health-related informatio
         - Implemented in `CausesStep.tsx` using local state `selectedCausesState`.
     - [x] Subtask 3.1.3: On "Next" button click:
         - Store selected causes (and any custom causes) in the main state (`RecipeFormContext`) and `sessionStorage`.
-        - Trigger the API call to fetch "PotentialSymptoms".
+        - Trigger the API call to fetch "PotentialSymptoms" via the internal backend proxy.
 
-- [x] **Task 3.2: API Integration - PotentialSymptoms**
-    - [x] Subtask 3.2.1: Implement the "PotentialSymptoms" API call:
-        - Method: `POST`
-        - Request Body (as per `01_api_calls_n_responses.txt`):
+- [x] **Task 3.2: API Integration - PotentialSymptoms (via Backend Proxy)**
+    - [x] Subtask 3.2.1: Implement the "PotentialSymptoms" API call via the internal proxy:
+        - The API client in `aromarx-api-client.ts` will send a POST request to `/api/aromarx/route.ts`.
+        - Request Body (sent to internal proxy, then forwarded to external API):
             ```json
             {
               // ...all previous data (health_concern, demographics)
@@ -108,7 +107,7 @@ Implement a multi-step, guided user flow that collects health-related informatio
             }
             ```
         - Implemented in `getPotentialSymptoms` in `aromarx-api-client.ts`.
-    - [x] Subtask 3.2.2: Handle API response:
+    - [x] Subtask 3.2.2: Handle API response from the internal proxy:
         - Parse the JSON response (expected: array of symptom objects).
         - Store the `potential_symptoms` array in the main state (`RecipeFormContext`) and `sessionStorage` (e.g., key: `potentialSymptomsResult`).
     - [x] Subtask 3.2.3: Implement loading state UI.
@@ -134,12 +133,11 @@ Implement a multi-step, guided user flow that collects health-related informatio
         - Implemented in `SymptomsStep.tsx` using local state `selectedSymptomsState`.
     - [x] Subtask 4.1.3: On "Next" button click:
         - Store selected symptoms in the main state (`RecipeFormContext`) and `sessionStorage`.
-        - Trigger the API call to fetch "MedicalProperties".
+        - Trigger the API call to fetch "MedicalProperties" via the internal backend proxy.
 
-- [x] **Task 4.2: API Integration - MedicalProperties**
-    - [x] Subtask 4.2.1: Implement the "MedicalProperties" API call:
-        - Method: `POST`
-        - Request Body (as per `01_api_calls_n_responses.txt`):
+- [x] **Task 4.2: API Integration - MedicalProperties (via Backend Proxy)**
+    - [x] Subtask 4.2.1: Implement the "MedicalProperties" API call via the internal proxy:
+        - Request Body (sent to internal proxy, then forwarded):
             ```json
             {
               // ...all previous data (health_concern, demographics, selected_causes)
@@ -149,7 +147,7 @@ Implement a multi-step, guided user flow that collects health-related informatio
             }
             ```
         - Implemented in `getMedicalProperties` in `aromarx-api-client.ts`.
-    - [x] Subtask 4.2.2: Handle API response:
+    - [x] Subtask 4.2.2: Handle API response from the internal proxy:
         - Parse the JSON response (expected: object with `health_concern_in_english` and `therapeutic_properties` array).
         - Store the `health_concern_in_english` and `therapeutic_properties` array in the main state (`RecipeFormContext`) and `sessionStorage` (e.g., key: `medicalPropertiesResult`).
     - [x] Subtask 4.2.3: Implement loading state UI.
@@ -173,14 +171,13 @@ Implement a multi-step, guided user flow that collects health-related informatio
             - A mechanism to trigger fetching oils (automatic on load of this step for all properties).
             - Area to display suggested oils (populated by Task 5.2).
             - "Next" button (enabled after oils are fetched/selected - currently leads to placeholder).
-    - [x] Subtask 5.1.2: Upon loading this step, iterate through each therapeutic property from `medicalPropertiesResult` and trigger an API call for "SuggestedOils".
+    - [x] Subtask 5.1.2: Upon loading this step, iterate through each therapeutic property from `medicalPropertiesResult` and trigger an API call for "SuggestedOils" via the internal backend proxy.
         - Implemented in `PropertiesOilsStep.tsx` using `useEffect` and `fetchAllSuggestedOils`.
 
-- [x] **Task 5.2: API Integration - SuggestedOils (Iterative)**
+- [x] **Task 5.2: API Integration - SuggestedOils (Iterative, via Backend Proxy)**
     - [x] Subtask 5.2.1: For each `therapeutic_property` object in `medicalPropertiesResult.therapeutic_properties`:
-        - Implement the "SuggestedOils" API call:
-            - Method: `POST`
-            - Request Body (as per `01_api_calls_n_responses.txt`):
+        - Implement the "SuggestedOils" API call via the internal proxy:
+            - Request Body (sent to internal proxy, then forwarded):
                 ```json
                 {
                   // ...all previous data (health_concern, demographics, selected_causes, selected_symptoms)
@@ -190,7 +187,7 @@ Implement a multi-step, guided user flow that collects health-related informatio
                 }
                 ```
             - Implemented in `getSuggestedOils` in `aromarx-api-client.ts`.
-        - Handle API response:
+        - Handle API response from the internal proxy:
             - Parse the JSON response (expected: object containing `property_id`, `property_name`, and `suggested_oils` array for that property).
             - Store/append these suggested oils, associating them with their respective property, in the main state (`RecipeFormContext`) and `sessionStorage` (e.g., key: `suggestedOilsByProperty`, which is an object mapping property_id to its oils).
         - Implement loading state UI (global `isFetchingOils` state for all oil fetching in `PropertiesOilsStep`).
@@ -212,9 +209,9 @@ Implement a multi-step, guided user flow that collects health-related informatio
 
 ## Phase 6: Final Recipe Generation (Placeholder for Future Implementation)
 
-- [ ] **Task 6.1: (Future) API Integration - CreateRecipe**
+- [ ] **Task 6.1: (Future) API Integration - CreateRecipe (via Backend Proxy)**
     - [ ] Subtask 6.1.1: Define the request/response for a "CreateRecipe" step with the external API provider (not currently in `01_api_calls_n_responses.txt`).
-    - [ ] Subtask 6.1.2: Implement the "CreateRecipe" API call.
+    - [ ] Subtask 6.1.2: Implement the "CreateRecipe" API call via the internal proxy.
     - [ ] Subtask 6.1.3: Handle API response (the final recipe details).
     - [ ] Subtask 6.1.4: Implement loading and error handling.
 
@@ -231,7 +228,7 @@ Implement a multi-step, guided user flow that collects health-related informatio
 - [x] **Task 7.1: Overall Flow Navigation**
     - [x] Subtask 7.1.1: Ensure "Previous" buttons correctly navigate to the prior step and repopulate data from state/`sessionStorage`.
         - Implemented via `RecipeStepLayout` and router.
-    - [x] Subtask 7.1.2: Implement a progress indicator (e.g., stepper component) to show the user their current position in the flow. 
+    - [x] Subtask 7.1.2: Implement a progress indicator (e.g., stepper component) to show the user their current position in the flow.
         - Basic progress bar implemented in `RecipeStepLayout`.
     - [x] Subtask 7.1.3: Ensure the UI is responsive across different screen sizes.
         - Basic responsiveness handled by ShadCN components and Tailwind.
@@ -261,4 +258,3 @@ Implement a multi-step, guided user flow that collects health-related informatio
 *   Accessibility (ARIA attributes, keyboard navigation) should be considered throughout UI development.
 
 This task list will be updated as development progresses and more insights are gained.
-

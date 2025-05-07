@@ -1,10 +1,6 @@
 
 import type { RecipeFormData } from '@/contexts/RecipeFormContext';
 
-// Use NEXT_PUBLIC_ prefixed environment variables for client-side access
-const BASE_URL = process.env.NEXT_PUBLIC_AROMARX_BASE_URL;
-const API_KEY = process.env.NEXT_PUBLIC_AROMARX_API_KEY;
-
 // Define types for API responses based on 01_api_calls_n_responses.txt
 interface PotentialCause {
   cause_name: string;
@@ -95,38 +91,35 @@ type ApiRequestPayload =
   | MedicalPropertiesPayload 
   | SuggestedOilsPayload;
 
-// Generic fetch function
-async function fetchFromAromaRx<T>(payload: ApiRequestPayload): Promise<T> {
-  if (!payload || Object.keys(payload).length === 0) {
-    console.error("fetchFromAromaRx called with an empty or null payload. This is not allowed. Payload:", JSON.stringify(payload));
-    throw new Error("Internal error: API client called with empty payload.");
-  }
+// Internal API proxy endpoint
+const INTERNAL_API_PROXY_URL = '/api/aromarx';
 
-  if (!BASE_URL || !API_KEY) {
-    console.error("API base URL or API key is not configured. Check .env.local and ensure variables are prefixed with NEXT_PUBLIC_");
-    throw new Error("API base URL or API key is not configured.");
+// Generic fetch function to call the internal API proxy
+async function fetchFromInternalApi<T>(payload: ApiRequestPayload): Promise<T> {
+  if (!payload || Object.keys(payload).length === 0) {
+    console.error("fetchFromInternalApi called with an empty or null payload. This is not allowed. Payload:", JSON.stringify(payload));
+    throw new Error("Internal error: API client called with empty payload.");
   }
 
   let response;
   try {
-    response = await fetch(BASE_URL, {
+    response = await fetch(INTERNAL_API_PROXY_URL, {
       method: 'POST',
       headers: {
-        'apikey': API_KEY,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
     });
   } catch (networkError: any) {
-    console.error("Network error during API request:", networkError.message, "Payload:", JSON.stringify(payload));
+    console.error("Network error during internal API request:", networkError.message, "Payload:", JSON.stringify(payload));
     throw new Error(`Network error: ${networkError.message}`);
   }
 
   if (!response.ok) {
-    let errorMessage = `API request failed with status ${response.status}`;
+    let errorMessage = `Internal API request failed with status ${response.status}`;
     try {
       const errorData = await response.json();
-      errorMessage += `: ${errorData.message || JSON.stringify(errorData)}`;
+      errorMessage += `: ${errorData.message || errorData.error || JSON.stringify(errorData)}`;
     } catch (e) {
       try {
         const errorText = await response.text();
@@ -135,43 +128,33 @@ async function fetchFromAromaRx<T>(payload: ApiRequestPayload): Promise<T> {
         // Silent
       }
     }
-    console.error("API Error (non-200 OK):", errorMessage, "Payload:", JSON.stringify(payload));
+    console.error("Internal API Error (non-200 OK):", errorMessage, "Payload:", JSON.stringify(payload));
     throw new Error(errorMessage);
   }
 
   const contentType = response.headers.get("content-type");
   if (!contentType || !contentType.includes("application/json")) {
     const rawText = await response.text();
-    console.error("API response was not JSON (Status OK). Content-Type:", contentType, "Raw text:", rawText.substring(0, 500) + "...", "Payload:", JSON.stringify(payload));
-    throw new Error("API returned non-JSON response. Check console.");
+    console.error("Internal API response was not JSON (Status OK). Content-Type:", contentType, "Raw text:", rawText.substring(0, 500) + "...", "Payload:", JSON.stringify(payload));
+    throw new Error("Internal API returned non-JSON response. Check console.");
   }
 
   let data: any;
   try {
     data = await response.json();
   } catch (e: any) {
-    console.error("Failed to parse API JSON response (Status OK). Error:", e.message, "Payload:", JSON.stringify(payload));
-    throw new Error("Failed to parse API JSON response. Check console.");
+    console.error("Failed to parse internal API JSON response (Status OK). Error:", e.message, "Payload:", JSON.stringify(payload));
+    throw new Error("Failed to parse internal API JSON response. Check console.");
   }
 
+  // The external API returns data in a specific structure, often an array.
+  // We expect the internal proxy to return this structure directly.
+  // The client-side functions (getPotentialCauses, etc.) will extract the relevant 'content' part.
   // Primary expected structure: API returns an object like { message: { content: { ... } } }
-  if (data && typeof data === 'object' && !Array.isArray(data) &&
-      data.message && typeof data.message === 'object' && data.message !== null &&
-      Object.prototype.hasOwnProperty.call(data.message, 'content')) {
-    
-    if (data.message.content !== null && data.message.content !== undefined) {
-      // Even if content is an empty object {}, we return it. Callers must be robust.
-      if (typeof data.message.content === 'object' && Object.keys(data.message.content).length === 0) {
-         console.warn("API response 'content' is an empty object. Returning it as is. Data:", JSON.stringify(data), "Payload:", JSON.stringify(payload));
-      }
-      return data.message.content as T;
-    } else {
-      console.error("API response 'content' field is null or undefined. Data:", JSON.stringify(data), "Payload:", JSON.stringify(payload));
-      throw new Error("API response 'content' field is missing or empty. Check console.");
-    }
-  }
   // Fallback for structure documented in 01_api_calls_n_responses.txt: API returns an array [ { message: { content: { ... } } } ]
-  else if (Array.isArray(data) && data.length > 0) {
+  
+  // Check for the array structure first as per 01_api_calls_n_responses.txt
+  if (Array.isArray(data) && data.length > 0) {
     const firstItem = data[0];
     if (firstItem && typeof firstItem === 'object' && 
         firstItem.message && typeof firstItem.message === 'object' && firstItem.message !== null &&
@@ -181,26 +164,31 @@ async function fetchFromAromaRx<T>(payload: ApiRequestPayload): Promise<T> {
         if (typeof firstItem.message.content === 'object' && Object.keys(firstItem.message.content).length === 0) {
             console.warn("API response (from array) 'content' is an empty object. Data:", JSON.stringify(data), "Payload:", JSON.stringify(payload));
         }
-        return firstItem.message.content as T;
+        return firstItem.message.content as T; // Return the content part
       } else {
         console.error("API response (from array) 'content' field is null or undefined. Data:", JSON.stringify(data), "Payload:", JSON.stringify(payload));
         throw new Error("API response (from array) 'content' field is missing or empty. Check console.");
       }
     }
-  } else if (Array.isArray(data) && data.length === 0) {
-     console.warn("API returned an empty array. Interpreting as no data. Payload:", JSON.stringify(payload));
-     // This case is tricky. For functions expecting T that's an object with keys (e.g. { potential_causes: [] }),
-     // returning null might break them. They expect T.
-     // Let it fall through to the general error, or callers must handle Promise<T | null>.
-     // For now, let it throw, so callers expecting T must be robust or we adjust return type.
-     // Given current callers, they try to access properties on T, so null/{} without those props will fail.
-     // Better to throw here if an empty array means data is missing when T is expected.
-     // However, if T itself can represent "no data" (e.g. an object with an empty array inside), this is an issue.
-     // For now, considering an empty array as an unexpected structure if T is usually an object.
+  } 
+  // Check for direct object structure if not an array (alternative API response structure)
+  else if (data && typeof data === 'object' && !Array.isArray(data) &&
+      data.message && typeof data.message === 'object' && data.message !== null &&
+      Object.prototype.hasOwnProperty.call(data.message, 'content')) {
+    
+    if (data.message.content !== null && data.message.content !== undefined) {
+      if (typeof data.message.content === 'object' && Object.keys(data.message.content).length === 0) {
+         console.warn("API response 'content' is an empty object. Returning it as is. Data:", JSON.stringify(data), "Payload:", JSON.stringify(payload));
+      }
+      return data.message.content as T; // Return the content part
+    } else {
+      console.error("API response 'content' field is null or undefined. Data:", JSON.stringify(data), "Payload:", JSON.stringify(payload));
+      throw new Error("API response 'content' field is missing or empty. Check console.");
+    }
   }
-  
-  console.error("Unexpected API response JSON structure (Status OK). Actual data:", JSON.stringify(data), "Payload:", JSON.stringify(payload));
-  throw new Error("Unexpected API response JSON structure. Check console for actual data received.");
+
+  console.error("Unexpected API response JSON structure from internal proxy (Status OK). Actual data:", JSON.stringify(data), "Payload:", JSON.stringify(payload));
+  throw new Error("Unexpected API response JSON structure from internal proxy. Check console for actual data received.");
 }
 
 // Type for the expected content structure for getPotentialCauses
@@ -221,7 +209,7 @@ export const getPotentialCauses = async (
     user_language: "PT_BR",
   };
   
-  const result = await fetchFromAromaRx<PotentialCausesContent>(payload);
+  const result = await fetchFromInternalApi<PotentialCausesContent>(payload);
 
   if (result && result.potential_causes && Array.isArray(result.potential_causes)) {
     return result.potential_causes;
@@ -249,7 +237,7 @@ export const getPotentialSymptoms = async (
     user_language: "PT_BR",
   };
 
-  const result = await fetchFromAromaRx<PotentialSymptomsContent>(payload);
+  const result = await fetchFromInternalApi<PotentialSymptomsContent>(payload);
   if (result && result.potential_symptoms && Array.isArray(result.potential_symptoms)) {
       return result.potential_symptoms;
   }
@@ -277,7 +265,7 @@ export const getMedicalProperties = async (
     user_language: "PT_BR",
   };
   
-  const result = await fetchFromAromaRx<MedicalPropertiesContent>(payload);
+  const result = await fetchFromInternalApi<MedicalPropertiesContent>(payload);
   if (result && result.health_concern_in_english !== undefined && Array.isArray(result.therapeutic_properties)) {
       return result;
   }
@@ -307,7 +295,7 @@ export const getSuggestedOils = async (
     user_language: "PT_BR",
   };
 
-  const result = await fetchFromAromaRx<SuggestedOilsContent>(payload);
+  const result = await fetchFromInternalApi<SuggestedOilsContent>(payload);
   if (result && result.property_id && Array.isArray(result.suggested_oils)) {
       return result;
   }
@@ -320,4 +308,3 @@ export const getSuggestedOils = async (
       suggested_oils: [] 
     };
 };
-
