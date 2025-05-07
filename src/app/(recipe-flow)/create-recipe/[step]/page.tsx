@@ -37,43 +37,25 @@ const CreateRecipeStepPage = () => {
   }, [step, setCurrentStep]);
   
   useEffect(() => {
-    if (!formData.healthConcern && step && step !== 'demographics') {
-        // Redirect if healthConcern is missing for steps after demographics
+    if (!formData.healthConcern && step && step !== 'demographics' && step !== 'properties') { // Allow properties to load if data exists
         // router.push('/');
-        // console.warn("Health concern not found, redirecting to home.");
+        // console.warn("Health concern not found for this step, consider redirecting.");
     }
   }, [formData.healthConcern, router, step]);
 
   const StepComponent = step ? stepComponents[step] : null;
   const stepTitle = step ? stepTitles[step] || "Etapa Desconhecida" : "Carregando Etapa...";
 
-  // Define onNext handlers for each step that needs custom logic (like API calls)
-  // These will be triggered by the RecipeStepLayout's "Next" button
 
-  const onNextDemographics = useCallback(async () => {
-    // The form submission is handled by DemographicsStep's internal onSubmit
-    // This onNext is for RecipeStepLayout to potentially trigger that submit
-    // We can achieve this by ensuring the Next button in RecipeStepLayout
-    // has type="submit" and targets the form in DemographicsStep.
-    // Or, DemographicsStep can expose a submit function to be called here.
-    // For now, assuming RecipeStepLayout's button can submit the form.
-    // No direct navigation here; DemographicsStep handles it after successful API call.
-  }, []);
-
-
-  const onNextCauses = useCallback(async () => {
-    // Logic from CausesStep's handleSubmit will be invoked by its form being submitted.
-    // CausesStep handles navigation after successful API call.
-  }, []);
-
-  const onNextSymptoms = useCallback(async () => {
-    // Logic from SymptomsStep's handleSubmit.
-    // SymptomsStep handles navigation after successful API call.
-  }, []);
-  
   const onNextProperties = useCallback(async () => {
-    // Logic from PropertiesOilsStep's handleSubmit.
-    alert("Próxima etapa: Geração da Receita (Em Desenvolvimento)");
+    // The PropertiesOilsStep now has an internal submit button for its "Next" action (if any)
+    // and a "Start Over" button. This layout "Next" might not be needed or could trigger that internal submit.
+    const internalSubmitButton = document.getElementById('properties-oils-submit') as HTMLButtonElement | null;
+    if (internalSubmitButton) {
+      internalSubmitButton.click();
+    } else {
+      alert("Ação para 'Próxima Etapa' não implementada em PropertiesOilsStep.");
+    }
   }, []);
 
 
@@ -83,35 +65,46 @@ const CreateRecipeStepPage = () => {
       case 'demographics':
         return {
           previousRoute: '/',
-          onNext: undefined, // Form submission handled by DemographicsStep itself
-          isNextDisabled: !isFormValid, // Disable if form in DemographicsStep is invalid
+          onNext: undefined, 
+          isNextDisabled: !isFormValid, 
         };
       case 'causes':
         return {
           previousRoute: `${basePath}/demographics`,
-          onNext: undefined, // Form submission handled by CausesStep
-          isNextDisabled: !isFormValid, // Use isFormValid from context
+          onNext: undefined, 
+          isNextDisabled: !isFormValid, 
         };
       case 'symptoms':
         return {
           previousRoute: `${basePath}/causes`,
-          onNext: undefined, // Form submission handled by SymptomsStep
-          isNextDisabled: !isFormValid, // Use isFormValid from context
+          onNext: undefined, 
+          isNextDisabled: !isFormValid, 
         }
       case 'properties':
+        // The "Next" functionality is now handled by the "Start Over" button within PropertiesOilsStep
+        // or a future "Generate Recipe" button also within that step.
+        // So, the layout's next button can be hidden.
         return {
             previousRoute: `${basePath}/symptoms`,
-            onNext: onNextProperties,
-            nextButtonText: "Gerar Receita (Em Breve)", // Updated text
-            isNextDisabled: formData.isLoading, // Disable if oils are still being fetched
+            onNext: onNextProperties, // This will trigger the internal submit if it exists
+            nextButtonText: "Gerar Receita (Em Breve)", // This button might not be used if Start Over is primary
+            isNextDisabled: formData.isLoading || isFetchingOils, // Disable if oils are still being fetched or globally loading
+            hideNextButton: true, // Hide the layout's next button for this step
         }
       default:
         return {
             previousRoute: '/',
             isNextDisabled: true,
+            hideNextButton: false,
         };
     }
-  }, [step, isFormValid, formData.isLoading, onNextProperties]);
+  }, [step, isFormValid, formData.isLoading, onNextProperties, formData.suggestedOilsByProperty]); // Added suggestedOilsByProperty dependencies
+
+  // Determine if oils are still fetching for the properties step's next button disable logic
+  const isFetchingOils = step === 'properties' && 
+                        (!formData.suggestedOilsByProperty || 
+                         (formData.medicalPropertiesResult?.therapeutic_properties && Object.keys(formData.suggestedOilsByProperty).length < formData.medicalPropertiesResult.therapeutic_properties.length));
+
 
   if (!step || !StepComponent) {
     return <p className="text-center mt-10">Passo inválido ou não encontrado.</p>;
@@ -123,10 +116,11 @@ const CreateRecipeStepPage = () => {
     <RecipeStepLayout 
         stepTitle={stepTitle}
         previousRoute={navProps.previousRoute}
-        onNext={navProps.onNext} // Pass the onNext handler
+        onNext={navProps.onNext} 
         nextButtonText={navProps.nextButtonText}
-        isNextDisabled={navProps.isNextDisabled} // Control button state
-        formId={step === 'demographics' || step === 'causes' || step === 'symptoms' ? 'current-step-form' : undefined} // Link button to form
+        isNextDisabled={navProps.isNextDisabled} 
+        hideNextButton={navProps.hideNextButton}
+        formId={'current-step-form'} // Keep formId for steps that rely on layout's next button for submission
     >
       <StepComponent />
     </RecipeStepLayout>

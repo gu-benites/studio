@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { ReactNode } from 'react';
@@ -42,6 +43,15 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   const handleNextClick = async () => {
     if (onNext) {
       await onNext();
+    } else {
+      // If onNext is not provided, try to submit the form
+      const formElement = document.getElementById(formId) as HTMLFormElement | null;
+      if (formElement && typeof formElement.requestSubmit === 'function') {
+        formElement.requestSubmit();
+      } else if (formElement && typeof formElement.submit === 'function') {
+        // Fallback for older browsers or if requestSubmit is not available
+        formElement.submit();
+      }
     }
   };
 
@@ -71,7 +81,6 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
             aria-valuemax={100}
           ></div>
         </div>
-        {/* Removed the text display for step count and percentage */}
       </div>
       
       <h1 className="text-3xl font-bold mb-2 text-center text-primary">{stepTitle}</h1>
@@ -100,12 +109,12 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
         
         {!hideNextButton ? (
           <Button 
-            type={onNext ? "button" : "submit"}
-            form={onNext ? undefined : formId}
-            onClick={onNext ? handleNextClick : undefined}
+            type="button" // Changed to button to prevent accidental form submission if formId is present but onNext is used.
+            form={onNext ? undefined : formId} // Only associate with form if onNext is NOT provided
+            onClick={handleNextClick} // Always use this handler
             disabled={isNextDisabled || globalIsLoading}
           >
-            {globalIsLoading ? (
+            {globalIsLoading && !onNext ? ( // Show loader only if it's a form submit driven by layout and globalIsLoading
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <ArrowRight className="mr-2 h-4 w-4" />
@@ -119,3 +128,4 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
 };
 
 export default RecipeStepLayout;
+

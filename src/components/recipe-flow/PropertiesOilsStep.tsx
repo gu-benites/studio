@@ -6,9 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useRecipeForm } from '@/contexts/RecipeFormContext';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Loader2, FlaskConical } from 'lucide-react';
+import { Button } from '@/components/ui/button'; // Import Button
+import { Loader2, FlaskConical, RotateCcw } from 'lucide-react'; // Added RotateCcw for start over
 import { getSuggestedOils } from '@/services/aromarx-api-client';
 import type { RecipeFormData } from '@/contexts/RecipeFormContext';
 
@@ -40,37 +39,25 @@ interface SuggestedOilsForProperty {
 
 const PropertiesOilsStep: React.FC = () => {
   const router = useRouter();
-  const { formData, updateFormData, setCurrentStep, setIsLoading, setError } = useRecipeForm();
+  const { formData, updateFormData, setCurrentStep, setIsLoading, setError, resetFormData } = useRecipeForm();
   
   const [isFetchingOils, setIsFetchingOils] = useState(false);
   const [oilsFetchedFor, setOilsFetchedFor] = useState<Record<string, boolean>>({});
   
-  // This will store the selection of properties for which oils should be fetched/displayed if we add such a selection.
-  // For now, we assume all fetched therapeutic properties are relevant.
   const therapeuticProperties = formData.medicalPropertiesResult?.therapeutic_properties || [];
 
-  // Fetch suggested oils for each therapeutic property when the component mounts or properties change
   const fetchAllSuggestedOils = useCallback(async () => {
-    if (therapeuticProperties.length === 0) return;
+    if (therapeuticProperties.length === 0 || isFetchingOils) return;
 
     setIsFetchingOils(true);
     setError(null);
-    const newSuggestedOilsByProperty: Record<string, SuggestedOilsForProperty> = { ...formData.suggestedOilsByProperty };
+    const newSuggestedOilsByProperty: Record<string, SuggestedOilsForProperty> = { ...(formData.suggestedOilsByProperty || {}) };
     let anyError = false;
 
     for (const prop of therapeuticProperties) {
-      if (oilsFetchedFor[prop.property_id] || newSuggestedOilsByProperty[prop.property_id]) continue; // Skip if already fetched
+      if (oilsFetchedFor[prop.property_id] || newSuggestedOilsByProperty[prop.property_id]) continue; 
 
       try {
-        const apiPayload = {
-          healthConcern: formData.healthConcern,
-          gender: formData.gender,
-          ageCategory: formData.ageCategory,
-          ageSpecific: formData.ageSpecific,
-          selectedCauses: formData.selectedCauses,
-          selectedSymptoms: formData.selectedSymptoms,
-        };
-        // Pass only the required fields for the API from formData
         const oilsData = await getSuggestedOils(
             { healthConcern: formData.healthConcern, gender: formData.gender, ageCategory: formData.ageCategory, ageSpecific: formData.ageSpecific, selectedCauses: formData.selectedCauses, selectedSymptoms: formData.selectedSymptoms },
             prop
@@ -81,26 +68,28 @@ const PropertiesOilsStep: React.FC = () => {
         console.error(`Error fetching oils for property ${prop.property_name}:`, apiError);
         setError(`Falha ao buscar óleos para ${prop.property_name}.`);
         anyError = true;
-        // Decide if we should stop or continue for other properties
       }
     }
     updateFormData({ suggestedOilsByProperty: newSuggestedOilsByProperty });
     setIsFetchingOils(false);
-  }, [therapeuticProperties, formData, updateFormData, setError, oilsFetchedFor]);
+  }, [therapeuticProperties, formData.healthConcern, formData.gender, formData.ageCategory, formData.ageSpecific, formData.selectedCauses, formData.selectedSymptoms, formData.suggestedOilsByProperty, updateFormData, setError, oilsFetchedFor, isFetchingOils]);
 
   useEffect(() => {
-    fetchAllSuggestedOils();
-  }, [fetchAllSuggestedOils]);
+    // Only fetch if not already fetching and properties are available
+    if (therapeuticProperties.length > 0 && !isFetchingOils && Object.keys(oilsFetchedFor).length < therapeuticProperties.length) {
+        fetchAllSuggestedOils();
+    }
+  }, [therapeuticProperties, fetchAllSuggestedOils, isFetchingOils, oilsFetchedFor]);
 
 
-  const handleSubmit = async () => {
-    // This is where we would gather selected oils and proceed to the final recipe step
-    // For now, it's a placeholder.
-    console.log("Final selected oils (if any) and other data:", formData);
-    // Example: updateFormData({ finalSelectedOils: ... });
-    // setCurrentStep('final-recipe');
-    // router.push('/create-recipe/final-recipe');
+  const handleSubmitNext = async () => {
+    // Placeholder for future "Generate Recipe" step
     alert("Próxima etapa: Geração da Receita (Em Desenvolvimento)");
+  };
+
+  const handleStartOver = () => {
+    resetFormData();
+    router.push('/');
   };
 
   if (!formData.medicalPropertiesResult) {
@@ -116,7 +105,7 @@ const PropertiesOilsStep: React.FC = () => {
         )}
       </p>
 
-      {isFetchingOils && (
+      {isFetchingOils && Object.keys(oilsFetchedFor).length < therapeuticProperties.length && (
         <div className="flex items-center justify-center py-4">
           <Loader2 className="h-6 w-6 animate-spin mr-2 text-primary" />
           <p>Buscando óleos essenciais sugeridos...</p>
@@ -139,7 +128,13 @@ const PropertiesOilsStep: React.FC = () => {
               
               <div className="mt-3 pt-3 border-t">
                 <h4 className="text-md font-semibold mb-2">Óleos Sugeridos:</h4>
-                {formData.suggestedOilsByProperty && formData.suggestedOilsByProperty[prop.property_id] ? (
+                {isFetchingOils && !oilsFetchedFor[prop.property_id] && (
+                     <div className="flex items-center text-sm text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Buscando...
+                    </div>
+                )}
+                {!isFetchingOils && formData.suggestedOilsByProperty && formData.suggestedOilsByProperty[prop.property_id] ? (
                   formData.suggestedOilsByProperty[prop.property_id].suggested_oils.length > 0 ? (
                     <ul className="space-y-2">
                       {formData.suggestedOilsByProperty[prop.property_id].suggested_oils.map(oil => (
@@ -151,19 +146,28 @@ const PropertiesOilsStep: React.FC = () => {
                     </ul>
                   ) : <p className="text-sm text-muted-foreground">Nenhum óleo específico sugerido para esta propriedade.</p>
                 ) : (
-                  oilsFetchedFor[prop.property_id] ? <p className="text-sm text-muted-foreground">Nenhum óleo específico sugerido para esta propriedade.</p> : <p className="text-sm text-muted-foreground">Buscando óleos...</p>
+                  !isFetchingOils && oilsFetchedFor[prop.property_id] && <p className="text-sm text-muted-foreground">Nenhum óleo específico sugerido para esta propriedade.</p>
                 )}
               </div>
             </AccordionContent>
           </AccordionItem>
         ))}
       </Accordion>
-       <button onClick={handleSubmit} className="hidden" aria-hidden="true">
+      
+      {/* This button is now for explicit Next step for the layout if needed */}
+      <button onClick={handleSubmitNext} className="hidden" aria-hidden="true" id="properties-oils-submit">
         Internal Submit Trigger for Layout
       </button>
+
+      {/* Start Over Button */}
+      <div className="mt-8 flex justify-center">
+        <Button onClick={handleStartOver} variant="outline">
+          <RotateCcw className="mr-2 h-4 w-4" />
+          Iniciar Nova Consulta
+        </Button>
+      </div>
     </div>
   );
 };
 
 export default PropertiesOilsStep;
-
