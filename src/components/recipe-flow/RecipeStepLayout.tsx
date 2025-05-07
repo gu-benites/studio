@@ -121,8 +121,8 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
         <footer 
           className={cn(
             "fixed bottom-0 z-10 bg-background border-t border-border",
-            FOOTER_HEIGHT_CLASS,
-            "flex items-center justify-between px-4 sm:px-6",
+            FOOTER_HEIGHT_CLASS, // Footer has a fixed height
+            "flex items-center justify-between px-4 sm:px-6 py-2", // Added py-2 for internal padding
             "right-0", 
             isDesktopClientView 
               ? (desktopSidebarIsEffectivelyExpanded ? "md:left-[287px]" : "md:left-[48px]") 
@@ -131,7 +131,7 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
         >
           <div className="flex gap-2 items-center h-full">
             {!hidePreviousButton && currentStep !== FLOW_STEPS[0] && (
-              <Button variant="outline" onClick={handlePrevious} disabled={globalIsLoading} className="h-full px-4">
+              <Button variant="outline" onClick={handlePrevious} disabled={globalIsLoading} className="h-full px-4"> 
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Anterior
               </Button>
@@ -146,13 +146,13 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
           )}
           
           {!hideNextButton ? (
-            <div className="h-full">
+            <div className="h-full"> 
               <Button 
                 type="button" 
                 form={onNext ? undefined : formId} 
                 onClick={handleNextClick} 
                 disabled={isNextDisabled || globalIsLoading}
-                className="h-full px-4"
+                className="h-full px-4" // Button takes full height of its parent
               >
                 {globalIsLoading && !onNext ? ( 
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
