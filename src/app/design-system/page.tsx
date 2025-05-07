@@ -32,7 +32,7 @@ const DesignSystemPage: React.FC = () => {
   ];
 
   return (
-    <div className="container mx-auto py-10 px-4 bg-gray-100 font-['Poppins',_sans-serif]" style={{ color: aromaColors.text }}>
+    <div className="container mx-auto py-10 px-4 bg-gray-100 font-['Poppins', sans-serif]" style={{ color: aromaColors.text }}>
       <h1 className="text-3xl md:text-4xl font-bold mb-2" style={{ color: aromaColors.text }}>AromaChat Design System</h1>
       <p className="mb-10" style={{ color: aromaColors.textMuted }}>Showcasing styles for Material UI React components based on PRD guidelines (v2).</p>
 
@@ -116,14 +116,14 @@ const DesignSystemPage: React.FC = () => {
             <h3 className="text-xl font-medium p-6 pb-0">Loading Indicator</h3>
             <div className="p-6 pt-6 flex justify-center items-center min-h-[150px]">
               <div className="w-20 h-20 relative">
-                <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing" style={{ width: '40%', height: '40%', backgroundColor: aromaColors.primary, opacity: 0.85, animationDelay: '-0.1s' }}></div>
-                <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing" style={{ width: '47.5%', height: '47.5%', backgroundColor: aromaColors.primary, opacity: 0.75, animationDelay: '0s' }}></div>
-                <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing" style={{ width: '55%', height: '55%', backgroundColor: aromaColors.primary, opacity: 0.65, animationDelay: '0.1s' }}></div>
-                <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing" style={{ width: '62.5%', height: '62.5%', backgroundColor: aromaColors.primary, opacity: 0.55, animationDelay: '0.2s' }}></div>
-                <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing" style={{ width: '70%', height: '70%', backgroundColor: aromaColors.primary, opacity: 0.45, animationDelay: '0.3s' }}></div>
-                <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing" style={{ width: '77.5%', height: '77.5%', backgroundColor: aromaColors.primary, opacity: 0.35, animationDelay: '0.4s' }}></div>
-                <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing" style={{ width: '85%', height: '85%', backgroundColor: aromaColors.primary, opacity: 0.25, animationDelay: '0.5s' }}></div>
-                <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing" style={{ width: '92.5%', height: '92.5%', backgroundColor: aromaColors.primary, opacity: 0.15, animationDelay: '0.6s' }}></div>
+                <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing" style={{ width: '40%', height: '40%', backgroundColor: aromaColors.primary, opacity: 0.85, animationDelay: '-0.1s', transform: 'translate(-50%, -50%) scale(1)' }}></div>
+                <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing" style={{ width: '47.5%', height: '47.5%', backgroundColor: aromaColors.primary, opacity: 0.75, animationDelay: '0s', transform: 'translate(-50%, -50%) scale(1)' }}></div>
+                <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing" style={{ width: '55%', height: '55%', backgroundColor: aromaColors.primary, opacity: 0.65, animationDelay: '0.1s', transform: 'translate(-50%, -50%) scale(1)' }}></div>
+                <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing" style={{ width: '62.5%', height: '62.5%', backgroundColor: aromaColors.primary, opacity: 0.55, animationDelay: '0.2s', transform: 'translate(-50%, -50%) scale(1)' }}></div>
+                <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing" style={{ width: '70%', height: '70%', backgroundColor: aromaColors.primary, opacity: 0.45, animationDelay: '0.3s', transform: 'translate(-50%, -50%) scale(1)' }}></div>
+                <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing" style={{ width: '77.5%', height: '77.5%', backgroundColor: aromaColors.primary, opacity: 0.35, animationDelay: '0.4s', transform: 'translate(-50%, -50%) scale(1)' }}></div>
+                <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing" style={{ width: '85%', height: '85%', backgroundColor: aromaColors.primary, opacity: 0.25, animationDelay: '0.5s', transform: 'translate(-50%, -50%) scale(1)' }}></div>
+                <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing" style={{ width: '92.5%', height: '92.5%', backgroundColor: aromaColors.primary, opacity: 0.15, animationDelay: '0.6s', transform: 'translate(-50%, -50%) scale(1)' }}></div>
               </div>
             </div>
             <p className="text-sm p-6 pt-0 text-center" style={{ color: aromaColors.textMuted }}>Represents: Custom loading component or styled MUI `<CircularProgress>`.</p>
@@ -191,13 +191,13 @@ const DesignSystemPage: React.FC = () => {
             <h3 className="text-lg font-medium mb-3">Standard Variants</h3>
             <div className="flex flex-wrap gap-4 items-center">
               <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 text-white shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2" style={{ backgroundColor: aromaColors.primary, '--tw-ring-color': aromaColors.primary }}>Primary Contained</button>
-              <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 bg-white hover:bg-opacity-10 focus:outline-none focus:ring-2 focus:ring-offset-2" style={{ border: `1px solid ${aromaColors.primary}`, color: aromaColors.primary, '--tw-ring-color': aromaColors.primary }}>Primary Outlined</button>
-              <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 hover:bg-opacity-10 focus:outline-none focus:ring-2 focus:ring-offset-2" style={{ color: aromaColors.primary, '--tw-ring-color': aromaColors.primary }}>Primary Text</button>
+              <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 bg-white hover:bg-opacity-10 focus:outline-none focus:ring-2 focus:ring-offset-2" style={{ border: `1px solid ${aromaColors.primary}`, color: aromaColors.primary, '--tw-ring-color': aromaColors.primary, backgroundColor: `rgba(${parseInt(aromaColors.primary.slice(1,3),16)},${parseInt(aromaColors.primary.slice(3,5),16)},${parseInt(aromaColors.primary.slice(5,7),16)},0.0)`}} onMouseOver={e => e.currentTarget.style.backgroundColor = `rgba(${parseInt(aromaColors.primary.slice(1,3),16)},${parseInt(aromaColors.primary.slice(3,5),16)},${parseInt(aromaColors.primary.slice(5,7),16)},0.1)`} onMouseOut={e => e.currentTarget.style.backgroundColor = `rgba(${parseInt(aromaColors.primary.slice(1,3),16)},${parseInt(aromaColors.primary.slice(3,5),16)},${parseInt(aromaColors.primary.slice(5,7),16)},0.0)`}>Primary Outlined</button>
+              <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 hover:bg-opacity-10 focus:outline-none focus:ring-2 focus:ring-offset-2" style={{ color: aromaColors.primary, '--tw-ring-color': aromaColors.primary, backgroundColor: 'transparent' }} onMouseOver={e => e.currentTarget.style.backgroundColor = `rgba(${parseInt(aromaColors.primary.slice(1,3),16)},${parseInt(aromaColors.primary.slice(3,5),16)},${parseInt(aromaColors.primary.slice(5,7),16)},0.1)`} onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>Primary Text</button>
             </div>
             <p className="text-sm mt-2" style={{ color: aromaColors.textMuted }}>Represents: Standard MUI `<Button>` variants.</p>
             <div className="flex flex-wrap gap-4 items-center mt-4">
               <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 text-white shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2" style={{ backgroundColor: aromaColors.secondary, '--tw-ring-color': aromaColors.secondary }}>Secondary Contained</button>
-              <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 bg-white hover:bg-opacity-10 focus:outline-none focus:ring-2 focus:ring-offset-2" style={{ border: `1px solid ${aromaColors.secondary}`, color: aromaColors.secondary, '--tw-ring-color': aromaColors.secondary }}>Secondary Outlined</button>
+              <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 bg-white hover:bg-opacity-10 focus:outline-none focus:ring-2 focus:ring-offset-2" style={{ border: `1px solid ${aromaColors.secondary}`, color: aromaColors.secondary, '--tw-ring-color': aromaColors.secondary, backgroundColor: `rgba(${parseInt(aromaColors.secondary.slice(1,3),16)},${parseInt(aromaColors.secondary.slice(3,5),16)},${parseInt(aromaColors.secondary.slice(5,7),16)},0.0)`}} onMouseOver={e => e.currentTarget.style.backgroundColor = `rgba(${parseInt(aromaColors.secondary.slice(1,3),16)},${parseInt(aromaColors.secondary.slice(3,5),16)},${parseInt(aromaColors.secondary.slice(5,7),16)},0.1)`} onMouseOut={e => e.currentTarget.style.backgroundColor = `rgba(${parseInt(aromaColors.secondary.slice(1,3),16)},${parseInt(aromaColors.secondary.slice(3,5),16)},${parseInt(aromaColors.secondary.slice(5,7),16)},0.0)`}>Secondary Outlined</button>
             </div>
             <p className="text-sm mt-2" style={{ color: aromaColors.textMuted }}>Represents: Standard MUI `<Button>` variants using `color="secondary"`.</p>
           </div>
@@ -224,12 +224,12 @@ const DesignSystemPage: React.FC = () => {
                 className="border border-gray-300 p-px rounded-[1.75rem] group-hover:border-transparent group-focus-within:border-transparent transition-all duration-200"
                 style={{
                   backgroundImage: 'var(--input-gradient, none)',
-                  '--input-gradient': `linear-gradient(to right, ${aromaColors.gradStart}, ${aromaColors.gradEnd})`
+                  // '--input-gradient': `linear-gradient(to right, ${aromaColors.gradStart}, ${aromaColors.gradEnd})` // This will be controlled by JS
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.borderColor = 'transparent'}
-                onMouseLeave={(e) => {if (!e.currentTarget.contains(document.activeElement)) e.currentTarget.style.borderColor = '#d1d5db'}}
-                onFocusCapture={(e) => e.currentTarget.style.borderColor = 'transparent'}
-                onBlurCapture={(e) => {if (!e.currentTarget.contains(document.activeElement)) e.currentTarget.style.borderColor = '#d1d5db'}}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundImage = `linear-gradient(to right, ${aromaColors.gradStart}, ${aromaColors.gradEnd})`}
+                onMouseLeave={(e) => {if (!e.currentTarget.querySelector('input:focus')) e.currentTarget.style.backgroundImage = 'none'}}
+                onFocusCapture={(e) => e.currentTarget.style.backgroundImage = `linear-gradient(to right, ${aromaColors.gradStart}, ${aromaColors.gradEnd})`}
+                onBlurCapture={(e) => {if (!e.currentTarget.contains(document.activeElement)) e.currentTarget.style.backgroundImage = 'none'}}
               >
                 <div className="relative">
                   <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
@@ -254,10 +254,10 @@ const DesignSystemPage: React.FC = () => {
           <div className="card bg-white rounded-lg border border-gray-200 shadow-card">
             <h3 className="text-xl font-medium p-6 pb-0">Alert Example</h3>
             <div className="p-6">
-              <div className="relative w-full rounded-lg border p-4" style={{ backgroundColor: aromaColors.alertBg, borderColor: aromaColors.alertBorder }}>
-                <LucideTriangleAlert className="absolute left-4 top-4 h-4 w-4" style={{ color: aromaColors.alertIcon }}/>
-                <div className="pl-7 text-sm [&_p]:leading-relaxed" style={{ color: aromaColors.alertText }}>
-                  Estamos com alta demanda. Pode haver pequenos atrasos nas sugestões. Obrigada!
+              <div className="relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4" style={{ backgroundColor: aromaColors.alertBg, borderColor: aromaColors.alertBorder }}>
+                <LucideTriangleAlert className="h-4 w-4" style={{ color: aromaColors.alertIcon }}/>
+                <div className="text-sm [&_p]:leading-relaxed" style={{ color: aromaColors.alertText }}>
+                   Estamos com alta demanda. Pode haver pequenos atrasos nas sugestões. Obrigada!
                 </div>
               </div>
               <p className="text-sm mt-2" style={{ color: aromaColors.textMuted }}>Represents: MUI `<Alert severity="warning">`.</p>
@@ -281,9 +281,9 @@ const DesignSystemPage: React.FC = () => {
       
       {/* Layout Components Section */}
       <section className="mb-12">
-        <h2 className="text-2xl font-semibold text-aroma-text mb-4">Layout Components (Conceptual)</h2>
+        <h2 className="text-2xl font-semibold mb-4" style={{ color: aromaColors.text }}>Layout Components (Conceptual)</h2>
         <div className="card bg-white rounded-lg border border-gray-200 shadow-card">
-            <div className="p-6 space-y-4 text-aroma-text">
+            <div className="p-6 space-y-4" style={{ color: aromaColors.text }}>
                <p>Layout structure will follow `01_saas_template.md` using MUI components:</p>
                 <ul className="list-disc pl-5 space-y-1 text-sm">
                     <li>**Sidebar:** MUI `<Drawer>` component.</li>
@@ -292,7 +292,7 @@ const DesignSystemPage: React.FC = () => {
                     <li>**Modals:** MUI `<Dialog>` for confirmations.</li>
                     <li>**Cards:** MUI `<Card>` (as used in this design system).</li>
                </ul>
-                <p className="text-sm text-aroma-text-muted">Refer to `01_saas_template.md` for layout details.</p>
+                <p className="text-sm" style={{ color: aromaColors.textMuted }}>Refer to `01_saas_template.md` for layout details.</p>
             </div>
         </div>
     </section>
@@ -302,3 +302,4 @@ const DesignSystemPage: React.FC = () => {
 };
 
 export default DesignSystemPage;
+
