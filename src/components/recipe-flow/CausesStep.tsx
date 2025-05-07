@@ -27,11 +27,9 @@ const CausesStep: React.FC = () => {
   useEffect(() => {
     if (formData.selectedCauses) {
       setSelectedCausesState(formData.selectedCauses);
-      const preSelectedCauseNames = formData.selectedCauses.map(c => c.cause_name);
-      setOpenAccordionItems(prevOpen => {
-        const newOpen = new Set([...prevOpen, ...preSelectedCauseNames]);
-        return Array.from(newOpen);
-      });
+      // Initialize open accordions based on initially selected causes
+      const initiallyOpen = formData.selectedCauses.map(c => c.cause_name);
+      setOpenAccordionItems(prevOpen => Array.from(new Set([...prevOpen, ...initiallyOpen])));
     }
   }, [formData.selectedCauses]);
 
@@ -40,26 +38,33 @@ const CausesStep: React.FC = () => {
     updateFormValidity(selectedCausesState.length > 0);
   }, [selectedCausesState, updateFormValidity]);
 
-  const handleToggleCauseSelection = (cause: PotentialCause) => {
-    const causeId = cause.cause_name;
-    const isCurrentlySelected = selectedCausesState.some(c => c.cause_name === causeId);
-
-    let newSelectedCauses: PotentialCause[];
-    if (isCurrentlySelected) {
-      newSelectedCauses = selectedCausesState.filter(c => c.cause_name !== causeId);
-      setOpenAccordionItems(prev => prev.filter(item => item !== causeId));
-    } else {
-      newSelectedCauses = [...selectedCausesState, cause];
-      if (!openAccordionItems.includes(causeId)) {
-        setOpenAccordionItems(prev => [...prev, causeId]);
+  const handleSwitchChange = useCallback((cause: PotentialCause, checked: boolean) => {
+    setSelectedCausesState(prevSelected => {
+      if (checked) {
+        if (!prevSelected.some(c => c.cause_name === cause.cause_name)) {
+          return [...prevSelected, cause];
+        }
+      } else {
+        return prevSelected.filter(c => c.cause_name !== cause.cause_name);
       }
-    }
-    setSelectedCausesState(newSelectedCauses);
-  };
-  
-  const handleAccordionToggle = (value: string[]) => {
-    setOpenAccordionItems(value);
-  };
+      return prevSelected;
+    });
+
+    setOpenAccordionItems(prevOpen => {
+      if (checked) {
+        if (!prevOpen.includes(cause.cause_name)) {
+          return [...prevOpen, cause.cause_name];
+        }
+      } else {
+        return prevOpen.filter(item => item !== cause.cause_name);
+      }
+      return prevOpen;
+    });
+  }, [setSelectedCausesState, setOpenAccordionItems]);
+
+  const handleAccordionValueChange = useCallback((newOpenAccordionItemNames: string[]) => {
+    setOpenAccordionItems(newOpenAccordionItemNames);
+  }, [setOpenAccordionItems]);
 
   const handleSubmitCauses = async (event?: React.FormEvent<HTMLFormElement>) => {
     if (event) event.preventDefault(); 
@@ -109,7 +114,7 @@ const CausesStep: React.FC = () => {
         <Accordion 
           type="multiple" 
           value={openAccordionItems} 
-          onValueChange={handleAccordionToggle}
+          onValueChange={handleAccordionValueChange}
           className="w-full"
         >
           {formData.potentialCausesResult.map((cause, index) => {
@@ -133,16 +138,14 @@ const CausesStep: React.FC = () => {
                     isChecked && openAccordionItems.includes(causeId) ? "bg-primary/10 hover:bg-primary/15" : "",
                     isChecked && !openAccordionItems.includes(causeId) ? "hover:bg-primary/10" : ""
                   )}
-                  onClick={() => { 
-                    handleToggleCauseSelection(cause);
-                  }}
                 >
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
                     <Switch
                       id={`cause-switch-${causeId}`}
                       checked={isChecked}
-                      onCheckedChange={() => handleToggleCauseSelection(cause)}
-                      onClick={(e) => e.stopPropagation()} 
+                      onCheckedChange={(newCheckedState) => {
+                        handleSwitchChange(cause, newCheckedState);
+                      }}
                       className="shrink-0"
                       aria-labelledby={`cause-label-${causeId}`}
                     />
@@ -150,10 +153,6 @@ const CausesStep: React.FC = () => {
                       htmlFor={`cause-switch-${causeId}`}
                       id={`cause-label-${causeId}`}
                       className="font-medium text-base cursor-pointer flex-1 truncate"
-                      onClick={(e) => {
-                          e.stopPropagation(); 
-                          handleToggleCauseSelection(cause);
-                      }}
                     >
                       {cause.cause_name}
                     </Label>
@@ -173,4 +172,3 @@ const CausesStep: React.FC = () => {
 };
 
 export default CausesStep;
-

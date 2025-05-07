@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRecipeForm } from '@/contexts/RecipeFormContext';
 import { Label } from '@/components/ui/label';
@@ -30,11 +30,8 @@ const SymptomsStep: React.FC = () => {
   useEffect(() => {
     if (formData.selectedSymptoms) {
       setSelectedSymptomsState(formData.selectedSymptoms);
-      const preSelectedSymptomNames = formData.selectedSymptoms.map(s => s.symptom_name);
-      setOpenAccordionItems(prevOpen => {
-        const newOpen = new Set([...prevOpen, ...preSelectedSymptomNames]);
-        return Array.from(newOpen);
-      });
+      const initiallyOpen = formData.selectedSymptoms.map(s => s.symptom_name);
+      setOpenAccordionItems(prevOpen => Array.from(new Set([...prevOpen, ...initiallyOpen])));
     }
   }, [formData.selectedSymptoms]);
 
@@ -42,26 +39,34 @@ const SymptomsStep: React.FC = () => {
     updateFormValidity(selectedSymptomsState.length > 0);
   }, [selectedSymptomsState, updateFormValidity]);
 
-  const handleToggleSymptomSelection = (symptom: PotentialSymptom) => {
-    const symptomId = symptom.symptom_name;
-    const isCurrentlySelected = selectedSymptomsState.some(s => s.symptom_name === symptomId);
-
-    let newSelectedSymptoms: Pick<PotentialSymptom, 'symptom_name'>[];
-    if (isCurrentlySelected) {
-      newSelectedSymptoms = selectedSymptomsState.filter(s => s.symptom_name !== symptomId);
-      setOpenAccordionItems(prev => prev.filter(item => item !== symptomId));
-    } else {
-      newSelectedSymptoms = [...selectedSymptomsState, { symptom_name: symptom.symptom_name }];
-      if (!openAccordionItems.includes(symptomId)) {
-        setOpenAccordionItems(prev => [...prev, symptomId]);
+  const handleSwitchChange = useCallback((symptom: PotentialSymptom, checked: boolean) => {
+    setSelectedSymptomsState(prevSelected => {
+      if (checked) {
+        if (!prevSelected.some(s => s.symptom_name === symptom.symptom_name)) {
+          return [...prevSelected, { symptom_name: symptom.symptom_name }];
+        }
+      } else {
+        return prevSelected.filter(s => s.symptom_name !== symptom.symptom_name);
       }
-    }
-    setSelectedSymptomsState(newSelectedSymptoms);
-  };
+      return prevSelected;
+    });
 
-  const handleAccordionToggle = (value: string[]) => {
-    setOpenAccordionItems(value);
-  };
+    setOpenAccordionItems(prevOpen => {
+      if (checked) {
+        if (!prevOpen.includes(symptom.symptom_name)) {
+          return [...prevOpen, symptom.symptom_name];
+        }
+      } else {
+        return prevOpen.filter(item => item !== symptom.symptom_name);
+      }
+      return prevOpen;
+    });
+  }, [setSelectedSymptomsState, setOpenAccordionItems]);
+
+  const handleAccordionValueChange = useCallback((newOpenAccordionItemNames: string[]) => {
+    setOpenAccordionItems(newOpenAccordionItemNames);
+  }, [setOpenAccordionItems]);
+
 
   const handleSubmitSymptoms = async (event?: React.FormEvent<HTMLFormElement>) => {
     if (event) event.preventDefault();
@@ -111,7 +116,7 @@ const SymptomsStep: React.FC = () => {
         <Accordion 
           type="multiple" 
           value={openAccordionItems} 
-          onValueChange={handleAccordionToggle}
+          onValueChange={handleAccordionValueChange}
           className="w-full"
         >
           {formData.potentialSymptomsResult.map((symptom, index) => {
@@ -135,16 +140,14 @@ const SymptomsStep: React.FC = () => {
                     isChecked && openAccordionItems.includes(symptomId) ? "bg-primary/10 hover:bg-primary/15" : "",
                     isChecked && !openAccordionItems.includes(symptomId) ? "hover:bg-primary/10" : ""
                   )}
-                  onClick={() => { 
-                    handleToggleSymptomSelection(symptom);
-                  }}
                 >
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
                     <Switch
                       id={`symptom-switch-${symptomId}`}
                       checked={isChecked}
-                      onCheckedChange={() => handleToggleSymptomSelection(symptom)}
-                      onClick={(e) => e.stopPropagation()} 
+                      onCheckedChange={(newCheckedState) => {
+                        handleSwitchChange(symptom, newCheckedState);
+                      }}
                       className="shrink-0"
                       aria-labelledby={`symptom-label-${symptomId}`}
                     />
@@ -152,10 +155,6 @@ const SymptomsStep: React.FC = () => {
                       htmlFor={`symptom-switch-${symptomId}`}
                       id={`symptom-label-${symptomId}`}
                       className="font-medium text-base cursor-pointer flex-1 truncate"
-                      onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleSymptomSelection(symptom);
-                      }}
                     >
                       {symptom.symptom_name}
                     </Label>
@@ -175,4 +174,3 @@ const SymptomsStep: React.FC = () => {
 };
 
 export default SymptomsStep;
-
