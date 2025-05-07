@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Loader2, RotateCcw } from 'lucide-react'; // Added RotateCcw
+import { ArrowLeft, ArrowRight, Loader2, RotateCcw } from 'lucide-react';
 import { useRecipeForm } from '@/contexts/RecipeFormContext';
 import { Progress } from '@/components/ui/progress'; 
 import { cn } from '@/lib/utils';
@@ -22,7 +22,8 @@ interface RecipeStepLayoutProps {
 }
 
 const FLOW_STEPS = ['demographics', 'causes', 'symptoms', 'properties'];
-
+const FOOTER_HEIGHT_CLASS = "h-[80px]"; // Approx 80px, adjust as needed
+const FOOTER_PADDING_CLASS = "pb-[80px]"; // Match footer height for content padding
 
 const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   stepTitle,
@@ -63,6 +64,8 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   };
 
   const handleStartOverClick = () => {
+    // Consider adding a confirmation dialog here if destructive
+    // For now, directly resets as per previous implementation.
     resetFormData();
     router.push('/');
   };
@@ -73,7 +76,8 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   const showStartOverButton = currentStep && FLOW_STEPS.includes(currentStep);
 
   return (
-    <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8 max-w-3xl">
+    // The main container for the step, with padding at the bottom to account for the fixed footer
+    <div className={cn("container mx-auto py-8 px-4 sm:px-6 lg:px-8 max-w-3xl", FOOTER_PADDING_CLASS)}>
       <div className="mb-6">
         <div className="bg-muted rounded-full h-2.5 w-full overflow-hidden">
           <div 
@@ -103,21 +107,31 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
         {children}
       </div>
 
-      <div className="mt-8 flex justify-between items-center">
+      {/* Fixed Footer Navigation */}
+      <footer 
+        className={cn(
+          "fixed bottom-0 left-0 right-0 z-10 bg-background border-t border-border",
+          FOOTER_HEIGHT_CLASS,
+          "flex items-center justify-between px-4 sm:px-6 lg:px-8" // Standard padding
+        )}
+        // The `left` and `right` properties need to adjust based on the sidebar's state
+        // This will be handled by the parent (`AppLayoutClient`) applying margin to the scrollable content area
+      >
         <div className="flex gap-2 items-center">
-          {showStartOverButton && (
-            <Button variant="outline" onClick={handleStartOverClick} disabled={globalIsLoading}>
-                <RotateCcw className="mr-2 h-4 w-4" />
-                Recomeçar
-            </Button>
-          )}
-          {!hidePreviousButton && currentStep !== FLOW_STEPS[0] && ( // Hide Previous on first step
+          {!hidePreviousButton && currentStep !== FLOW_STEPS[0] && (
             <Button variant="outline" onClick={handlePrevious} disabled={globalIsLoading}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Anterior
             </Button>
           )}
         </div>
+
+        {showStartOverButton && (
+            <Button variant="ghost" onClick={handleStartOverClick} disabled={globalIsLoading} className="text-muted-foreground hover:text-foreground">
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Recomeçar
+            </Button>
+        )}
         
         {!hideNextButton ? (
           <Button 
@@ -134,7 +148,7 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
             {nextButtonText}
           </Button>
         ) : <div />} 
-      </div>
+      </footer>
     </div>
   );
 };
