@@ -30,11 +30,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={cn(fontPoppins.variable)}>
+    <html lang="en" suppressHydrationWarning className={cn(fontSans.variable, fontPoppins.variable)}>
       <body
         className={cn(
-          'min-h-screen bg-background font-sans antialiased', // Default to font-sans (Inter)
-          fontSans.variable // Ensure Inter variable is also available if needed globally
+          'min-h-screen bg-background font-sans antialiased'
         )}
       >
         <ClientRoot>{children}</ClientRoot>
