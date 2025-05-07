@@ -1,10 +1,11 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRecipeForm } from '@/contexts/RecipeFormContext';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch'; 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { getMedicalProperties } from '@/services/aromarx-api-client';
 import type { RecipeFormData } from '@/contexts/RecipeFormContext';
@@ -29,7 +30,6 @@ const SymptomsStep: React.FC = () => {
   useEffect(() => {
     if (formData.selectedSymptoms) {
       setSelectedSymptomsState(formData.selectedSymptoms);
-      // Open accordions for already selected symptoms when the component mounts or formData.selectedSymptoms changes
       const preSelectedSymptomNames = formData.selectedSymptoms.map(s => s.symptom_name);
       setOpenAccordionItems(prevOpen => {
         const newOpen = new Set([...prevOpen, ...preSelectedSymptomNames]);
@@ -49,11 +49,9 @@ const SymptomsStep: React.FC = () => {
     let newSelectedSymptoms: Pick<PotentialSymptom, 'symptom_name'>[];
     if (isCurrentlySelected) {
       newSelectedSymptoms = selectedSymptomsState.filter(s => s.symptom_name !== symptomId);
-      // If item is being deselected, close its accordion
       setOpenAccordionItems(prev => prev.filter(item => item !== symptomId));
     } else {
       newSelectedSymptoms = [...selectedSymptomsState, { symptom_name: symptom.symptom_name }];
-      // If item is being selected and its accordion is closed, open it
       if (!openAccordionItems.includes(symptomId)) {
         setOpenAccordionItems(prev => [...prev, symptomId]);
       }
@@ -137,22 +135,25 @@ const SymptomsStep: React.FC = () => {
                     isChecked && openAccordionItems.includes(symptomId) ? "bg-primary/10 hover:bg-primary/15" : "",
                     isChecked && !openAccordionItems.includes(symptomId) ? "hover:bg-primary/10" : ""
                   )}
+                  onClick={() => { 
+                    handleToggleSymptomSelection(symptom);
+                  }}
                 >
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
-                    <Checkbox
-                      id={`symptom-checkbox-${symptomId}`}
+                    <Switch
+                      id={`symptom-switch-${symptomId}`}
                       checked={isChecked}
                       onCheckedChange={() => handleToggleSymptomSelection(symptom)}
-                      onClick={(e) => e.stopPropagation()} // Prevent accordion toggle
-                      className="shrink-0 border-muted-foreground data-[state=checked]:border-primary"
+                      onClick={(e) => e.stopPropagation()} 
+                      className="shrink-0"
                       aria-labelledby={`symptom-label-${symptomId}`}
                     />
                     <Label
-                      htmlFor={`symptom-checkbox-${symptomId}`}
+                      htmlFor={`symptom-switch-${symptomId}`}
                       id={`symptom-label-${symptomId}`}
                       className="font-medium text-base cursor-pointer flex-1 truncate"
                       onClick={(e) => {
-                          e.stopPropagation(); // Prevent accordion toggle
+                          e.stopPropagation();
                           handleToggleSymptomSelection(symptom);
                       }}
                     >
@@ -174,3 +175,4 @@ const SymptomsStep: React.FC = () => {
 };
 
 export default SymptomsStep;
+

@@ -1,10 +1,11 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRecipeForm } from '@/contexts/RecipeFormContext';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch'; 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { getPotentialSymptoms } from '@/services/aromarx-api-client';
 import type { RecipeFormData } from '@/contexts/RecipeFormContext';
@@ -26,7 +27,6 @@ const CausesStep: React.FC = () => {
   useEffect(() => {
     if (formData.selectedCauses) {
       setSelectedCausesState(formData.selectedCauses);
-      // Open accordions for already selected causes when the component mounts or formData.selectedCauses changes
       const preSelectedCauseNames = formData.selectedCauses.map(c => c.cause_name);
       setOpenAccordionItems(prevOpen => {
         const newOpen = new Set([...prevOpen, ...preSelectedCauseNames]);
@@ -47,11 +47,9 @@ const CausesStep: React.FC = () => {
     let newSelectedCauses: PotentialCause[];
     if (isCurrentlySelected) {
       newSelectedCauses = selectedCausesState.filter(c => c.cause_name !== causeId);
-      // If item is being deselected, close its accordion
       setOpenAccordionItems(prev => prev.filter(item => item !== causeId));
     } else {
       newSelectedCauses = [...selectedCausesState, cause];
-      // If item is being selected and its accordion is closed, open it
       if (!openAccordionItems.includes(causeId)) {
         setOpenAccordionItems(prev => [...prev, causeId]);
       }
@@ -135,29 +133,31 @@ const CausesStep: React.FC = () => {
                     isChecked && openAccordionItems.includes(causeId) ? "bg-primary/10 hover:bg-primary/15" : "",
                     isChecked && !openAccordionItems.includes(causeId) ? "hover:bg-primary/10" : ""
                   )}
+                  onClick={() => { 
+                    handleToggleCauseSelection(cause);
+                  }}
                 >
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
-                    <Checkbox
-                      id={`cause-checkbox-${causeId}`}
+                    <Switch
+                      id={`cause-switch-${causeId}`}
                       checked={isChecked}
                       onCheckedChange={() => handleToggleCauseSelection(cause)}
-                      onClick={(e) => e.stopPropagation()} // Prevent accordion toggle
-                      className="shrink-0 border-muted-foreground data-[state=checked]:border-primary"
+                      onClick={(e) => e.stopPropagation()} 
+                      className="shrink-0"
                       aria-labelledby={`cause-label-${causeId}`}
                     />
                     <Label
-                      htmlFor={`cause-checkbox-${causeId}`}
+                      htmlFor={`cause-switch-${causeId}`}
                       id={`cause-label-${causeId}`}
                       className="font-medium text-base cursor-pointer flex-1 truncate"
                       onClick={(e) => {
-                          e.stopPropagation(); // Prevent accordion toggle
+                          e.stopPropagation(); 
                           handleToggleCauseSelection(cause);
                       }}
                     >
                       {cause.cause_name}
                     </Label>
                   </div>
-                  {/* Chevron is part of AccordionTrigger */}
                 </AccordionTrigger>
                 <AccordionContent className="px-4 pb-4 pt-1 space-y-1 bg-background">
                   <p className="text-sm text-muted-foreground">{cause.cause_suggestion}</p>
@@ -173,3 +173,4 @@ const CausesStep: React.FC = () => {
 };
 
 export default CausesStep;
+
