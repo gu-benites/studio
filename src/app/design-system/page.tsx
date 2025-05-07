@@ -2,7 +2,7 @@
 "use client";
 
 import { Search, ArrowRight, TriangleAlert as LucideTriangleAlert } from 'lucide-react';
-import React from 'react'; // Import React
+import React from 'react';
 
 // Define colors from the AromaChat design system for this page specifically
 const aromaColors = {
@@ -31,13 +31,9 @@ const DesignSystemPage: React.FC = () => {
   ];
 
   return (
-    <div 
-      className="container mx-auto py-10 px-4 bg-gray-100" 
+    <div
+      className="container mx-auto py-10 px-4 bg-gray-100 font-poppins"
       style={{ color: aromaColors.text }}
-      // Temporarily removed font-poppins from className for diagnostics.
-      // The page should ideally use Poppins font as per design docs.
-      // This can be achieved by adding 'font-poppins' to the body in layout.tsx for this specific route,
-      // or by re-adding font-poppins here if the parsing issue is resolved.
     >
       <h1 className="text-3xl md:text-4xl font-bold mb-2 font-poppins" style={{ color: aromaColors.text }}>AromaChat Design System</h1>
       <p className="mb-10 font-poppins" style={{ color: aromaColors.textMuted }}>Showcasing styles for Material UI React components based on PRD guidelines (v2).</p>
@@ -152,7 +148,7 @@ const DesignSystemPage: React.FC = () => {
                 <p className="text-base font-medium mb-3 text-center font-poppins">Step List Example</p>
                 <ul className="space-y-2 text-center">
                   {steps.map(step => (
-                    <li key={step.id} 
+                    <li key={step.id}
                         className={`
                           transition-all duration-400 ease-in-out text-base min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center font-poppins
                           ${step.id < activeStep ? 'text-gray-400 line-through opacity-70 font-normal text-sm' : ''}
@@ -182,7 +178,7 @@ const DesignSystemPage: React.FC = () => {
           <div>
             <h3 className="text-lg font-medium mb-3 font-poppins">Main Action Button</h3>
             <div className="flex flex-wrap gap-4">
-              <button 
+              <button
                 className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-white font-semibold py-3.5 px-8 rounded-3xl shadow-button-normal hover:-translate-y-0.5 hover:shadow-button-focus focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 font-poppins"
                 style={{ background: `linear-gradient(to right, ${aromaColors.gradStart}, ${aromaColors.gradEnd})`, boxShadow: '0 4px 12px rgba(75, 71, 99, 0.1)', '--tw-ring-color': aromaColors.primary }}
                 onMouseOver={e => e.currentTarget.style.boxShadow = `0px 6px 18px rgba(122, 92, 255, 0.3)`}
@@ -226,7 +222,7 @@ const DesignSystemPage: React.FC = () => {
           <div className="max-w-lg mx-auto">
             <label htmlFor="health-concern-example" className="block text-sm font-medium mb-2 font-poppins" style={{ color: aromaColors.text }}>Health Concern Input</label>
             <div className="relative group">
-              <div 
+              <div
                 className="border border-gray-300 p-px rounded-[1.75rem] group-hover:border-transparent group-focus-within:border-transparent transition-all duration-200"
                 style={{
                   backgroundImage: 'var(--input-gradient, none)',
@@ -240,7 +236,7 @@ const DesignSystemPage: React.FC = () => {
                   <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
                     <Search size={20} />
                   </div>
-                  <input type="text" id="health-concern-example" placeholder="Ex: dor de cabeça, insônia, ansiedade..." 
+                  <input type="text" id="health-concern-example" placeholder="Ex: dor de cabeça, insônia, ansiedade..."
                     className="bg-white border-none rounded-[calc(1.75rem-1px)] w-full pl-12 pr-4 py-3.5 text-base outline-none shadow-none font-poppins"
                     style={{ color: aromaColors.text }}
                   />
@@ -283,7 +279,7 @@ const DesignSystemPage: React.FC = () => {
           </div>
         </div>
       </section>
-      
+
       {/* Layout Components Section */}
       <section className="mb-12">
         <h2 className="text-2xl font-semibold mb-4 font-poppins" style={{ color: aromaColors.text }}>Layout Components (Conceptual)</h2>
