@@ -4,13 +4,12 @@
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import React from 'react'; 
-import { ArrowRight, AlertTriangle, Search, ArrowUp } from 'lucide-react'; // Removed Plus, FileEdit as they are not used
+import { ArrowRight, AlertTriangle, Search, ArrowUp } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"; 
 
-// The aromaColors constant is no longer needed as styles are applied via Tailwind theme classes.
 
 const DesignSystemPage: NextPage = () => {
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -238,8 +237,8 @@ const DesignSystemPage: NextPage = () => {
                 <div>
                   <Label htmlFor="chat-input-example" className="block text-sm font-medium text-aroma-text mb-2">Chat Input (New Style)</Label>
                   <form onSubmit={handleFormSubmit} className="space-y-2">
-                    <div className="group relative rounded-md border border-input p-0.5 hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end transition-all duration-200 ease-in-out">
-                       <div className="flex items-center w-full bg-card rounded-[calc(theme(borderRadius.md)-0.5px)] p-1 pr-1.5 shadow-sm">
+                    <div className="group relative rounded-md border border-input p-px hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end transition-all duration-200 ease-in-out">
+                       <div className="flex items-center w-full bg-card rounded-[calc(theme(borderRadius.md)-1px)] p-1 pr-1.5 shadow-sm">
                         <Search className="h-5 w-5 text-muted-foreground mx-3 pointer-events-none" />
                         <Separator orientation="vertical" className="h-6 mr-2 bg-border" />
                         <Input
