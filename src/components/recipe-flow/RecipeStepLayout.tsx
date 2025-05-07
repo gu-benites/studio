@@ -25,7 +25,7 @@ interface RecipeStepLayoutProps {
 
 const FLOW_STEPS = ['demographics', 'causes', 'symptoms', 'properties'];
 const FOOTER_HEIGHT_CLASS = "h-[60px]"; 
-const FOOTER_PADDING_CLASS = "pb-[60px]"; 
+const CONTENT_PADDING_BOTTOM_CLASS = "pb-[76px]"; // 60px footer + 16px extra padding
 
 const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   stepTitle,
@@ -66,6 +66,7 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
       if (formElement && typeof formElement.requestSubmit === 'function') {
         formElement.requestSubmit();
       } else if (formElement && typeof formElement.submit === 'function') {
+        // Fallback for older browsers or simple forms not using requestSubmit
         formElement.submit();
       }
     }
@@ -92,8 +93,8 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   const showStartOverButton = currentStep && FLOW_STEPS.includes(currentStep);
 
   return (
-    <div className={cn("flex flex-col min-h-0 flex-1")}>
-      <div className={cn("flex-grow overflow-y-auto", FOOTER_PADDING_CLASS)}>
+    <div className={cn("flex flex-col flex-1", CONTENT_PADDING_BOTTOM_CLASS)}>
+      <div className="flex-grow overflow-y-auto">
         <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8 max-w-3xl">
           <div className="mb-6">
             <Progress value={progressPercentage} className="h-2.5 w-full [&>div]:bg-gradient-to-r [&>div]:from-aroma-grad-start [&>div]:to-aroma-grad-end" />
@@ -121,17 +122,17 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
         <footer 
           className={cn(
             "fixed bottom-0 z-10 bg-background border-t border-border",
-            FOOTER_HEIGHT_CLASS, // Footer has a fixed height
-            "flex items-center justify-between px-4 sm:px-6 py-2", // Added py-2 for internal padding
+            FOOTER_HEIGHT_CLASS, 
+            "flex items-center justify-between px-4 sm:px-6", // py-2 removed to rely on button height and items-center
             "right-0", 
             isDesktopClientView 
               ? (desktopSidebarIsEffectivelyExpanded ? "md:left-[287px]" : "md:left-[48px]") 
               : "left-0"
           )}
         >
-          <div className="flex gap-2 items-center h-full">
+          <div className="flex gap-2 items-center">
             {!hidePreviousButton && currentStep !== FLOW_STEPS[0] && (
-              <Button variant="outline" onClick={handlePrevious} disabled={globalIsLoading} className="h-full px-4"> 
+              <Button variant="outline" onClick={handlePrevious} disabled={globalIsLoading} className="h-8 px-4"> 
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Anterior
               </Button>
@@ -139,30 +140,28 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
           </div>
 
           {showStartOverButton && (
-              <Button variant="ghost" onClick={handleStartOverClick} disabled={globalIsLoading} className="h-full px-4 text-muted-foreground hover:text-foreground">
+              <Button variant="ghost" onClick={handleStartOverClick} disabled={globalIsLoading} className="h-8 px-4 text-muted-foreground hover:text-foreground">
                   <RotateCcw className="mr-2 h-4 w-4" />
                   Recomeçar
               </Button>
           )}
           
           {!hideNextButton ? (
-            <div className="h-full"> 
-              <Button 
-                type="button" 
-                form={onNext ? undefined : formId} 
-                onClick={handleNextClick} 
-                disabled={isNextDisabled || globalIsLoading}
-                className="h-full px-4" // Button takes full height of its parent
-              >
-                {globalIsLoading && !onNext ? ( 
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <ArrowRight className="mr-2 h-4 w-4" />
-                )}
-                {nextButtonText}
-              </Button>
-            </div>
-          ) : <div />} 
+            <Button 
+              type="button" 
+              form={onNext ? undefined : formId} 
+              onClick={handleNextClick} 
+              disabled={isNextDisabled || globalIsLoading}
+              className="h-8 px-4" 
+            >
+              {globalIsLoading && !onNext ? ( 
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <ArrowRight className="mr-2 h-4 w-4" />
+              )}
+              {nextButtonText}
+            </Button>
+          ) : <div className="h-8 w-0" /> /* Spacer to maintain layout if next button hidden */}
         </footer>
       )}
     </div>
