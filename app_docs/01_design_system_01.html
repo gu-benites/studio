@@ -28,19 +28,20 @@
               },
               fontFamily: {
                 sans: ['Poppins', 'system-ui', 'sans-serif'],
+                poppins: ['Poppins', 'sans-serif'], // Added for direct usage
               },
               borderRadius: {
-                 'lg': "0.75rem", // Example radius (adjust based on Shadcn/Daisy inspiration)
+                 'lg': "0.75rem", 
                  'md': "0.5rem",
                  'sm': "0.25rem",
                  'xl': "1rem",
-                 '2xl': "1.5rem", // For larger buttons/inputs
-                 '3xl': "1.75rem", // For main action button
+                 '2xl': "1.5rem", 
+                 '3xl': "1.75rem", 
                  'full': '9999px',
               },
               boxShadow: {
-                 'button-focus': '0px 6px 18px rgba(122, 92, 255, 0.3)', // Using primary purple
-                 'button-normal': '0 4px 12px rgba(75, 71, 99, 0.1)', // Using text color base
+                 'button-focus': '0px 6px 18px rgba(122, 92, 255, 0.3)', 
+                 'button-normal': '0 4px 12px rgba(75, 71, 99, 0.1)', 
                  'card': '0 1px 3px 0 rgba(75, 71, 99, 0.1), 0 1px 2px -1px rgba(75, 71, 99, 0.1)',
               },
               keyframes: {
@@ -65,30 +66,24 @@
         }
     </script>
     <style>
+        /* Base body styles - Tailwind handles most of this with bg-gray-100 and font-poppins */
         body {
-            font-family: 'Poppins', sans-serif;
-            color: #4B4763; /* aroma-text */
-            background-color: #f8f9fa; /* Light background for contrast */
+            /* font-family: 'Poppins', sans-serif; Replaced by font-poppins class */
+            /* color: #4B4763; Replaced by text-aroma-text class */
+            /* background-color: #f8f9fa; Replaced by bg-gray-100 class */
         }
+        /* Basic h tag styling if needed, but Tailwind's text-aroma-text and font-semibold should cover it */
         h1, h2, h3, h4, h5, h6 {
-            color: #4B4763; /* aroma-text */
-            font-weight: 600;
+            /* color: #4B4763; */
+            font-weight: 600; /* Can be achieved with font-semibold class */
         }
-        .card {
-            background-color: white;
-            border-radius: 0.75rem; /* lg */
-            border: 1px solid #e5e7eb; /* gray-200 */
-            box-shadow: 0 1px 3px 0 rgba(75, 71, 99, 0.1), 0 1px 2px -1px rgba(75, 71, 99, 0.1); /* card */
-        }
-        .card-content { padding: 1.5rem; }
+        /* .card class is handled by Tailwind classes directly on elements */
+        
+        .card-content { padding: 1.5rem; } /* Can be p-6 on the div */
 
-        /* Gradient text */
-        .bg-clip-text {
-            -webkit-background-clip: text;
-            background-clip: text;
-        }
-
-        /* Input with Gradient Border Styling (Focus/Hover) */
+        /* Gradient text - bg-clip-text and text-transparent are standard Tailwind */
+        
+        /* Input with Gradient Border Styling (Focus/Hover) - Complex, might need some custom CSS if Tailwind alone is tricky */
         .input-gradient-border {
             border: 1px solid #d1d5db; /* Default gray border */
             padding: 1px;
@@ -99,76 +94,66 @@
         .input-gradient-border:hover,
         .input-gradient-border:focus-within {
              border-color: transparent;
-             background-image: linear-gradient(to right, var(--tw-gradient-from), var(--tw-gradient-to));
-             --tw-gradient-from: #7b61ff; /* aroma-grad-start */
-             --tw-gradient-to: #ff5fa1;   /* aroma-grad-end */
+             /* Tailwind gradient classes would be applied here dynamically or via group-hover/focus-within */
+             /* background-image: linear-gradient(to right, var(--tw-gradient-from), var(--tw-gradient-to)); */
+             /* --tw-gradient-from: #7b61ff; */
+             /* --tw-gradient-to: #ff5fa1; */
         }
         .input-gradient-border input {
              background-color: white;
              border: none;
              border-radius: calc(1.75rem - 1px); /* Slightly smaller than parent */
              width: 100%;
-             padding-left: 3rem;
-             padding-right: 1rem;
+             padding-left: 3rem; /* pl-12 */
+             padding-right: 1rem; /* pr-4 */
              padding-top: 0.875rem; /* py-3.5 equivalent */
              padding-bottom: 0.875rem;
-             font-size: 1rem;
-             line-height: 1.5rem;
-             color: #4B4763; /* aroma-text */
+             font-size: 1rem; /* text-base */
+             line-height: 1.5rem; /* leading-6 */
+             color: #4B4763; /* text-aroma-text */
              outline: none;
              box-shadow: none;
         }
         .input-gradient-border input::placeholder {
-            color: #9ca3af; /* gray-400 */
+            color: #9ca3af; /* placeholder-gray-400 */
         }
 
         /* Loading Circle Animation - Uses Primary Color */
         .pulse-circle {
             position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); border-radius: 50%;
-            background-color: rgba(122, 92, 255, var(--tw-bg-opacity)); /* aroma-primary base */
+            /* background-color: rgba(122, 92, 255, var(--tw-bg-opacity)); Tailwind bg-aroma-primary with opacity */
             animation: pulseRing 2.5s infinite ease-in-out;
         }
-        /* Opacity levels for pulsing effect */
-        .pulse-circle-1 { --tw-bg-opacity: 0.85; animation-delay: -0.1s; width: 40%; height: 40%; }
-        .pulse-circle-2 { --tw-bg-opacity: 0.75; animation-delay: 0s;   width: 47.5%; height: 47.5%; }
-        .pulse-circle-3 { --tw-bg-opacity: 0.65; animation-delay: 0.1s;  width: 55%; height: 55%; }
-        .pulse-circle-4 { --tw-bg-opacity: 0.55; animation-delay: 0.2s;  width: 62.5%; height: 62.5%; }
-        .pulse-circle-5 { --tw-bg-opacity: 0.45; animation-delay: 0.3s;  width: 70%; height: 70%; }
-        .pulse-circle-6 { --tw-bg-opacity: 0.35; animation-delay: 0.4s;  width: 77.5%; height: 77.5%; }
-        .pulse-circle-7 { --tw-bg-opacity: 0.25; animation-delay: 0.5s;  width: 85%; height: 85%; }
-        .pulse-circle-8 { --tw-bg-opacity: 0.15; animation-delay: 0.6s;  width: 92.5%; height: 92.5%; }
+        /* Opacity levels for pulsing effect - handled by Tailwind opacity classes bg-aroma-primary/XX */
 
         /* Step List Styling - Uses Theme Text Colors */
          #step-list li {
-            transition: all .4s ease-in-out; color: #9ca3af; /* gray-400 - Inactive */
-            font-size: 1rem; font-weight: 400; opacity: .9;
-            min-height: 1.75rem; line-height: 1.75rem;
-            display: flex; align-items: center; justify-content: center;
+            transition: all .4s ease-in-out; /* Tailwind: transition-all duration-400 ease-in-out */
+            /* color: #9ca3af; text-gray-400 (Inactive) */
+            font-size: 1rem; font-weight: 400; opacity: .9; /* text-base font-normal opacity-90 */
+            min-height: 1.75rem; line-height: 1.75rem; /* min-h-[1.75rem] leading-[1.75rem] */
+            display: flex; align-items: center; justify-content: center; /* flex items-center justify-center */
         }
         #step-list li.step-active {
-            color: #4B4763; /* aroma-text - Active */
-            font-weight: 700; font-size: 1.125rem; opacity: 1;
+            /* color: #4B4763; text-aroma-text (Active) */
+            font-weight: 700; font-size: 1.125rem; opacity: 1; /* font-bold text-lg opacity-100 */
         }
         #step-list li.step-completed {
-            color: #6f6b89; /* aroma-text-muted - Completed */
-            font-size: 1rem; font-weight: 400; text-decoration: line-through; opacity: .7;
+            /* color: #6f6b89; text-aroma-text-muted (Completed) */
+            font-size: 1rem; font-weight: 400; text-decoration: line-through; opacity: .7; /* text-base font-normal line-through opacity-70 */
         }
-        #step-list li.step-completed::before { content: '✓ '; font-weight: bold; }
+        #step-list li.step-completed::before { content: '✓ '; font-weight: bold; } /* Handled in JSX */
         #step-list li.step-active.ellipsis:after {
+            /* Tailwind animate-ellipsis and other properties */
             color: inherit; font-size: inherit; display: inline-block;
             animation: ellipsis 1.6s infinite; content: " "; width: 1.5em;
             text-align: left; vertical-align: bottom;
         }
 
-        /* Alert Component Styling - Example using Orange/Amber */
-        .alert-manual-bg { background-color: rgba(255, 244, 229, 0.8); } /* alert-bg */
-        .alert-manual-text { color: #d97706; } /* alert-text */
-        .alert-manual-border { border-color: rgba(245, 158, 11, 0.5); } /* alert-border */
-        .alert-manual-icon { color: #d97706; } /* alert-icon */
-
+        /* Alert Component Styling - Example using Orange/Amber - Handled by Tailwind bg-alert-bg, text-alert-text etc. */
     </style>
 </head>
-<body class="bg-gray-100 font-sans">
+<body class="bg-gray-100 font-poppins text-aroma-text">
 
 <div class="container mx-auto py-10 px-4">
     <h1 class="text-3xl md:text-4xl font-bold text-aroma-text mb-2">AromaChat Design System</h1>
@@ -176,8 +161,8 @@
 
     <section class="mb-12">
         <h2 class="text-2xl font-semibold text-aroma-text mb-4">Color Palette (PRD 4.1.1)</h2>
-        <div class="card">
-            <div class="card-content grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+        <div class="bg-white rounded-lg border border-gray-200 shadow-card">
+            <div class="p-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
                  <div class="flex flex-col gap-2 items-center">
                     <div class="h-20 w-full rounded-md bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end"></div>
                     <p class="text-sm font-medium text-aroma-text">Primary Gradient</p>
@@ -209,8 +194,8 @@
 
     <section class="mb-12">
         <h2 class="text-2xl font-semibold text-aroma-text mb-4">Typography (Poppins)</h2>
-        <div class="card">
-            <div class="card-content space-y-4">
+        <div class="bg-white rounded-lg border border-gray-200 shadow-card">
+            <div class="p-6 space-y-4">
                 <div>
                     <h1 class="text-3xl md:text-4xl font-bold">Heading 1 (Poppins Bold)</h1>
                     <p class="text-sm text-aroma-text-muted">Represents: MUI `<Typography variant="h1">`</p>
@@ -249,27 +234,27 @@
     <section class="mb-12">
         <h2 class="text-2xl font-semibold text-aroma-text mb-4">Loading & Progress</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="card">
+            <div class="bg-white rounded-lg border border-gray-200 shadow-card">
                  <h3 class="text-xl font-medium p-6 pb-0">Loading Indicator</h3>
-                <div class="card-content pt-6 flex justify-center items-center min-h-[150px]">
+                <div class="p-6 pt-6 flex justify-center items-center min-h-[150px]">
                     <div class="w-20 h-20 relative">
                         <div class="pulse-container">
-                            <div class="pulse-circle pulse-circle-1"></div>
-                            <div class="pulse-circle pulse-circle-2"></div>
-                            <div class="pulse-circle pulse-circle-3"></div>
-                            <div class="pulse-circle pulse-circle-4"></div>
-                            <div class="pulse-circle pulse-circle-5"></div>
-                            <div class="pulse-circle pulse-circle-6"></div>
-                            <div class="pulse-circle pulse-circle-7"></div>
-                            <div class="pulse-circle pulse-circle-8"></div>
+                            <div class="pulse-circle animate-pulseRing absolute left-1/2 top-1/2 rounded-full bg-aroma-primary/80" style="animation-delay: -0.1s; width: 40%; height: 40%;"></div>
+                            <div class="pulse-circle animate-pulseRing absolute left-1/2 top-1/2 rounded-full bg-aroma-primary/70" style="animation-delay: 0s;   width: 47.5%; height: 47.5%;"></div>
+                            <div class="pulse-circle animate-pulseRing absolute left-1/2 top-1/2 rounded-full bg-aroma-primary/60" style="animation-delay: 0.1s;  width: 55%; height: 55%;"></div>
+                            <div class="pulse-circle animate-pulseRing absolute left-1/2 top-1/2 rounded-full bg-aroma-primary/50" style="animation-delay: 0.2s;  width: 62.5%; height: 62.5%;"></div>
+                            <div class="pulse-circle animate-pulseRing absolute left-1/2 top-1/2 rounded-full bg-aroma-primary/40" style="animation-delay: 0.3s;  width: 70%; height: 70%;"></div>
+                            <div class="pulse-circle animate-pulseRing absolute left-1/2 top-1/2 rounded-full bg-aroma-primary/30" style="animation-delay: 0.4s;  width: 77.5%; height: 77.5%;"></div>
+                            <div class="pulse-circle animate-pulseRing absolute left-1/2 top-1/2 rounded-full bg-aroma-primary/20" style="animation-delay: 0.5s;  width: 85%; height: 85%;"></div>
+                            <div class="pulse-circle animate-pulseRing absolute left-1/2 top-1/2 rounded-full bg-aroma-primary/10" style="animation-delay: 0.6s;  width: 92.5%; height: 92.5%;"></div>
                         </div>
                     </div>
                 </div>
                  <p class="text-sm text-aroma-text-muted p-6 pt-0 text-center">Represents: Custom loading component or styled MUI `<CircularProgress variant="determinate">` (if animated via value).</p>
             </div>
-            <div class="card">
+            <div class="bg-white rounded-lg border border-gray-200 shadow-card">
                  <h3 class="text-xl font-medium p-6 pb-0">Progress Steps</h3>
-                <div class="card-content space-y-6">
+                <div class="p-6 space-y-6">
                     <div>
                         <p class="text-base font-medium mb-3 text-center">Progress Bar</p>
                         <div class="bg-gray-200 rounded-full h-2.5 w-full overflow-hidden">
@@ -284,11 +269,11 @@
                     <div>
                         <p class="text-base font-medium mb-3 text-center">Step List Example</p>
                         <ul id="step-list" class="space-y-2 text-center">
-                             <li data-step="1" class="step-completed">Enter Health Concern</li>
-                             <li data-step="2" class="step-completed">Provide Demographics</li>
-                             <li data-step="3" class="step-active ellipsis">Select Causes</li>
-                             <li data-step="4">Select Symptoms</li>
-                             <li data-step="5">Review Properties</li>
+                             <li data-step="1" class="transition-all duration-400 ease-in-out text-sm font-normal opacity-70 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center line-through text-aroma-text-muted"><span class="font-bold mr-1">✓ </span>Enter Health Concern</li>
+                             <li data-step="2" class="transition-all duration-400 ease-in-out text-sm font-normal opacity-70 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center line-through text-aroma-text-muted"><span class="font-bold mr-1">✓ </span>Provide Demographics</li>
+                             <li data-step="3" class="transition-all duration-400 ease-in-out text-lg font-bold opacity-100 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center relative text-aroma-text after:inline-block after:ml-1 after:w-[1.5em] after:text-left after:align-bottom after:content-['\00a0'] after:animate-ellipsis">Select Causes</li>
+                             <li data-step="4" class="transition-all duration-400 ease-in-out text-gray-400 text-sm font-normal opacity-90 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center">Select Symptoms</li>
+                             <li data-step="5" class="transition-all duration-400 ease-in-out text-gray-400 text-sm font-normal opacity-90 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center">Review Properties</li>
                         </ul>
                          <p class="text-sm text-aroma-text-muted mt-2 text-center">Represents: MUI `<Stepper>` or custom list component.</p>
                     </div>
@@ -299,8 +284,8 @@
 
     <section class="mb-12">
         <h2 class="text-2xl font-semibold text-aroma-text mb-4">Buttons</h2>
-        <div class="card">
-            <div class="card-content space-y-8">
+        <div class="bg-white rounded-lg border border-gray-200 shadow-card">
+            <div class="p-6 space-y-8">
                  <div>
                     <h3 class="text-lg font-medium mb-3">Main Action Button</h3>
                     <div class="flex flex-wrap gap-4">
@@ -315,13 +300,13 @@
                 <div>
                     <h3 class="text-lg font-medium mb-3">Standard Variants</h3>
                      <div class="flex flex-wrap gap-4 items-center">
-                        <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 bg-aroma-primary text-white shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aroma-primary">Primary Contained</button>
+                        <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 bg-aroma-primary text-white shadow-sm hover:bg-aroma-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aroma-primary">Primary Contained</button>
                         <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 border border-aroma-primary text-aroma-primary bg-white hover:bg-aroma-primary/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aroma-primary">Primary Outlined</button>
                          <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 text-aroma-primary hover:bg-aroma-primary/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aroma-primary">Primary Text</button>
                     </div>
                     <p class="text-sm text-aroma-text-muted mt-2">Represents: Standard MUI `<Button>` variants (`contained`, `outlined`, `text`) using `color="primary"`.</p>
                      <div class="flex flex-wrap gap-4 items-center mt-4">
-                        <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 bg-aroma-secondary text-white shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aroma-secondary">Secondary Contained</button>
+                        <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 bg-aroma-secondary text-white shadow-sm hover:bg-aroma-secondary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aroma-secondary">Secondary Contained</button>
                         <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 border border-aroma-secondary text-aroma-secondary bg-white hover:bg-aroma-secondary/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aroma-secondary">Secondary Outlined</button>
                      </div>
                       <p class="text-sm text-aroma-text-muted mt-2">Represents: Standard MUI `<Button>` variants using `color="secondary"` (requires theme setup).</p>
@@ -342,19 +327,16 @@
 
     <section class="mb-12">
         <h2 class="text-2xl font-semibold text-aroma-text mb-4">Input Fields</h2>
-         <div class="card">
-             <div class="card-content">
+         <div class="bg-white rounded-lg border border-gray-200 shadow-card">
+             <div class="p-6">
                  <div class="max-w-lg mx-auto">
                      <label for="health-concern-example" class="block text-sm font-medium text-aroma-text mb-2">Health Concern Input</label>
-                     <div class="relative input-outer-wrapper">
-                         {/* This simulates the styled MUI TextField */}
-                         <div class="input-gradient-border">
-                             <div class="relative">
-                                 <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
-                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                 </div>
-                                 <input type="text" id="health-concern-example" placeholder="Ex: dor de cabeça, insônia, ansiedade...">
+                     <div class="group relative rounded-3xl border border-gray-300 p-px hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end">
+                         <div class="relative">
+                             <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
+                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                              </div>
+                             <input type="text" id="health-concern-example" placeholder="Ex: dor de cabeça, insônia, ansiedade..." class="block w-full rounded-[calc(1.75rem-1px)] border-none bg-white py-3.5 pl-12 pr-4 text-base leading-6 text-aroma-text shadow-none outline-none placeholder-gray-400">
                          </div>
                      </div>
                      <p class="text-sm text-aroma-text-muted mt-2">Represents: MUI `<TextField variant="outlined">` styled with large border-radius, icon (`InputProps`), and custom gradient focus/hover effect on the fieldset/border.</p>
@@ -366,23 +348,22 @@
     <section class="mb-12">
         <h2 class="text-2xl font-semibold text-aroma-text mb-4">Alerts & Badges</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="card">
+            <div class="bg-white rounded-lg border border-gray-200 shadow-card">
                  <h3 class="text-xl font-medium p-6 pb-0">Alert Example</h3>
-                <div class="card-content">
-                     <div class="relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 alert-manual-bg alert-manual-border">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 alert-manual-icon"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                        <div class="text-sm [&_p]:leading-relaxed alert-manual-text">
+                <div class="p-6">
+                     <div class="relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 bg-alert-bg border-alert-border">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-alert-icon"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                        <div class="text-sm [&_p]:leading-relaxed text-alert-text">
                            Estamos com alta demanda. Pode haver pequenos atrasos nas sugestões. Obrigada!
                         </div>
                     </div>
                      <p class="text-sm text-aroma-text-muted mt-2">Represents: MUI `<Alert severity="warning">` (or other severities) with custom background/text/border colors defined in the theme.</p>
                 </div>
             </div>
-            <div class="card">
+            <div class="bg-white rounded-lg border border-gray-200 shadow-card">
                  <h3 class="text-xl font-medium p-6 pb-0">Relevancy Badges</h3>
-                <div class="card-content">
+                <div class="p-6">
                     <div class="flex flex-wrap gap-3">
-                        {/* Example: Using theme colors for relevance */}
                         <span class="inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold bg-aroma-primary/80 text-white">Relevância: 5/5</span>
                         <span class="inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold bg-aroma-accent/80 text-aroma-text">Relevância: 4/5</span>
                         <span class="inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold bg-yellow-500 text-white">Relevância: 3/5</span>
@@ -397,8 +378,8 @@
 
      <section class="mb-12">
         <h2 class="text-2xl font-semibold text-aroma-text mb-4">Layout Components (Conceptual)</h2>
-        <div class="card">
-            <div class="card-content space-y-4 text-aroma-text">
+        <div class="bg-white rounded-lg border border-gray-200 shadow-card">
+            <div class="p-6 space-y-4 text-aroma-text">
                <p>Layout structure will follow `01_saas_template.md` using MUI components:</p>
                 <ul class="list-disc pl-5 space-y-1 text-sm">
                     <li>**Sidebar:** MUI `<Drawer>` component (persistent or temporary variant) with `<List>`, `<ListItem>`, `<ListItemIcon>`, `<ListItemText>`.</li>

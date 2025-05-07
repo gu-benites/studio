@@ -10,9 +10,9 @@ export default {
   ],
   theme: {
   	extend: {
-      fontFamily: { // Add this to correctly use the CSS variable for Inter
+      fontFamily: { 
         sans: ["var(--font-geist-sans)", ...defaultFontFamily.sans],
-        poppins: ["var(--font-poppins)", ...defaultFontFamily.sans], // Added Poppins
+        poppins: ["var(--font-poppins)", ...defaultFontFamily.sans],
       },
   		colors: {
   			background: 'hsl(var(--background))',
@@ -64,7 +64,19 @@ export default {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
-  			}
+  			},
+        // AromaChat Design System Colors
+        'aroma-primary': 'hsl(var(--aroma-primary-hsl))',
+        'aroma-secondary': 'hsl(var(--aroma-secondary-hsl))',
+        'aroma-accent': 'hsl(var(--aroma-accent-hsl))',
+        'aroma-text': 'hsl(var(--aroma-text-hsl))',
+        'aroma-text-muted': 'hsl(var(--aroma-text-muted-hsl))',
+        'aroma-grad-start': 'hsl(var(--aroma-grad-start-hsl))',
+        'aroma-grad-end': 'hsl(var(--aroma-grad-end-hsl))',
+        'alert-bg': 'hsl(var(--alert-bg-hsl))', // Note: HSL might not fully represent rgba alpha
+        'alert-text': 'hsl(var(--alert-text-hsl))',
+        'alert-border': 'hsl(var(--alert-border-hsl))', // Note: HSL might not fully represent rgba alpha
+        'alert-icon': 'hsl(var(--alert-icon-hsl))',
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
@@ -93,11 +105,11 @@ export default {
           '50%': { opacity: '1', transform: 'translate(-50%, -50%) scale(1)' }
         },
         ellipsis: {
-          '0%': { content: '"\\00a0"' }, // Non-breaking space
+          '0%': { content: '"\\00a0"' }, 
           '25%': { content: '"."' },
           '50%': { content: '".."' },
           '75%': { content: '"..."' },
-          '100%': { content: '"\\00a0"' } // Non-breaking space
+          '100%': { content: '"\\00a0"' } 
         },
   		},
   		animation: {

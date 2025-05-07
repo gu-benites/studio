@@ -8,68 +8,116 @@ body {
 
 @layer base {
   :root {
-    --background: 0 0% 100%; /* white */
-    --foreground: 220 10% 25%; /* dark grayish blue - slightly desaturated for better harmony */
-    --card: 0 0% 100%;
-    --card-foreground: 220 10% 25%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 10% 25%;
-    --primary: 207 90% 54%; /* Material Blue 500 #2196F3 */
+    --background: 210 17% 97%; /* #f8f9fa - light gray from Aroma design */
+    --foreground: 248 16% 33%; /* aroma-text #4B4763 */
+    
+    --card: 0 0% 100%; /* white */
+    --card-foreground: 248 16% 33%; /* aroma-text */
+    
+    --popover: 0 0% 100%; /* white */
+    --popover-foreground: 248 16% 33%; /* aroma-text */
+    
+    --primary: 253 100% 68%; /* aroma-primary #7a5cff */
     --primary-foreground: 0 0% 100%; /* white */
-    --secondary: 210 30% 96%; /* very light cool gray */
-    --secondary-foreground: 207 90% 54%;
-    --muted: 210 30% 90%; /* light cool gray */
-    --muted-foreground: 210 15% 45%; /* medium cool grayish blue */
-    --accent: 210 30% 96%; /* same as secondary */
-    --accent-foreground: 207 90% 54%;
-    --destructive: 0 70% 50%; /* Adjusted for more vibrant red */
-    --destructive-foreground: 0 0% 100%;
-    --border: 210 20% 88%; /* light cool grayish blue border */
-    --input: 210 20% 88%;
-    --ring: 207 90% 54%; /* focus ring */
+    
+    --secondary: 12 100% 68%; /* aroma-secondary #FF7A5C */
+    --secondary-foreground: 0 0% 100%; /* white (for contrast with orange) */
+    
+    --muted: 253 100% 96%; /* very light aroma-primary */
+    --muted-foreground: 247 13% 48%; /* aroma-text-muted #6f6b89 */
+    
+    --accent: 133 100% 68%; /* aroma-accent #5CFF7A */
+    --accent-foreground: 248 16% 33%; /* aroma-text (for contrast with green) */
+    
+    --destructive: 0 70% 55%; /* standard destructive red */
+    --destructive-foreground: 0 0% 100%; /* white */
+    
+    --border: 210 14% 90%; /* gray-200 #e5e7eb from Aroma card borders */
+    --input: 210 14% 90%; /* same as border */
+    --ring: 253 100% 68%; /* aroma-primary for focus rings */
+    
+    --radius: 0.75rem; /* from Aroma design system for lg, default for ShadCN */
+
+    /* Chart colors (can be kept or updated if Aroma spec has them) */
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
 
-    /* Custom Sidebar Vars (can be used by the new sidebar) */
-    --app-sidebar-background: 0 0% 98%; /* very light gray, almost white */
-    --app-sidebar-foreground: 220 10% 25%;
-    --app-sidebar-border: 210 15% 88%;
-    --app-sidebar-hover-background: 210 20% 94%; /* Slightly darker for hover */
-    --app-sidebar-active-background: 207 90% 54%;
-    --app-sidebar-active-foreground: 0 0% 100%;
+    /* AromaChat Design System HSL Variables */
+    --aroma-primary-hsl: 253 100% 68%;
+    --aroma-secondary-hsl: 12 100% 68%;
+    --aroma-accent-hsl: 133 100% 68%;
+    --aroma-text-hsl: 248 16% 33%;
+    --aroma-text-muted-hsl: 247 13% 48%;
+    --aroma-grad-start-hsl: 252 100% 69%;
+    --aroma-grad-end-hsl: 330 100% 69%;
+    --alert-bg-hsl: 39 100% 95%; /* approx rgba(255, 244, 229) */
+    --alert-text-hsl: 30 95% 44%; /* #d97706 */
+    --alert-border-hsl: 39 92% 50%; /* approx rgba(245, 158, 11) */
+    --alert-icon-hsl: 30 95% 44%; /* #d97706 */
+    /* Note: For --alert-bg and --alert-border, opacity is handled by Tailwind class like bg-alert-bg/80 */
+
+    /* Custom Sidebar Vars - Aligned with new Aroma theme */
+    --app-sidebar-background: 0 0% 100%; /* Card white */
+    --app-sidebar-foreground: 248 16% 33%; /* aroma-text */
+    --app-sidebar-border: 210 14% 90%; /* border */
+    --app-sidebar-hover-background: 210 17% 95%; /* Slightly darker than main background */
+    --app-sidebar-active-background: 253 100% 68%; /* aroma-primary */
+    --app-sidebar-active-foreground: 0 0% 100%; /* white */
   }
 
   .dark {
-    --background: 220 15% 10%; /* dark blue-gray */
-    --foreground: 210 30% 95%; /* light cool gray */
-    --card: 220 15% 12%;
-    --card-foreground: 210 30% 95%;
-    --popover: 220 15% 10%;
-    --popover-foreground: 210 30% 95%;
-    --primary: 207 90% 60%; /* Lighter blue for dark mode */
-    --primary-foreground: 220 10% 15%;
-    --secondary: 220 15% 20%; /* darker cool gray */
-    --secondary-foreground: 207 90% 60%;
-    --muted: 220 15% 25%; /* medium-dark cool gray */
-    --muted-foreground: 210 20% 65%;
-    --accent: 220 15% 20%;
-    --accent-foreground: 207 90% 60%;
-    --destructive: 0 60% 50%;
+    --background: 240 10% 10%; 
+    --foreground: 210 17% 85%; 
+    
+    --card: 240 10% 12%;
+    --card-foreground: 210 17% 85%;
+    
+    --popover: 240 10% 12%;
+    --popover-foreground: 210 17% 85%;
+    
+    --primary: 253 100% 75%; /* Lighter aroma-primary */
+    --primary-foreground: 248 16% 10%; /* Dark text for lighter primary */
+    
+    --secondary: 12 100% 75%; /* Lighter aroma-secondary */
+    --secondary-foreground: 0 0% 10%; /* Dark text for lighter secondary */
+    
+    --muted: 253 30% 20%; /* Darker version of light aroma-primary */
+    --muted-foreground: 247 10% 70%; /* Lighter aroma-text-muted */
+    
+    --accent: 133 100% 75%; /* Lighter aroma-accent */
+    --accent-foreground: 248 16% 10%; /* Dark text for lighter accent */
+    
+    --destructive: 0 70% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 15% 25%;
-    --input: 220 15% 25%;
-    --ring: 207 90% 60%;
+    
+    --border: 240 5% 25%;
+    --input: 240 5% 25%;
+    --ring: 253 100% 75%; /* Lighter aroma-primary */
 
-    --app-sidebar-background: 220 15% 12%;
-    --app-sidebar-foreground: 210 30% 95%;
-    --app-sidebar-border: 220 15% 25%;
-    --app-sidebar-hover-background: 220 15% 18%;
-    --app-sidebar-active-background: 207 90% 60%;
-    --app-sidebar-active-foreground: 220 10% 15%;
+    /* AromaChat Design System HSL Variables - Dark Mode */
+    --aroma-primary-hsl: 253 100% 75%;
+    --aroma-secondary-hsl: 12 100% 75%;
+    --aroma-accent-hsl: 133 100% 75%;
+    --aroma-text-hsl: 210 17% 85%; /* Lighter text for dark mode */
+    --aroma-text-muted-hsl: 247 10% 70%; /* Lighter muted text for dark mode */
+    --aroma-grad-start-hsl: 252 100% 76%;
+    --aroma-grad-end-hsl: 330 100% 76%;
+    /* Alert colors for dark mode would need specific design or derivation */
+    --alert-bg-hsl: 39 30% 20%; 
+    --alert-text-hsl: 30 95% 70%; 
+    --alert-border-hsl: 39 50% 30%;
+    --alert-icon-hsl: 30 95% 70%;
+
+    /* Custom Sidebar Vars - Dark Mode */
+    --app-sidebar-background: 240 10% 12%;
+    --app-sidebar-foreground: 210 17% 85%;
+    --app-sidebar-border: 240 5% 25%;
+    --app-sidebar-hover-background: 240 10% 18%;
+    --app-sidebar-active-background: 253 100% 75%;
+    --app-sidebar-active-foreground: 248 16% 10%;
   }
 }
 

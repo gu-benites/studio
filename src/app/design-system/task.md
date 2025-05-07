@@ -1,33 +1,41 @@
 # Design System Page Tasks
 
-- [ ] **Task: Create Design System Page Component**
-    - [ ] Subtask: Create `src/app/design-system/page.tsx`.
-    - [ ] Subtask: Add basic page structure (main container, title).
+- [x] **Task: Create Design System Page Component**
+    - [x] Subtask: Create `src/app/design-system/page.tsx`.
+    - [x] Subtask: Add basic page structure (main container, title).
 
-- [ ] **Task: Translate HTML Content to JSX**
-    - [ ] Subtask: Replicate overall HTML structure from `app_docs/01_design_system_01.html`.
-    - [ ] Subtask: Convert HTML tags to JSX elements.
-    - [ ] Subtask: Apply Tailwind CSS classes from the HTML to `className` attributes.
+- [x] **Task: Translate HTML Content to JSX**
+    - [x] Subtask: Replicate overall HTML structure from `app_docs/01_design_system_01.html`.
+    - [x] Subtask: Convert HTML tags to JSX elements.
+    - [x] Subtask: Apply Tailwind CSS classes from the HTML to `className` attributes, prioritizing theme-based classes.
 
-- [ ] **Task: Implement Styling and Color Palette**
-    - [ ] Subtask: Use explicit hex/rgba color values from `01_design_system_01.html` for `aroma-` prefixed colors to accurately represent the documented design system (e.g., using inline styles for specificity on this page).
-    - [ ] Subtask: Ensure typography (font, sizes, weights) matches the HTML specification, leveraging `font-poppins`.
-    - [ ] Subtask: Implement gradient text and gradient backgrounds as shown in the HTML.
+- [x] **Task: Integrate with Global Theme (AromaChat)**
+    - [x] Subtask: Update `tailwind.config.ts` to include the AromaChat color palette (`aroma-primary`, `aroma-secondary`, etc.) and other design tokens (fonts, borderRadius).
+    - [x] Subtask: Update `src/app/globals.css` to define HSL CSS variables for the AromaChat colors, making them available for ShadCN components and general Tailwind usage.
+    - [x] Subtask: Ensure the `DesignSystemPage` uses Tailwind classes that reference the newly defined theme colors (e.g., `bg-aroma-primary`, `text-aroma-text`) instead of local constants or inline styles for AromaChat specific colors.
+    - [x] Subtask: Verify that existing ShadCN components used elsewhere in the app now reflect the AromaChat theme colors where appropriate (e.g., `bg-primary` should map to `aroma-primary`).
 
-- [ ] **Task: Implement UI Components Showcase**
-    - [ ] Subtask: Buttons: Replicate styles for main action button, standard variants, and suggestion chips.
-    - [ ] Subtask: Input Fields: Replicate styled input field with icon and gradient border effect.
-    - [ ] Subtask: Loading & Progress:
-        - [ ] Replicate pulsing circle loading indicator (using `animate-pulseRing`).
-        - [ ] Replicate progress bar with gradient.
-        - [ ] Replicate step list with active, completed, and ellipsis states (using `animate-ellipsis`).
-    - [ ] Subtask: Alerts & Badges: Replicate alert component style and relevancy badges.
-    - [ ] Subtask: Replace placeholder SVGs with Lucide React icons where appropriate (Search, ArrowRight, AlertTriangle) or keep as inline SVGs.
+- [x] **Task: Implement Styling and Color Palette Showcase**
+    - [x] Subtask: Use Tailwind classes for all `aroma-` prefixed colors by referencing the theme (e.g., `bg-aroma-primary`, `text-aroma-text-muted`).
+    - [x] Subtask: Ensure typography (font `font-poppins`, sizes, weights) matches the HTML specification using Tailwind classes.
+    - [x] Subtask: Implement gradient text and gradient backgrounds using Tailwind classes (`from-aroma-grad-start`, `to-aroma-grad-end`).
+
+- [x] **Task: Implement UI Components Showcase (Using Tailwind Theme)**
+    - [x] Subtask: Buttons: Replicate styles for main action button, standard variants, and suggestion chips using Tailwind classes and theme colors.
+    - [x] Subtask: Input Fields: Replicate styled input field with icon and gradient border effect using Tailwind classes and theme colors for borders/gradients.
+    - [x] Subtask: Loading & Progress:
+        - [x] Replicate pulsing circle loading indicator (using `animate-pulseRing` and theme colors like `bg-aroma-primary` with opacities).
+        - [x] Replicate progress bar with gradient (using `from-aroma-grad-start`, `to-aroma-grad-end`).
+        - [x] Replicate step list with active, completed, and ellipsis states (using `animate-ellipsis` and theme text colors like `text-aroma-text`, `text-aroma-text-muted`).
+    - [x] Subtask: Alerts & Badges: Replicate alert component style (`bg-alert-bg`, `text-alert-text`) and relevancy badges using theme colors.
+    - [x] Subtask: Replace placeholder SVGs with Lucide React icons where appropriate (Search, ArrowRight, AlertTriangle).
 
 - [ ] **Task: Ensure Page Functionality (Visual)**
     - [ ] Subtask: Page should be responsive based on Tailwind classes.
-    - [ ] Subtask: Hover/focus states on interactive elements (buttons, inputs) should visually match the HTML spec.
+    - [ ] Subtask: Hover/focus states on interactive elements (buttons, inputs) should visually match the HTML spec and use theme colors.
 
 - [ ] **Task: Verify Integration**
     - [ ] Subtask: Confirm page is accessible via the `/design-system` route.
     - [ ] Subtask: Confirm the "Design System" link in `AppSidebar` correctly navigates to this page.
+    - [ ] Subtask: Confirm that the page correctly uses the Poppins font via `font-poppins` Tailwind class.
+    - [ ] Subtask: Manually inspect that `globals.css` variables for `--primary`, `--secondary`, etc., are correctly mapped to AromaChat HSL values.
