@@ -297,7 +297,6 @@ const DesignSystemPage: React.FC = () => {
             </div>
         </div>
     </section>
-
     </div>
   );
 };
