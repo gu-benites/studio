@@ -10,21 +10,20 @@ Implement a multi-step, guided user flow that collects health-related informatio
 ## Phase 1: Initial Setup & Health Concern Input
 
 - [ ] **Task 1.1: Project Setup & Core Components**
-    - [ ] Subtask 1.1.1: Create a new Next.js page/route for the recipe creation flow (e.g., `/create-recipe`).
+    - [ ] Subtask 1.1.1: Determine routing strategy for the multi-step flow (e.g., if it starts on `/` and transitions to `/create-recipe/step/:id` or stays on a single dynamic route).
     - [ ] Subtask 1.1.2: Develop a main state management solution for the multi-step form (e.g., React Context, Zustand, or component state passed through props).
         - This will hold user inputs, API responses, and current step.
-    - [ ] Subtask 1.1.3: Create basic UI layout for the multi-step form (header, content area, navigation buttons).
+    - [ ] Subtask 1.1.3: Create basic UI layout for subsequent steps of the multi-step form (header, content area, navigation buttons). (The first step uses `RecipeGenerator.tsx`).
     - [ ] Subtask 1.1.4: Implement utility functions for `sessionStorage` (get, set, remove) to persist data across steps and browser sessions. Include error handling for `sessionStorage` operations.
 
-- [ ] **Task 1.2: Health Concern Input UI & Logic**
-    - [ ] Subtask 1.2.1: Design and implement the UI for the first step: "Health Concern".
-        - Component: `HealthConcernStep.tsx`
-        - Elements:
-            - Text input field for the user to describe their health concern.
-            - "Next" button.
-    - [ ] Subtask 1.2.2: Implement form validation for the health concern input (e.g., not empty).
-    - [ ] Subtask 1.2.3: On "Next" button click:
-        - Store the health concern in the main state and `sessionStorage`.
+- [x] **Task 1.2: Health Concern Input UI & Logic**
+    - [x] Subtask 1.2.1: Adapt existing UI for the "Health Concern" step.
+        - Component: `RecipeGenerator.tsx` (main page at `/`).
+        - Elements: Existing input field in `RecipeGenerator.tsx` for 'recipeIdea' serves as health concern input. Existing 'Criar Receita' button will act as 'Next'.
+    - [x] Subtask 1.2.2: Implement form validation for the health concern input.
+        - Note: `RecipeGenerator.tsx` already uses a Zod schema (`recipeInputSchema`) for `recipeIdea` which includes `min(3)`. This validation is suitable.
+    - [ ] Subtask 1.2.3: On 'Criar Receita' button click (adapting `RecipeGenerator.tsx`'s `handleGenerateRecipe` or creating a new handler for the flow):
+        - Store the health concern (from `recipeIdea` input) in the main state and `sessionStorage`.
         - Transition the user to the "Demographics" step.
 
 ---
@@ -33,7 +32,7 @@ Implement a multi-step, guided user flow that collects health-related informatio
 
 - [ ] **Task 2.1: Demographics Input UI & Logic**
     - [ ] Subtask 2.1.1: Design and implement the UI for the "Demographics" step.
-        - Component: `DemographicsStep.tsx`
+        - Component: `DemographicsStep.tsx` (or similar, as part of the `/create-recipe/...` flow).
         - Elements:
             - Input for "Gender" (e.g., select dropdown: male, female, other).
             - Input for "Age Category" (e.g., select dropdown: child, teen, adult, senior).
@@ -51,7 +50,7 @@ Implement a multi-step, guided user flow that collects health-related informatio
         - Request Body (as per `01_api_calls_n_responses.txt`):
             ```json
             {
-              "health_concern": "...",
+              "health_concern": "...", // From Step 1
               "gender": "...",
               "age_category": "...",
               "age_specific": "...",
