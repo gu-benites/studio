@@ -28,7 +28,7 @@ const CausesStep: React.FC = () => {
       setSelectedCausesState(formData.selectedCauses);
       // Initialize open accordions based on initially selected causes
       const initiallyOpen = formData.selectedCauses.map(c => c.cause_name);
-      setOpenAccordionItems(prevOpen => Array.from(new Set([...prevOpen, ...initiallyOpen])));
+      setOpenAccordionItems(Array.from(new Set(initiallyOpen)));
     }
   }, [formData.selectedCauses]);
 
@@ -39,47 +39,23 @@ const CausesStep: React.FC = () => {
 
   const handleSwitchChange = useCallback((cause: PotentialCause, checked: boolean) => {
     setSelectedCausesState(prevSelected => {
-      if (checked) {
-        if (!prevSelected.some(c => c.cause_name === cause.cause_name)) {
-          return [...prevSelected, cause];
-        }
-      } else {
+      const isCurrentlySelected = prevSelected.some(c => c.cause_name === cause.cause_name);
+      if (checked && !isCurrentlySelected) {
+        return [...prevSelected, cause];
+      } else if (!checked && isCurrentlySelected) {
         return prevSelected.filter(c => c.cause_name !== cause.cause_name);
       }
       return prevSelected;
     });
-
-    // This effect will run after selectedCausesState updates
-    // setOpenAccordionItems will be handled in the useEffect below that listens to selectedCausesState changes
-  }, [setSelectedCausesState]);
+  }, []);
 
   // Effect to sync accordion open state with selection state
   useEffect(() => {
-    setOpenAccordionItems(prevOpen => {
-        const currentlySelectedNames = selectedCausesState.map(c => c.cause_name);
-        // Add newly selected items to open list
-        const toOpen = currentlySelectedNames.filter(name => !prevOpen.includes(name));
-        // Remove deselected items from open list
-        const toClose = prevOpen.filter(name => !currentlySelectedNames.includes(name));
-        
-        let newOpenItems = [...prevOpen];
-        if (toOpen.length > 0) {
-            newOpenItems = [...newOpenItems, ...toOpen];
-        }
-        if (toClose.length > 0) {
-            newOpenItems = newOpenItems.filter(item => !toClose.includes(item));
-        }
-        // Deduplicate, just in case
-        return Array.from(new Set(newOpenItems));
-    });
+    const currentlySelectedNames = selectedCausesState.map(c => c.cause_name);
+    setOpenAccordionItems(currentlySelectedNames);
   }, [selectedCausesState]);
 
-
-  const handleAccordionValueChange = useCallback((newOpenAccordionItemNames: string[]) => {
-    setOpenAccordionItems(newOpenAccordionItemNames);
-    // Note: We do not change selection state here. Selection is purely driven by the switch.
-    // User can manually open/close accordions without affecting their selected status.
-  }, [setOpenAccordionItems]);
+  // Removed handleAccordionValueChange as switch controls accordion state
 
   const handleSubmitCauses = async (event?: React.FormEvent<HTMLFormElement>) => {
     if (event) event.preventDefault(); 
@@ -129,7 +105,7 @@ const CausesStep: React.FC = () => {
         <Accordion 
           type="multiple" 
           value={openAccordionItems} 
-          onValueChange={handleAccordionValueChange}
+          // onValueChange prop removed - accordion state is controlled by the switch
           className="w-full"
         >
           {formData.potentialCausesResult.map((cause, index) => {
@@ -147,17 +123,7 @@ const CausesStep: React.FC = () => {
                 )}
               >
                 <AccordionTrigger 
-                   onClick={(e) => {
-                     const target = e.target as HTMLElement;
-                     if (target.closest(`#cause-switch-${causeId}`) || target.closest(`#cause-label-${causeId}`)) {
-                       return;
-                     }
-                     // For other clicks on Trigger, this will toggle the accordion via onValueChange
-                     // If the accordion was closed and is being opened, and the item is selected, nothing more to do.
-                     // If the accordion was open and is being closed, and the item is selected, nothing more to do.
-                     // If the accordion was closed and is being opened, and item is NOT selected, nothing more to do (user wants to read)
-                     // This seems okay, selection is separate.
-                   }}
+                  // Removed onClick from AccordionTrigger as switch controls accordion state
                   className={cn(
                     "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card transition-colors",
                     openAccordionItems.includes(causeId) ? "hover:bg-muted/10" : "hover:bg-muted/5",

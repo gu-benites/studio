@@ -30,7 +30,7 @@ const SymptomsStep: React.FC = () => {
     if (formData.selectedSymptoms) {
       setSelectedSymptomsState(formData.selectedSymptoms);
       const initiallyOpen = formData.selectedSymptoms.map(s => s.symptom_name);
-      setOpenAccordionItems(prevOpen => Array.from(new Set([...prevOpen, ...initiallyOpen])));
+      setOpenAccordionItems(Array.from(new Set(initiallyOpen)));
     }
   }, [formData.selectedSymptoms]);
 
@@ -40,44 +40,23 @@ const SymptomsStep: React.FC = () => {
 
   const handleSwitchChange = useCallback((symptom: PotentialSymptom, checked: boolean) => {
     setSelectedSymptomsState(prevSelected => {
-      if (checked) {
-        if (!prevSelected.some(s => s.symptom_name === symptom.symptom_name)) {
-          return [...prevSelected, { symptom_name: symptom.symptom_name }];
-        }
-      } else {
+      const isCurrentlySelected = prevSelected.some(s => s.symptom_name === symptom.symptom_name);
+      if (checked && !isCurrentlySelected) {
+        return [...prevSelected, { symptom_name: symptom.symptom_name }];
+      } else if (!checked && isCurrentlySelected) {
         return prevSelected.filter(s => s.symptom_name !== symptom.symptom_name);
       }
       return prevSelected;
     });
-    // Accordion open/close logic will be handled by the useEffect below
-  }, [setSelectedSymptomsState]);
+  }, []);
 
   // Effect to sync accordion open state with selection state
   useEffect(() => {
-    setOpenAccordionItems(prevOpen => {
-        const currentlySelectedNames = selectedSymptomsState.map(s => s.symptom_name);
-        // Add newly selected items to open list
-        const toOpen = currentlySelectedNames.filter(name => !prevOpen.includes(name));
-        // Remove deselected items from open list
-        const toClose = prevOpen.filter(name => !currentlySelectedNames.includes(name));
-        
-        let newOpenItems = [...prevOpen];
-        if (toOpen.length > 0) {
-            newOpenItems = [...newOpenItems, ...toOpen];
-        }
-        if (toClose.length > 0) {
-            newOpenItems = newOpenItems.filter(item => !toClose.includes(item));
-        }
-        // Deduplicate
-        return Array.from(new Set(newOpenItems));
-    });
+    const currentlySelectedNames = selectedSymptomsState.map(s => s.symptom_name);
+    setOpenAccordionItems(currentlySelectedNames);
   }, [selectedSymptomsState]);
 
-
-  const handleAccordionValueChange = useCallback((newOpenAccordionItemNames: string[]) => {
-    setOpenAccordionItems(newOpenAccordionItemNames);
-  }, [setOpenAccordionItems]);
-
+  // Removed handleAccordionValueChange as switch controls accordion state
 
   const handleSubmitSymptoms = async (event?: React.FormEvent<HTMLFormElement>) => {
     if (event) event.preventDefault();
@@ -127,7 +106,7 @@ const SymptomsStep: React.FC = () => {
         <Accordion 
           type="multiple" 
           value={openAccordionItems} 
-          onValueChange={handleAccordionValueChange}
+          // onValueChange prop removed - accordion state is controlled by the switch
           className="w-full"
         >
           {formData.potentialSymptomsResult.map((symptom, index) => {
@@ -145,12 +124,7 @@ const SymptomsStep: React.FC = () => {
                 )}
               >
                 <AccordionTrigger
-                   onClick={(e) => {
-                    const target = e.target as HTMLElement;
-                    if (target.closest(`#symptom-switch-${symptomId}`) || target.closest(`#symptom-label-${symptomId}`)) {
-                      return;
-                    }
-                  }}
+                  // Removed onClick from AccordionTrigger as switch controls accordion state
                   className={cn(
                     "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card transition-colors",
                     openAccordionItems.includes(symptomId) ? "hover:bg-muted/10" : "hover:bg-muted/5",
