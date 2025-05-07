@@ -3,7 +3,7 @@
 
 import type { NextPage } from 'next';
 import Head from 'next/head';
-import React from 'react'; // Keep React import
+import React from 'react'; 
 import { Search, ArrowRight, AlertTriangle } from 'lucide-react';
 
 // Define colors from the AromaChat design system for this page specifically
@@ -22,10 +22,6 @@ const aromaColors = {
 };
 
 const DesignSystemPage: NextPage = () => {
-  // State for input field focus to manually apply gradient border styles if needed,
-  // but aiming for CSS-only solution with group-focus-within.
-  // const [isInputFocused, setIsInputFocused] = React.useState(false);
-
   return (
     <>
       <Head>
@@ -123,7 +119,6 @@ const DesignSystemPage: NextPage = () => {
               <div className="card-content pt-6 flex justify-center items-center min-h-[150px]">
                 <div className="w-20 h-20 relative">
                   <div className="pulse-container">
-                    {/* Tailwind animation 'animate-pulseRing' should be defined in tailwind.config.js */}
                     <div className="pulse-circle animate-pulseRing absolute left-1/2 top-1/2 rounded-full" style={{ backgroundColor: `rgba(122, 92, 255, 0.85)`, animationDelay: '-0.1s', width: '40%', height: '40%' }}></div>
                     <div className="pulse-circle animate-pulseRing absolute left-1/2 top-1/2 rounded-full" style={{ backgroundColor: `rgba(122, 92, 255, 0.75)`, animationDelay: '0s',   width: '47.5%', height: '47.5%' }}></div>
                     <div className="pulse-circle animate-pulseRing absolute left-1/2 top-1/2 rounded-full" style={{ backgroundColor: `rgba(122, 92, 255, 0.65)`, animationDelay: '0.1s',  width: '55%', height: '55%' }}></div>
@@ -154,11 +149,16 @@ const DesignSystemPage: NextPage = () => {
                 <div>
                   <p className="text-base font-medium mb-3 text-center">Step List Example</p>
                   <ul className="space-y-2 text-center">
-                    <li className="transition-all duration-400 ease-in-out text-gray-400 text-base font-normal opacity-90 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center line-through" style={{color: aromaColors.textMuted, opacity: 0.7 }}><span className="font-bold mr-1">✓</span>Enter Health Concern</li>
-                    <li className="transition-all duration-400 ease-in-out text-gray-400 text-base font-normal opacity-90 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center line-through" style={{color: aromaColors.textMuted, opacity: 0.7 }}><span className="font-bold mr-1">✓</span>Provide Demographics</li>
-                    <li className="transition-all duration-400 ease-in-out text-lg font-bold opacity-100 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center animate-ellipsis" style={{color: aromaColors.text}}>Select Causes</li>
-                    <li className="transition-all duration-400 ease-in-out text-gray-400 text-base font-normal opacity-90 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center" style={{color: '#9ca3af'}}>Select Symptoms</li>
-                    <li className="transition-all duration-400 ease-in-out text-gray-400 text-base font-normal opacity-90 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center" style={{color: '#9ca3af'}}>Review Properties</li>
+                    <li className="transition-all duration-400 ease-in-out text-sm font-normal opacity-70 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center line-through" style={{color: aromaColors.textMuted }}><span className="font-bold mr-1">✓</span>Enter Health Concern</li>
+                    <li className="transition-all duration-400 ease-in-out text-sm font-normal opacity-70 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center line-through" style={{color: aromaColors.textMuted }}><span className="font-bold mr-1">✓</span>Provide Demographics</li>
+                    <li 
+                      className="transition-all duration-400 ease-in-out text-lg font-bold opacity-100 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center relative after:inline-block after:ml-1 after:w-[1.5em] after:text-left after:align-bottom after:content-['\\00a0'] after:animate-ellipsis" 
+                      style={{color: aromaColors.text}}
+                    >
+                      Select Causes
+                    </li>
+                    <li className="transition-all duration-400 ease-in-out text-gray-400 text-sm font-normal opacity-90 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center" style={{color: '#9ca3af'}}>Select Symptoms</li>
+                    <li className="transition-all duration-400 ease-in-out text-gray-400 text-sm font-normal opacity-90 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center" style={{color: '#9ca3af'}}>Review Properties</li>
                   </ul>
                   <p className="text-sm mt-2 text-center" style={{ color: aromaColors.textMuted }}>Represents: MUI &lt;Stepper&gt; or custom list component.</p>
                 </div>
@@ -178,12 +178,10 @@ const DesignSystemPage: NextPage = () => {
                     className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-white font-semibold py-3.5 px-8 rounded-3xl shadow-button-normal hover:-translate-y-0.5 hover:shadow-button-focus focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200"
                     style={{ 
                       background: `linear-gradient(to right, ${aromaColors.gradStart}, ${aromaColors.gradEnd})`,
-                      boxShadow: '0 4px 12px rgba(75, 71, 99, 0.1)', // button-normal
-                      // hover:boxShadow needs JS or more complex Tailwind setup
-                      // focus:ringColor should be aromaColors.primary
+                      boxShadow: '0 4px 12px rgba(75, 71, 99, 0.1)', 
                     }}
-                    onMouseOver={e => e.currentTarget.style.boxShadow = '0px 6px 18px rgba(122, 92, 255, 0.3)'} // button-focus
-                    onMouseOut={e => e.currentTarget.style.boxShadow = '0 4px 12px rgba(75, 71, 99, 0.1)'} // button-normal
+                    onMouseOver={e => e.currentTarget.style.boxShadow = '0px 6px 18px rgba(122, 92, 255, 0.3)'} 
+                    onMouseOut={e => e.currentTarget.style.boxShadow = '0 4px 12px rgba(75, 71, 99, 0.1)'} 
                   >
                     Criar Receita
                     <ArrowRight strokeWidth={2.5} className="w-4 h-4" />
@@ -196,13 +194,13 @@ const DesignSystemPage: NextPage = () => {
                 <h3 className="text-lg font-medium mb-3">Standard Variants</h3>
                 <div className="flex flex-wrap gap-4 items-center">
                   <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 text-white shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2" style={{backgroundColor: aromaColors.primary, borderColor: aromaColors.primary}}>Primary Contained</button>
-                  <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 border bg-white hover:bg-opacity-10 focus:outline-none focus:ring-2 focus:ring-offset-2" style={{color: aromaColors.primary, borderColor: aromaColors.primary, /* hover:backgroundColor: aromaColors.primary+'1A' */ }}>Primary Outlined</button>
-                  <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 hover:bg-opacity-10 focus:outline-none focus:ring-2 focus:ring-offset-2" style={{color: aromaColors.primary, /* hover:backgroundColor: aromaColors.primary+'1A' */}}>Primary Text</button>
+                  <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 border bg-white hover:bg-opacity-10 focus:outline-none focus:ring-2 focus:ring-offset-2" style={{color: aromaColors.primary, borderColor: aromaColors.primary }}>Primary Outlined</button>
+                  <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 hover:bg-opacity-10 focus:outline-none focus:ring-2 focus:ring-offset-2" style={{color: aromaColors.primary }}>Primary Text</button>
                 </div>
                 <p className="text-sm mt-2" style={{ color: aromaColors.textMuted }}>Represents: Standard MUI &lt;Button&gt; variants.</p>
                 <div className="flex flex-wrap gap-4 items-center mt-4">
                   <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 text-white shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2" style={{backgroundColor: aromaColors.secondary, borderColor: aromaColors.secondary}}>Secondary Contained</button>
-                  <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 border bg-white hover:bg-opacity-10 focus:outline-none focus:ring-2 focus:ring-offset-2" style={{color: aromaColors.secondary, borderColor: aromaColors.secondary, /* hover:backgroundColor: aromaColors.secondary+'1A' */}}>Secondary Outlined</button>
+                  <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 border bg-white hover:bg-opacity-10 focus:outline-none focus:ring-2 focus:ring-offset-2" style={{color: aromaColors.secondary, borderColor: aromaColors.secondary }}>Secondary Outlined</button>
                 </div>
                 <p className="text-sm mt-2" style={{ color: aromaColors.textMuted }}>Represents: Standard MUI &lt;Button&gt; variants with secondary color.</p>
               </div>
@@ -237,8 +235,6 @@ const DesignSystemPage: NextPage = () => {
                       placeholder="Ex: dor de cabeça, insônia, ansiedade..." 
                       className="block w-full rounded-[calc(1.75rem-1px)] border-none bg-white py-3.5 pl-12 pr-4 text-base leading-6 shadow-none outline-none placeholder-gray-400"
                       style={{color: aromaColors.text}}
-                      // onFocus={() => setIsInputFocused(true)}
-                      // onBlur={() => setIsInputFocused(false)}
                     />
                   </div>
                 </div>

@@ -93,11 +93,11 @@ export default {
           '50%': { opacity: '1', transform: 'translate(-50%, -50%) scale(1)' }
         },
         ellipsis: {
-          '0%': { content: '" "' },
-          '25%': { content: '". "' },
-          '50%': { content: '".. "' },
+          '0%': { content: '"\\00a0"' }, // Non-breaking space
+          '25%': { content: '"."' },
+          '50%': { content: '".."' },
           '75%': { content: '"..."' },
-          'to': { content: '" "' }
+          '100%': { content: '"\\00a0"' } // Non-breaking space
         },
   		},
   		animation: {
