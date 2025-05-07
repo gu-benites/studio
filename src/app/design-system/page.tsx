@@ -4,28 +4,13 @@
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import React from 'react'; 
-import { ArrowRight, AlertTriangle, ArrowUp, Search } from 'lucide-react';
+import { ArrowRight, AlertTriangle, Search, ArrowUp } from 'lucide-react'; // Removed Plus, FileEdit as they are not used
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"; 
 
-// Define colors from the AromaChat design system for this page specifically
-// These would ideally come from a theme context or CSS variables if used app-wide
-const aromaColors = {
-  primary: 'hsl(var(--aroma-primary-hsl))',
-  secondary: 'hsl(var(--aroma-secondary-hsl))',
-  accent: 'hsl(var(--aroma-accent-hsl))',
-  text: 'hsl(var(--aroma-text-hsl))',
-  textMuted: 'hsl(var(--aroma-text-muted-hsl))',
-  gradStart: 'hsl(var(--aroma-grad-start-hsl))',
-  gradEnd: 'hsl(var(--aroma-grad-end-hsl))',
-  alertBg: 'hsl(var(--alert-bg-hsl))', 
-  alertText: 'hsl(var(--alert-text-hsl))',
-  alertBorder: 'hsl(var(--alert-border-hsl))',
-  alertIcon: 'hsl(var(--alert-icon-hsl))',
-};
-
+// The aromaColors constant is no longer needed as styles are applied via Tailwind theme classes.
 
 const DesignSystemPage: NextPage = () => {
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -134,15 +119,15 @@ const DesignSystemPage: NextPage = () => {
               <h3 className="text-xl font-medium p-6 pb-0">Loading Indicator</h3>
               <div className="p-6 pt-6 flex justify-center items-center min-h-[150px]">
                 <div className="w-20 h-20 relative">
-                  {/* Simplified pulse circles for direct Tailwind application */}
-                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-aroma-primary/80" style={{ animationDelay: '-0.1s', width: '40%', height: '40%' }}></div>
-                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-aroma-primary/70" style={{ animationDelay: '0s',   width: '47.5%', height: '47.5%' }}></div>
-                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-aroma-primary/60" style={{ animationDelay: '0.1s',  width: '55%', height: '55%' }}></div>
-                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-aroma-primary/50" style={{ animationDelay: '0.2s',  width: '62.5%', height: '62.5%' }}></div>
-                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-aroma-primary/40" style={{ animationDelay: '0.3s',  width: '70%', height: '70%' }}></div>
-                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-aroma-primary/30" style={{ animationDelay: '0.4s',  width: '77.5%', height: '77.5%' }}></div>
-                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-aroma-primary/20" style={{ animationDelay: '0.5s',  width: '85%', height: '85%' }}></div>
-                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-aroma-primary/10" style={{ animationDelay: '0.6s',  width: '92.5%', height: '92.5%' }}></div>
+                  {/* Pulsing circles using theme primary color with opacity */}
+                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-primary/80" style={{ animationDelay: '-0.1s', width: '40%', height: '40%' }}></div>
+                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-primary/70" style={{ animationDelay: '0s',   width: '47.5%', height: '47.5%' }}></div>
+                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-primary/60" style={{ animationDelay: '0.1s',  width: '55%', height: '55%' }}></div>
+                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-primary/50" style={{ animationDelay: '0.2s',  width: '62.5%', height: '62.5%' }}></div>
+                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-primary/40" style={{ animationDelay: '0.3s',  width: '70%', height: '70%' }}></div>
+                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-primary/30" style={{ animationDelay: '0.4s',  width: '77.5%', height: '77.5%' }}></div>
+                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-primary/20" style={{ animationDelay: '0.5s',  width: '85%', height: '85%' }}></div>
+                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-primary/10" style={{ animationDelay: '0.6s',  width: '92.5%', height: '92.5%' }}></div>
                 </div>
               </div>
               <p className="text-sm p-6 pt-0 text-center text-aroma-text-muted">Represents: Custom loading component or styled &lt;CircularProgress&gt;.</p>
@@ -253,8 +238,8 @@ const DesignSystemPage: NextPage = () => {
                 <div>
                   <Label htmlFor="chat-input-example" className="block text-sm font-medium text-aroma-text mb-2">Chat Input (New Style)</Label>
                   <form onSubmit={handleFormSubmit} className="space-y-2">
-                    <div className="group relative rounded-md border border-input p-px hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end transition-all duration-200 ease-in-out">
-                       <div className="flex items-center w-full bg-card rounded-[calc(theme(borderRadius.md)-1px)] p-1 pr-1.5 shadow-sm">
+                    <div className="group relative rounded-md border border-input p-0.5 hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end transition-all duration-200 ease-in-out">
+                       <div className="flex items-center w-full bg-card rounded-[calc(theme(borderRadius.md)-0.5px)] p-1 pr-1.5 shadow-sm">
                         <Search className="h-5 w-5 text-muted-foreground mx-3 pointer-events-none" />
                         <Separator orientation="vertical" className="h-6 mr-2 bg-border" />
                         <Input
@@ -337,4 +322,3 @@ const DesignSystemPage: NextPage = () => {
 };
 
 export default DesignSystemPage;
-
