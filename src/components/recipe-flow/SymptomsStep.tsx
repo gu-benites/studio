@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -50,18 +49,30 @@ const SymptomsStep: React.FC = () => {
       }
       return prevSelected;
     });
+    // Accordion open/close logic will be handled by the useEffect below
+  }, [setSelectedSymptomsState]);
 
+  // Effect to sync accordion open state with selection state
+  useEffect(() => {
     setOpenAccordionItems(prevOpen => {
-      if (checked) {
-        if (!prevOpen.includes(symptom.symptom_name)) {
-          return [...prevOpen, symptom.symptom_name];
+        const currentlySelectedNames = selectedSymptomsState.map(s => s.symptom_name);
+        // Add newly selected items to open list
+        const toOpen = currentlySelectedNames.filter(name => !prevOpen.includes(name));
+        // Remove deselected items from open list
+        const toClose = prevOpen.filter(name => !currentlySelectedNames.includes(name));
+        
+        let newOpenItems = [...prevOpen];
+        if (toOpen.length > 0) {
+            newOpenItems = [...newOpenItems, ...toOpen];
         }
-      } else {
-        return prevOpen.filter(item => item !== symptom.symptom_name);
-      }
-      return prevOpen;
+        if (toClose.length > 0) {
+            newOpenItems = newOpenItems.filter(item => !toClose.includes(item));
+        }
+        // Deduplicate
+        return Array.from(new Set(newOpenItems));
     });
-  }, [setSelectedSymptomsState, setOpenAccordionItems]);
+  }, [selectedSymptomsState]);
+
 
   const handleAccordionValueChange = useCallback((newOpenAccordionItemNames: string[]) => {
     setOpenAccordionItems(newOpenAccordionItemNames);
@@ -86,8 +97,8 @@ const SymptomsStep: React.FC = () => {
       const apiPayload = {
         healthConcern: formData.healthConcern,
         gender: formData.gender,
-        ageCategory: formData.ageCategory,
-        ageSpecific: formData.ageSpecific,
+        ageCategory: formData.ageCategory, 
+        ageSpecific: formData.ageSpecific, 
         selectedCauses: formData.selectedCauses,
         selectedSymptoms: selectedSymptomsState,
       };
@@ -133,7 +144,13 @@ const SymptomsStep: React.FC = () => {
                    index === formData.potentialSymptomsResult!.length - 1 ? "border-b-0" : ""
                 )}
               >
-                <AccordionTrigger 
+                <AccordionTrigger
+                   onClick={(e) => {
+                    const target = e.target as HTMLElement;
+                    if (target.closest(`#symptom-switch-${symptomId}`) || target.closest(`#symptom-label-${symptomId}`)) {
+                      return;
+                    }
+                  }}
                   className={cn(
                     "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card transition-colors",
                     openAccordionItems.includes(symptomId) ? "hover:bg-muted/10" : "hover:bg-muted/5",
@@ -148,6 +165,7 @@ const SymptomsStep: React.FC = () => {
                       onCheckedChange={(newCheckedState) => {
                         handleSwitchChange(symptom, newCheckedState);
                       }}
+                      onClick={(e) => e.stopPropagation()}
                       className="shrink-0"
                       aria-labelledby={`symptom-label-${symptomId}`}
                     />
@@ -155,6 +173,10 @@ const SymptomsStep: React.FC = () => {
                       htmlFor={`symptom-switch-${symptomId}`}
                       id={`symptom-label-${symptomId}`}
                       className="font-medium text-base cursor-pointer flex-1 truncate"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSwitchChange(symptom, !isChecked);
+                      }}
                     >
                       {symptom.symptom_name}
                     </Label>

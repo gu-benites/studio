@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -50,20 +49,36 @@ const CausesStep: React.FC = () => {
       return prevSelected;
     });
 
+    // This effect will run after selectedCausesState updates
+    // setOpenAccordionItems will be handled in the useEffect below that listens to selectedCausesState changes
+  }, [setSelectedCausesState]);
+
+  // Effect to sync accordion open state with selection state
+  useEffect(() => {
     setOpenAccordionItems(prevOpen => {
-      if (checked) {
-        if (!prevOpen.includes(cause.cause_name)) {
-          return [...prevOpen, cause.cause_name];
+        const currentlySelectedNames = selectedCausesState.map(c => c.cause_name);
+        // Add newly selected items to open list
+        const toOpen = currentlySelectedNames.filter(name => !prevOpen.includes(name));
+        // Remove deselected items from open list
+        const toClose = prevOpen.filter(name => !currentlySelectedNames.includes(name));
+        
+        let newOpenItems = [...prevOpen];
+        if (toOpen.length > 0) {
+            newOpenItems = [...newOpenItems, ...toOpen];
         }
-      } else {
-        return prevOpen.filter(item => item !== cause.cause_name);
-      }
-      return prevOpen;
+        if (toClose.length > 0) {
+            newOpenItems = newOpenItems.filter(item => !toClose.includes(item));
+        }
+        // Deduplicate, just in case
+        return Array.from(new Set(newOpenItems));
     });
-  }, [setSelectedCausesState, setOpenAccordionItems]);
+  }, [selectedCausesState]);
+
 
   const handleAccordionValueChange = useCallback((newOpenAccordionItemNames: string[]) => {
     setOpenAccordionItems(newOpenAccordionItemNames);
+    // Note: We do not change selection state here. Selection is purely driven by the switch.
+    // User can manually open/close accordions without affecting their selected status.
   }, [setOpenAccordionItems]);
 
   const handleSubmitCauses = async (event?: React.FormEvent<HTMLFormElement>) => {
@@ -85,8 +100,8 @@ const CausesStep: React.FC = () => {
       const apiPayload = {
         healthConcern: formData.healthConcern,
         gender: formData.gender,
-        ageCategory: formData.ageCategory,
-        ageSpecific: formData.ageSpecific,
+        ageCategory: formData.ageCategory, 
+        ageSpecific: formData.ageSpecific, 
         selectedCauses: selectedCausesState,
       };
       const potentialSymptoms = await getPotentialSymptoms(apiPayload);
@@ -132,6 +147,17 @@ const CausesStep: React.FC = () => {
                 )}
               >
                 <AccordionTrigger 
+                   onClick={(e) => {
+                     const target = e.target as HTMLElement;
+                     if (target.closest(`#cause-switch-${causeId}`) || target.closest(`#cause-label-${causeId}`)) {
+                       return;
+                     }
+                     // For other clicks on Trigger, this will toggle the accordion via onValueChange
+                     // If the accordion was closed and is being opened, and the item is selected, nothing more to do.
+                     // If the accordion was open and is being closed, and the item is selected, nothing more to do.
+                     // If the accordion was closed and is being opened, and item is NOT selected, nothing more to do (user wants to read)
+                     // This seems okay, selection is separate.
+                   }}
                   className={cn(
                     "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card transition-colors",
                     openAccordionItems.includes(causeId) ? "hover:bg-muted/10" : "hover:bg-muted/5",
@@ -146,6 +172,7 @@ const CausesStep: React.FC = () => {
                       onCheckedChange={(newCheckedState) => {
                         handleSwitchChange(cause, newCheckedState);
                       }}
+                      onClick={(e) => e.stopPropagation()} 
                       className="shrink-0"
                       aria-labelledby={`cause-label-${causeId}`}
                     />
@@ -153,6 +180,10 @@ const CausesStep: React.FC = () => {
                       htmlFor={`cause-switch-${causeId}`}
                       id={`cause-label-${causeId}`}
                       className="font-medium text-base cursor-pointer flex-1 truncate"
+                      onClick={(e) => {
+                        e.stopPropagation(); 
+                        handleSwitchChange(cause, !isChecked);
+                      }}
                     >
                       {cause.cause_name}
                     </Label>
