@@ -253,22 +253,22 @@ const DesignSystemPage: NextPage = () => {
                 <div>
                   <Label htmlFor="chat-input-example" className="block text-sm font-medium text-aroma-text mb-2">Chat Input (New Style)</Label>
                   <form onSubmit={handleFormSubmit} className="space-y-2">
-                    <div className="group relative rounded-xl border border-input p-px hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end transition-all duration-200 ease-in-out">
-                       <div className="flex items-center w-full bg-card rounded-[calc(theme(borderRadius.xl)-1px)] p-1 pr-1.5 shadow-sm">
+                    <div className="group relative rounded-md border border-input p-px hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end transition-all duration-200 ease-in-out">
+                       <div className="flex items-center w-full bg-card rounded-[calc(theme(borderRadius.md)-1px)] p-1 pr-1.5 shadow-sm">
                         <Search className="h-5 w-5 text-muted-foreground mx-3 pointer-events-none" />
                         <Separator orientation="vertical" className="h-6 mr-2 bg-border" />
                         <Input
                           type="text"
                           id="chat-input-example"
                           name="chat-input"
-                          placeholder="Lorem Ipsum is simply dummy text..."
+                          placeholder="Descreva sua ideia de receita..."
                           className="flex-grow py-2.5 px-2 bg-transparent border-none outline-none text-card-foreground placeholder:text-muted-foreground text-sm h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
                         />
                         <Button 
                           type="submit"
                           size="icon"
                           className="h-9 w-9 bg-aroma-secondary text-primary-foreground rounded-md hover:bg-aroma-secondary/90 focus:ring-aroma-secondary focus:ring-offset-card"
-                          aria-label="Send message"
+                          aria-label="Criar Receita"
                         >
                           <ArrowUp className="w-5 h-5" />
                         </Button>
@@ -337,3 +337,4 @@ const DesignSystemPage: NextPage = () => {
 };
 
 export default DesignSystemPage;
+
