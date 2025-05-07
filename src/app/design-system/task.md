@@ -22,20 +22,23 @@
 
 - [x] **Task: Implement UI Components Showcase (Using Tailwind Theme)**
     - [x] Subtask: Buttons: Replicate styles for main action button, standard variants, and suggestion chips using Tailwind classes and theme colors.
-    - [x] Subtask: Input Fields: Replicate styled input field with icon and gradient border effect using Tailwind classes and theme colors for borders/gradients.
+    - [x] Subtask: Input Fields: 
+        - [x] Replicate original styled input field with icon and gradient border effect.
+        - [x] Implement new chat-style input field with send button (`ArrowUp` icon) and accessory buttons (`Plus`, `FileEdit`). Ensure smooth border transition on focus.
     - [x] Subtask: Loading & Progress:
         - [x] Replicate pulsing circle loading indicator (using `animate-pulseRing` and theme colors like `bg-aroma-primary` with opacities).
         - [x] Replicate progress bar with gradient (using `from-aroma-grad-start`, `to-aroma-grad-end`).
         - [x] Replicate step list with active, completed, and ellipsis states (using `animate-ellipsis` and theme text colors like `text-aroma-text`, `text-aroma-text-muted`).
     - [x] Subtask: Alerts & Badges: Replicate alert component style (`bg-alert-bg`, `text-alert-text`) and relevancy badges using theme colors.
-    - [x] Subtask: Replace placeholder SVGs with Lucide React icons where appropriate (Search, ArrowRight, AlertTriangle).
+    - [x] Subtask: Replace placeholder SVGs with Lucide React icons where appropriate (ArrowRight, AlertTriangle, ArrowUp, Plus, FileEdit).
 
-- [ ] **Task: Ensure Page Functionality (Visual)**
-    - [ ] Subtask: Page should be responsive based on Tailwind classes.
-    - [ ] Subtask: Hover/focus states on interactive elements (buttons, inputs) should visually match the HTML spec and use theme colors.
+- [x] **Task: Ensure Page Functionality (Visual)**
+    - [x] Subtask: Page should be responsive based on Tailwind classes.
+    - [x] Subtask: Hover/focus states on interactive elements (buttons, inputs) should visually match the HTML spec and use theme colors.
+    - [x] Subtask: Chat input send button works with click or keyboard Enter (demonstrated with console logs).
 
-- [ ] **Task: Verify Integration**
-    - [ ] Subtask: Confirm page is accessible via the `/design-system` route.
-    - [ ] Subtask: Confirm the "Design System" link in `AppSidebar` correctly navigates to this page.
-    - [ ] Subtask: Confirm that the page correctly uses the Poppins font via `font-poppins` Tailwind class.
-    - [ ] Subtask: Manually inspect that `globals.css` variables for `--primary`, `--secondary`, etc., are correctly mapped to AromaChat HSL values.
+- [x] **Task: Verify Integration**
+    - [x] Subtask: Confirm page is accessible via the `/design-system` route.
+    - [x] Subtask: Confirm the "Design System" link in `AppSidebar` correctly navigates to this page.
+    - [x] Subtask: Confirm that the page correctly uses the Poppins font via `font-poppins` Tailwind class.
+    - [x] Subtask: Manually inspect that `globals.css` variables for `--primary`, `--secondary`, etc., are correctly mapped to AromaChat HSL values.

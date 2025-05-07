@@ -4,9 +4,30 @@
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import React from 'react'; 
-import { Search, ArrowRight, AlertTriangle } from 'lucide-react';
+import { ArrowRight, AlertTriangle, ArrowUp, Plus, FileEdit } from 'lucide-react'; // Added ArrowUp, Plus, FileEdit
+import { Button } from "@/components/ui/button"; // Import Button component
+import { Separator } from "@/components/ui/separator"; // Import Separator
 
 const DesignSystemPage: NextPage = () => {
+  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const inputValue = formData.get('chat-input') as string;
+    console.log('Form submitted with input:', inputValue);
+    // In a real app, you would handle the input here
+    event.currentTarget.reset(); // Optional: clear input after submit
+  };
+
+  const handleButtonClick = () => {
+    // This could trigger form submission or other actions
+    const inputElement = document.getElementById('chat-input-example') as HTMLInputElement | null;
+    if (inputElement) {
+      console.log('Button clicked with input:', inputElement.value);
+      // To simulate submission via button, you might call a submit function or manipulate form state
+    }
+  };
+
+
   return (
     <>
       <Head>
@@ -16,7 +37,7 @@ const DesignSystemPage: NextPage = () => {
         className="container mx-auto py-10 px-4 bg-gray-100 font-poppins text-aroma-text"
       >
         <h1 className="text-3xl md:text-4xl font-bold mb-2 text-aroma-text">AromaChat Design System</h1>
-        <p className="mb-10 text-aroma-text-muted">Showcasing styles for Material UI React components based on PRD guidelines (v2).</p>
+        <p className="mb-10 text-aroma-text-muted">Showcasing styles for React components based on PRD guidelines (v2).</p>
 
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4 text-aroma-text">Color Palette (PRD 4.1.1)</h2>
@@ -57,23 +78,23 @@ const DesignSystemPage: NextPage = () => {
             <div className="card-content p-6 space-y-4">
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold">Heading 1 (Poppins Bold)</h1>
-                <p className="text-sm text-aroma-text-muted">Represents: MUI &lt;Typography variant="h1"&gt;</p>
+                <p className="text-sm text-aroma-text-muted">Represents: &lt;Typography variant="h1"&gt;</p>
               </div>
               <div>
                 <h2 className="text-2xl font-semibold">Heading 2 (Poppins SemiBold)</h2>
-                <p className="text-sm text-aroma-text-muted">Represents: MUI &lt;Typography variant="h2"&gt;</p>
+                <p className="text-sm text-aroma-text-muted">Represents: &lt;Typography variant="h2"&gt;</p>
               </div>
               <div>
                 <h3 className="text-xl font-medium">Heading 3 (Poppins Medium)</h3>
-                <p className="text-sm text-aroma-text-muted">Represents: MUI &lt;Typography variant="h3"&gt;</p>
+                <p className="text-sm text-aroma-text-muted">Represents: &lt;Typography variant="h3"&gt;</p>
               </div>
               <div>
                 <p className="text-base font-normal">Body text (Poppins Regular). Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                <p className="text-sm text-aroma-text-muted">Represents: MUI &lt;Typography variant="body1"&gt;</p>
+                <p className="text-sm text-aroma-text-muted">Represents: &lt;Typography variant="body1"&gt;</p>
               </div>
               <div>
                 <p className="text-sm font-normal text-aroma-text-muted">Small text / captions (Poppins Regular).</p>
-                <p className="text-xs text-aroma-text-muted">Represents: MUI &lt;Typography variant="caption"&gt; or `variant="body2"`</p>
+                <p className="text-xs text-aroma-text-muted">Represents: &lt;Typography variant="caption"&gt; or `variant="body2"`</p>
               </div>
               <div>
                 <p className="text-base font-semibold">SemiBold Body text</p>
@@ -86,7 +107,7 @@ const DesignSystemPage: NextPage = () => {
                 >
                   Qual receita você quer criar hoje?
                 </h1>
-                <p className="text-sm mt-1 text-aroma-text-muted">Represents: MUI &lt;Typography&gt; styled with gradient background clip.</p>
+                <p className="text-sm mt-1 text-aroma-text-muted">Represents: &lt;Typography&gt; styled with gradient background clip.</p>
               </div>
             </div>
           </div>
@@ -111,7 +132,7 @@ const DesignSystemPage: NextPage = () => {
                   </div>
                 </div>
               </div>
-              <p className="text-sm p-6 pt-0 text-center text-aroma-text-muted">Represents: Custom loading component or styled MUI &lt;CircularProgress&gt;.</p>
+              <p className="text-sm p-6 pt-0 text-center text-aroma-text-muted">Represents: Custom loading component or styled &lt;CircularProgress&gt;.</p>
             </div>
             <div className="card bg-white rounded-lg border border-gray-200 shadow-card">
               <h3 className="text-xl font-medium p-6 pb-0">Progress Steps</h3>
@@ -125,7 +146,7 @@ const DesignSystemPage: NextPage = () => {
                     <span>65% Complete</span>
                     <span>Time elapsed: 01:15</span>
                   </div>
-                  <p className="text-sm mt-2 text-center text-aroma-text-muted">Represents: MUI &lt;LinearProgress&gt; styled with gradient.</p>
+                  <p className="text-sm mt-2 text-center text-aroma-text-muted">Represents: &lt;LinearProgress&gt; styled with gradient.</p>
                 </div>
                 <div>
                   <p className="text-base font-medium mb-3 text-center">Step List Example</p>
@@ -140,7 +161,7 @@ const DesignSystemPage: NextPage = () => {
                     <li className="transition-all duration-400 ease-in-out text-gray-400 text-sm font-normal opacity-90 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center">Select Symptoms</li>
                     <li className="transition-all duration-400 ease-in-out text-gray-400 text-sm font-normal opacity-90 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center">Review Properties</li>
                   </ul>
-                  <p className="text-sm mt-2 text-center text-aroma-text-muted">Represents: MUI &lt;Stepper&gt; or custom list component.</p>
+                  <p className="text-sm mt-2 text-center text-aroma-text-muted">Represents: &lt;Stepper&gt; or custom list component.</p>
                 </div>
               </div>
             </div>
@@ -154,39 +175,39 @@ const DesignSystemPage: NextPage = () => {
               <div>
                 <h3 className="text-lg font-medium mb-3">Main Action Button</h3>
                 <div className="flex flex-wrap gap-4">
-                  <button 
+                  <Button 
                     className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-white font-semibold py-3.5 px-8 rounded-3xl shadow-button-normal hover:-translate-y-0.5 hover:shadow-button-focus focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end focus:ring-aroma-primary"
                   >
                     Criar Receita
                     <ArrowRight strokeWidth={2.5} className="w-4 h-4" />
-                  </button>
+                  </Button>
                 </div>
-                <p className="text-sm mt-2 text-aroma-text-muted">Represents: MUI &lt;Button variant="contained"&gt; heavily styled.</p>
+                <p className="text-sm mt-2 text-aroma-text-muted">Represents: &lt;Button variant="contained"&gt; heavily styled.</p>
               </div>
 
               <div>
                 <h3 className="text-lg font-medium mb-3">Standard Variants</h3>
                 <div className="flex flex-wrap gap-4 items-center">
-                  <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 text-white shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-aroma-primary focus:ring-aroma-primary">Primary Contained</button>
-                  <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 border border-aroma-primary text-aroma-primary bg-white hover:bg-aroma-primary/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aroma-primary">Primary Outlined</button>
-                  <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 text-aroma-primary hover:bg-aroma-primary/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aroma-primary">Primary Text</button>
+                  <Button className="bg-aroma-primary hover:bg-aroma-primary/90 focus:ring-aroma-primary">Primary Contained</Button>
+                  <Button variant="outline" className="border-aroma-primary text-aroma-primary hover:bg-aroma-primary/10 focus:ring-aroma-primary">Primary Outlined</Button>
+                  <Button variant="ghost" className="text-aroma-primary hover:bg-aroma-primary/10 focus:ring-aroma-primary">Primary Text</Button>
                 </div>
-                <p className="text-sm mt-2 text-aroma-text-muted">Represents: Standard MUI &lt;Button&gt; variants.</p>
+                <p className="text-sm mt-2 text-aroma-text-muted">Represents: Standard &lt;Button&gt; variants.</p>
                 <div className="flex flex-wrap gap-4 items-center mt-4">
-                  <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 text-white shadow-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-aroma-secondary focus:ring-aroma-secondary">Secondary Contained</button>
-                  <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 border border-aroma-secondary text-aroma-secondary bg-white hover:bg-aroma-secondary/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aroma-secondary">Secondary Outlined</button>
+                  <Button className="bg-aroma-secondary text-white hover:bg-aroma-secondary/90 focus:ring-aroma-secondary">Secondary Contained</Button>
+                  <Button variant="outline" className="border-aroma-secondary text-aroma-secondary hover:bg-aroma-secondary/10 focus:ring-aroma-secondary">Secondary Outlined</Button>
                 </div>
-                <p className="text-sm mt-2 text-aroma-text-muted">Represents: Standard MUI &lt;Button&gt; variants with secondary color.</p>
+                <p className="text-sm mt-2 text-aroma-text-muted">Represents: Standard &lt;Button&gt; variants with secondary color.</p>
               </div>
 
               <div>
                 <h3 className="text-lg font-medium mb-3">Suggestion Chips / Small Actions</h3>
                 <div className="flex flex-wrap gap-3">
-                  <button className="text-sm font-medium py-2 px-4 rounded-full transition-colors duration-200 bg-purple-50 border border-purple-200 text-aroma-primary hover:bg-purple-100">Relaxar</button>
-                  <button className="text-sm font-medium py-2 px-4 rounded-full transition-colors duration-200 bg-purple-50 border border-purple-200 text-aroma-primary hover:bg-purple-100">Dormir melhor</button>
-                  <button className="text-sm font-medium py-2 px-4 rounded-full transition-colors duration-200 bg-purple-50 border border-purple-200 text-aroma-primary hover:bg-purple-100">Alívio da tensão</button>
+                  <Button variant="outline" className="rounded-full border-purple-200 text-aroma-primary bg-purple-50 hover:bg-purple-100 hover:text-aroma-primary">Relaxar</Button>
+                  <Button variant="outline" className="rounded-full border-purple-200 text-aroma-primary bg-purple-50 hover:bg-purple-100 hover:text-aroma-primary">Dormir melhor</Button>
+                  <Button variant="outline" className="rounded-full border-purple-200 text-aroma-primary bg-purple-50 hover:bg-purple-100 hover:text-aroma-primary">Alívio da tensão</Button>
                 </div>
-                <p className="text-sm mt-2 text-aroma-text-muted">Represents: MUI &lt;Chip&gt; components.</p>
+                <p className="text-sm mt-2 text-aroma-text-muted">Represents: &lt;Chip&gt; components.</p>
               </div>
             </div>
           </div>
@@ -196,22 +217,58 @@ const DesignSystemPage: NextPage = () => {
           <h2 className="text-2xl font-semibold mb-4 text-aroma-text">Input Fields</h2>
           <div className="card bg-white rounded-lg border border-gray-200 shadow-card">
             <div className="card-content p-6">
-              <div className="max-w-lg mx-auto">
-                <label htmlFor="health-concern-example" className="block text-sm font-medium mb-2 text-aroma-text">Health Concern Input</label>
-                <div className="group relative rounded-3xl border border-gray-300 p-px hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end">
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
-                      <Search className="w-5 h-5" />
+              <div className="max-w-2xl mx-auto space-y-8">
+                <div>
+                  <Label htmlFor="health-concern-example" className="block text-sm font-medium text-aroma-text mb-2">Health Concern Input (Old Style)</Label>
+                  <div className="group relative rounded-3xl border border-gray-300 p-px hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end transition-all duration-200 ease-in-out">
+                    <div className="relative">
+                      <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                      </div>
+                      <input 
+                        type="text" 
+                        id="health-concern-example-old" 
+                        placeholder="Ex: dor de cabeça, insônia, ansiedade..." 
+                        className="block w-full rounded-[calc(1.75rem-1px)] border-none bg-white py-3.5 pl-12 pr-4 text-base leading-6 shadow-none outline-none placeholder-gray-400 text-aroma-text"
+                      />
                     </div>
-                    <input 
-                      type="text" 
-                      id="health-concern-example" 
-                      placeholder="Ex: dor de cabeça, insônia, ansiedade..." 
-                      className="block w-full rounded-[calc(1.75rem-1px)] border-none bg-white py-3.5 pl-12 pr-4 text-base leading-6 shadow-none outline-none placeholder-gray-400 text-aroma-text"
-                    />
                   </div>
+                  <p className="text-sm mt-2 text-aroma-text-muted">Represents: &lt;TextField variant="outlined"&gt; styled with gradient border effect.</p>
                 </div>
-                <p className="text-sm mt-2 text-aroma-text-muted">Represents: MUI &lt;TextField variant="outlined"&gt; styled.</p>
+                
+                <div>
+                  <Label htmlFor="chat-input-example" className="block text-sm font-medium text-aroma-text mb-2">Chat Input (New Style)</Label>
+                  <form onSubmit={handleFormSubmit} className="space-y-2">
+                    <div className="flex items-center w-full border border-input rounded-xl focus-within:ring-2 focus-within:ring-aroma-primary focus-within:border-aroma-primary transition-all duration-300 ease-in-out bg-card p-1 pr-1.5 shadow-sm">
+                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground h-9 w-9">
+                        <Plus className="w-5 h-5" />
+                      </Button>
+                       <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground h-9 w-9">
+                        <FileEdit className="w-5 h-5" />
+                      </Button>
+                      <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
+                      <input
+                        type="text"
+                        id="chat-input-example"
+                        name="chat-input"
+                        placeholder="Lorem Ipsum is simply dummy text..."
+                        className="flex-grow py-2.5 px-3 bg-transparent border-none outline-none text-card-foreground placeholder-muted-foreground text-sm"
+                      />
+                      <Button 
+                        type="submit"
+                        variant="default"
+                        size="icon"
+                        className="h-9 w-9 bg-aroma-secondary text-white rounded-md hover:bg-aroma-secondary/90 focus:ring-aroma-secondary focus:ring-offset-card"
+                        onClick={handleButtonClick}
+                        aria-label="Send message"
+                      >
+                        <ArrowUp className="w-5 h-5" />
+                      </Button>
+                    </div>
+                     <p className="text-xs text-muted-foreground text-center">Claude 3.7 Sonnet ✓</p>
+                  </form>
+                  <p className="text-sm mt-2 text-aroma-text-muted">Represents: New chat-style input with action button. Border transitions on focus.</p>
+                </div>
               </div>
             </div>
           </div>
@@ -231,7 +288,7 @@ const DesignSystemPage: NextPage = () => {
                     Estamos com alta demanda. Pode haver pequenos atrasos nas sugestões. Obrigada!
                   </div>
                 </div>
-                <p className="text-sm mt-2 text-aroma-text-muted">Represents: MUI &lt;Alert severity="warning"&gt;.</p>
+                <p className="text-sm mt-2 text-aroma-text-muted">Represents: &lt;Alert severity="warning"&gt;.</p>
               </div>
             </div>
             <div className="card bg-white rounded-lg border border-gray-200 shadow-card">
@@ -244,7 +301,7 @@ const DesignSystemPage: NextPage = () => {
                   <span className="inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold text-white bg-aroma-secondary/80">Relevância: 2/5</span>
                   <span className="inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold text-white bg-red-500">Relevância: 1/5</span>
                 </div>
-                <p className="text-sm mt-2 text-aroma-text-muted">Represents: MUI &lt;Chip size="small"&gt;.</p>
+                <p className="text-sm mt-2 text-aroma-text-muted">Represents: &lt;Chip size="small"&gt;.</p>
               </div>
             </div>
           </div>
@@ -254,15 +311,15 @@ const DesignSystemPage: NextPage = () => {
           <h2 className="text-2xl font-semibold mb-4 text-aroma-text">Layout Components (Conceptual)</h2>
           <div className="card bg-white rounded-lg border border-gray-200 shadow-card text-aroma-text">
             <div className="card-content p-6 space-y-4">
-              <p>Layout structure will follow `01_saas_template.md` using MUI components:</p>
+              <p>Layout structure will follow `01_saas_template.md` using components:</p>
               <ul className="list-disc pl-5 space-y-1 text-sm">
-                <li>**Sidebar:** MUI &lt;Drawer&gt; component (persistent or temporary variant) with &lt;List&gt;, &lt;ListItem&gt;, &lt;ListItemIcon&gt;, &lt;ListItemText&gt;.</li>
-                <li>**User Menu:** MUI &lt;Menu&gt; or &lt;Popover&gt; anchored to a &lt;Button&gt; or &lt;Avatar&gt; in the sidebar.</li>
-                <li>**Settings Page:** Main content area with MUI &lt;Tabs orientation="vertical"&gt; and &lt;TabPanel&gt;.</li>
-                <li>**Modals:** MUI &lt;Dialog&gt; for confirmations (logout) or full-screen content (Subscription).</li>
-                <li>**Cards:** MUI &lt;Card&gt; with &lt;CardContent&gt;, &lt;CardHeader&gt;, etc. (as used in this design system).</li>
+                <li>**Sidebar:** Custom Drawer component with Shadcn UI elements.</li>
+                <li>**User Menu:** Integrated within Sidebar, using Shadcn UI buttons/layout.</li>
+                <li>**Settings Page:** Main content area with Shadcn UI &lt;Tabs&gt;.</li>
+                <li>**Modals:** Shadcn UI &lt;AlertDialog&gt; / &lt;Dialog&gt; for confirmations and full-screen content.</li>
+                <li>**Cards:** Shadcn UI &lt;Card&gt; (as used in this design system).</li>
               </ul>
-              <p className="text-sm text-aroma-text-muted">Refer to `01_saas_template.md` for layout details and Material UI documentation for component implementation.</p>
+              <p className="text-sm text-aroma-text-muted">Refer to `01_saas_template.md` for layout details and Shadcn UI documentation for component implementation.</p>
             </div>
           </div>
         </section>
