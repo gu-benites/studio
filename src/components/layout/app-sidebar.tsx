@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { LucideIcon } from 'lucide-react';
@@ -9,8 +8,8 @@ import {
   ChefHat,
   Palette,
   LoaderCircle,
-  Settings, // Added for consistency, though not used in mainNavItems
-  CreditCard, // Added for consistency
+  Settings, 
+  CreditCard, 
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -40,9 +39,12 @@ const mainNavItems: NavItem[] = [
   { href: '/loading-state', icon: LoaderCircle, label: 'Loading State' },
 ];
 
+// User Account Menu related items are handled inside UserAccountMenu component
+// and triggered by avatar click. They are not mainNavItems.
+
 const AppSidebar: React.FC = () => {
   const { 
-    isSidebarOpen, 
+    isSidebarOpen: contextSidebarOpen, // Renamed to avoid conflict
     isSidebarPinned, 
     toggleDesktopSidebarPin, 
     toggleMobileSidebar,
@@ -71,16 +73,21 @@ const AppSidebar: React.FC = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Use state from context, but ensure it's false for SSR (hasMounted check)
+  const currentIsSidebarOpen = hasMounted ? contextSidebarOpen : false;
+  const currentIsSidebarPinned = hasMounted ? isSidebarPinned : false;
+  const currentIsUserAccountMenuExpanded = hasMounted ? isUserAccountMenuExpanded : false;
+
 
   const handleMouseEnter = () => {
-    if (hasMounted && !isClientMobile && !isSidebarPinned && !isSidebarOpen && !isUserAccountMenuExpanded) { 
+    if (hasMounted && !isClientMobile && !currentIsSidebarPinned && !currentIsSidebarOpen && !currentIsUserAccountMenuExpanded) { 
       if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
       setIsHovering(true);
     }
   };
 
   const handleMouseLeave = () => {
-    if (hasMounted && !isClientMobile && !isSidebarPinned && !isSidebarOpen && !isUserAccountMenuExpanded) {
+    if (hasMounted && !isClientMobile && !currentIsSidebarPinned && !currentIsSidebarOpen && !currentIsUserAccountMenuExpanded) {
       hoverTimeoutRef.current = setTimeout(() => setIsHovering(false), 100);
     }
   };
@@ -92,28 +99,25 @@ const AppSidebar: React.FC = () => {
   }, []);
 
   const isDesktopClient = hasMounted && !isClientMobile;
-  const currentIsSidebarOpen = hasMounted ? isSidebarOpen : false; // Use UI state after mount, default to false for SSR
-  const currentIsSidebarPinned = hasMounted ? isSidebarPinned : false;
-  const currentIsUserAccountMenuExpanded = hasMounted ? isUserAccountMenuExpanded : false;
-
+  
   const isDesktopExpanded = isDesktopClient && (currentIsSidebarPinned || currentIsUserAccountMenuExpanded);
-  const isMobileExpanded = hasMounted && isClientMobile && currentIsSidebarOpen;
+  const isMobileExpanded = hasMounted && isClientMobile && currentIsSidebarOpen; // Use currentIsSidebarOpen
   const isEffectivelyExpanded = isDesktopExpanded || isMobileExpanded;
   
   const desktopSidebarWidth = isDesktopExpanded ? 'md:w-[287px]' : 'md:w-[48px]';
-  const mobileSidebarTranslate = currentIsSidebarOpen ? 'translate-x-0' : '-translate-x-full';
+  const mobileSidebarTranslate = currentIsSidebarOpen ? 'translate-x-0' : '-translate-x-full'; // Use currentIsSidebarOpen
 
   const sidebarClasses = cn(
     'flex flex-col bg-[hsl(var(--app-sidebar-background))] text-[hsl(var(--app-sidebar-foreground))] border-r border-[hsl(var(--app-sidebar-border))] transition-all duration-300 ease-in-out shadow-lg', 
     (hasMounted && isClientMobile)
       ? `fixed inset-y-0 left-0 z-40 w-full max-w-[287px] ${mobileSidebarTranslate}` 
-      : `h-full ${desktopSidebarWidth}`, 
+      : `relative h-full ${desktopSidebarWidth}`, // Use relative for desktop flow
     (isHovering && isDesktopClient && !isDesktopExpanded && !currentIsUserAccountMenuExpanded) && 'bg-[hsl(var(--app-sidebar-hover-background))]' 
   );
   
   const handleAvatarClick = () => {
     if (isClientMobile) {
-      if (!currentIsSidebarOpen) { 
+      if (!currentIsSidebarOpen) { // Use currentIsSidebarOpen
         toggleMobileSidebar(); 
         setTimeout(() => openUserAccountMenuSimple(), 50); 
       } else { 
@@ -124,11 +128,12 @@ const AppSidebar: React.FC = () => {
     }
   };
 
+
   if (!hasMounted) {
     // Render a static, collapsed version for SSR and initial client render
     const collapsedSidebarClasses = cn(
       'flex flex-col bg-[hsl(var(--app-sidebar-background))] text-[hsl(var(--app-sidebar-foreground))] border-r border-[hsl(var(--app-sidebar-border))] shadow-lg',
-      'h-full md:w-[48px]' 
+      'relative h-full md:w-[48px]' // Use relative, ensure server renders desktop collapsed
     );
     return (
       <TooltipProvider delayDuration={0}>
@@ -143,7 +148,12 @@ const AppSidebar: React.FC = () => {
               <div key={item.label}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Link href={item.href} className="flex justify-center items-center w-8 h-9 p-0 rounded-lg text-[hsl(var(--app-sidebar-foreground))] hover:bg-[hsl(var(--app-sidebar-hover-background))]" title={item.label}>
+                    <Link 
+                      href={item.href} 
+                      className="flex justify-center items-center w-8 h-9 p-0 rounded-lg text-[hsl(var(--app-sidebar-foreground))] hover:bg-[hsl(var(--app-sidebar-hover-background))]" 
+                      title={item.label}
+                      onClick={() => {}} // Add dummy onClick for prop consistency
+                    >
                       <item.icon className="h-4 w-4 shrink-0" />
                     </Link>
                   </TooltipTrigger>
@@ -165,7 +175,7 @@ const AppSidebar: React.FC = () => {
 
   return (
     <>
-      {isClientMobile && currentIsSidebarOpen && (
+      {isClientMobile && currentIsSidebarOpen && ( // Use currentIsSidebarOpen
           <div 
               onClick={toggleMobileSidebar} 
               className="fixed inset-0 z-30 bg-black/50 md:hidden"
@@ -199,7 +209,7 @@ const AppSidebar: React.FC = () => {
                 )}
                 aria-label={
                   isClientMobile 
-                    ? (currentIsSidebarOpen ? 'Close sidebar' : 'Open sidebar')
+                    ? (currentIsSidebarOpen ? 'Close sidebar' : 'Open sidebar') // Use currentIsSidebarOpen
                     : (currentIsSidebarPinned ? 'Unpin and collapse sidebar' : 'Pin and expand sidebar')
                 }
             >
@@ -228,7 +238,7 @@ const AppSidebar: React.FC = () => {
                 <Link
                   href={item.href}
                   onClick={() => { 
-                    if (isClientMobile && currentIsSidebarOpen) {
+                    if (isClientMobile && currentIsSidebarOpen) { // Use currentIsSidebarOpen
                       closeSidebarCompletely(); 
                     }
                   }}
@@ -269,36 +279,48 @@ const AppSidebar: React.FC = () => {
           {currentIsUserAccountMenuExpanded && isEffectivelyExpanded && (
             <UserAccountMenu />
           )}
-          <button
-            onClick={handleAvatarClick}
-            className={cn(
-              "flex w-full items-center gap-3 text-left text-sm font-medium transition-colors",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 focus-visible:ring-offset-[hsl(var(--app-sidebar-background))]",
-              isEffectivelyExpanded ? "p-3 h-[60px]" : "justify-center h-[60px] w-full px-[calc((48px-32px)/2)]", 
-              currentIsUserAccountMenuExpanded && isEffectivelyExpanded 
-                ? 'bg-[hsl(var(--app-sidebar-active-background))] text-[hsl(var(--app-sidebar-active-foreground))]'
-                : 'hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))]'
-            )}
-            aria-label="Open user menu" 
-          >
-            <Image
-              src="https://picsum.photos/seed/useravatar/64/64" 
-              alt="User Avatar"
-              width={32} 
-              height={32} 
-              className="rounded-full shrink-0" 
-              data-ai-hint="profile avatar"
-            />
-            {isEffectivelyExpanded && (
-              <div className="flex flex-col overflow-hidden">
-                <span className="truncate">User Name</span>
-                <span className={cn(
-                  "text-xs truncate",
-                  currentIsUserAccountMenuExpanded && isEffectivelyExpanded ? 'opacity-80' : 'text-muted-foreground'
-                )}>user@example.com</span>
-              </div>
-            )}
-          </button>
+          <TooltipProvider delayDuration={0}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={handleAvatarClick}
+                  className={cn(
+                    "flex w-full items-center gap-3 text-left text-sm font-medium transition-colors",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 focus-visible:ring-offset-[hsl(var(--app-sidebar-background))]",
+                    isEffectivelyExpanded ? "p-3 h-[60px]" : "justify-center h-[60px] w-full px-[calc((48px-32px)/2)]", 
+                    currentIsUserAccountMenuExpanded && isEffectivelyExpanded 
+                      ? 'bg-[hsl(var(--app-sidebar-active-background))] text-[hsl(var(--app-sidebar-active-foreground))]'
+                      : 'hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))]'
+                  )}
+                  aria-label="Open user menu" 
+                >
+                  <Image
+                    src="https://picsum.photos/seed/useravatar/64/64" 
+                    alt="User Avatar"
+                    width={32} 
+                    height={32} 
+                    className="rounded-full shrink-0" 
+                    data-ai-hint="profile avatar"
+                  />
+                  {isEffectivelyExpanded && (
+                    <div className="flex flex-col overflow-hidden">
+                      <span className="truncate">User Name</span>
+                      <span className={cn(
+                        "text-xs truncate",
+                        currentIsUserAccountMenuExpanded && isEffectivelyExpanded ? 'opacity-80' : 'text-muted-foreground'
+                      )}>user@example.com</span>
+                    </div>
+                  )}
+                </button>
+              </TooltipTrigger>
+              {(isDesktopClient && !isEffectivelyExpanded) && ( // Only show tooltip if desktop and sidebar is collapsed
+                 <TooltipContent side="right" sideOffset={8}>
+                   <p>User Name</p>
+                   <p className="text-xs text-muted-foreground">user@example.com</p>
+                 </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </aside>
       </TooltipProvider>
@@ -307,4 +329,3 @@ const AppSidebar: React.FC = () => {
 };
 
 export default AppSidebar;
-
