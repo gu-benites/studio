@@ -26,7 +26,6 @@ const CausesStep: React.FC = () => {
   useEffect(() => {
     if (formData.selectedCauses) {
       setSelectedCausesState(formData.selectedCauses);
-      // Initialize open accordions based on initially selected causes
       const initiallyOpen = formData.selectedCauses.map(c => c.cause_name);
       setOpenAccordionItems(Array.from(new Set(initiallyOpen)));
     }
@@ -41,21 +40,27 @@ const CausesStep: React.FC = () => {
     setSelectedCausesState(prevSelected => {
       const isCurrentlySelected = prevSelected.some(c => c.cause_name === cause.cause_name);
       if (checked && !isCurrentlySelected) {
+        setOpenAccordionItems(prevOpen => Array.from(new Set([...prevOpen, cause.cause_name])));
         return [...prevSelected, cause];
       } else if (!checked && isCurrentlySelected) {
+        setOpenAccordionItems(prevOpen => prevOpen.filter(item => item !== cause.cause_name));
         return prevSelected.filter(c => c.cause_name !== cause.cause_name);
       }
       return prevSelected;
     });
   }, []);
 
-  // Effect to sync accordion open state with selection state
-  useEffect(() => {
-    const currentlySelectedNames = selectedCausesState.map(c => c.cause_name);
-    setOpenAccordionItems(currentlySelectedNames);
-  }, [selectedCausesState]);
+  const handleAccordionToggle = useCallback((causeName: string) => {
+    setOpenAccordionItems(prevOpen => {
+      const isOpen = prevOpen.includes(causeName);
+      if (isOpen) {
+        return prevOpen.filter(item => item !== causeName);
+      } else {
+        return [...prevOpen, causeName];
+      }
+    });
+  }, []);
 
-  // Removed handleAccordionValueChange as switch controls accordion state
 
   const handleSubmitCauses = async (event?: React.FormEvent<HTMLFormElement>) => {
     if (event) event.preventDefault(); 
@@ -93,11 +98,11 @@ const CausesStep: React.FC = () => {
   };
 
   if (!formData.potentialCausesResult) {
-    return <p>Carregando causas... Se demorar, volte e tente novamente.</p>;
+    return <p className="px-4 sm:px-0">Carregando causas... Se demorar, volte e tente novamente.</p>;
   }
   
   return (
-    <form id="current-step-form" onSubmit={handleSubmitCauses} className="space-y-3">
+    <form id="current-step-form" onSubmit={handleSubmitCauses} className="space-y-3 px-4 sm:px-0">
       <p className="text-muted-foreground text-sm">
         Selecione as causas que você acredita estarem relacionadas ao seu problema de saúde. Clique no título para ver mais detalhes.
       </p>
@@ -105,7 +110,7 @@ const CausesStep: React.FC = () => {
         <Accordion 
           type="multiple" 
           value={openAccordionItems} 
-          // onValueChange prop removed - accordion state is controlled by the switch
+          onValueChange={setOpenAccordionItems} // Allow Radix to manage open items based on clicks
           className="w-full"
         >
           {formData.potentialCausesResult.map((cause, index) => {
@@ -118,18 +123,19 @@ const CausesStep: React.FC = () => {
                 className={cn(
                   "transition-all",
                   isChecked ? "bg-primary/5" : "bg-card",
-                  openAccordionItems.includes(causeId) && !isChecked ? "bg-muted/5" : "",
+                  // openAccordionItems.includes(causeId) && !isChecked ? "bg-muted/5" : "", // Keep open visual distinct if not checked
                   index === formData.potentialCausesResult!.length - 1 ? "border-b-0" : ""
                 )}
               >
                 <AccordionTrigger 
-                  // Removed onClick from AccordionTrigger as switch controls accordion state
                   className={cn(
                     "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card transition-colors",
-                    openAccordionItems.includes(causeId) ? "hover:bg-muted/10" : "hover:bg-muted/5",
-                    isChecked && openAccordionItems.includes(causeId) ? "bg-primary/10 hover:bg-primary/15" : "",
-                    isChecked && !openAccordionItems.includes(causeId) ? "hover:bg-primary/10" : ""
+                    // openAccordionItems.includes(causeId) ? "hover:bg-muted/10" : "hover:bg-muted/5",
+                    // isChecked && openAccordionItems.includes(causeId) ? "bg-primary/10 hover:bg-primary/15" : "",
+                    // isChecked && !openAccordionItems.includes(causeId) ? "hover:bg-primary/10" : ""
+                     isChecked ? "bg-primary/10 hover:bg-primary/15" : "hover:bg-muted/5"
                   )}
+                  onClick={() => handleAccordionToggle(causeId)} // Toggle accordion explicitly
                 >
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
                     <Switch
@@ -139,7 +145,7 @@ const CausesStep: React.FC = () => {
                         handleSwitchChange(cause, newCheckedState);
                       }}
                       onClick={(e) => e.stopPropagation()} 
-                      className="shrink-0"
+                      className="shrink-0 h-6 w-11 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input [&>span]:h-5 [&>span]:w-5 [&>span[data-state=checked]]:translate-x-5 [&>span[data-state=unchecked]]:translate-x-0"
                       aria-labelledby={`cause-label-${causeId}`}
                     />
                     <Label

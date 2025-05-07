@@ -42,21 +42,27 @@ const SymptomsStep: React.FC = () => {
     setSelectedSymptomsState(prevSelected => {
       const isCurrentlySelected = prevSelected.some(s => s.symptom_name === symptom.symptom_name);
       if (checked && !isCurrentlySelected) {
+        setOpenAccordionItems(prevOpen => Array.from(new Set([...prevOpen, symptom.symptom_name])));
         return [...prevSelected, { symptom_name: symptom.symptom_name }];
       } else if (!checked && isCurrentlySelected) {
+         setOpenAccordionItems(prevOpen => prevOpen.filter(item => item !== symptom.symptom_name));
         return prevSelected.filter(s => s.symptom_name !== symptom.symptom_name);
       }
       return prevSelected;
     });
   }, []);
+  
+  const handleAccordionToggle = useCallback((symptomName: string) => {
+    setOpenAccordionItems(prevOpen => {
+      const isOpen = prevOpen.includes(symptomName);
+      if (isOpen) {
+        return prevOpen.filter(item => item !== symptomName);
+      } else {
+        return [...prevOpen, symptomName];
+      }
+    });
+  }, []);
 
-  // Effect to sync accordion open state with selection state
-  useEffect(() => {
-    const currentlySelectedNames = selectedSymptomsState.map(s => s.symptom_name);
-    setOpenAccordionItems(currentlySelectedNames);
-  }, [selectedSymptomsState]);
-
-  // Removed handleAccordionValueChange as switch controls accordion state
 
   const handleSubmitSymptoms = async (event?: React.FormEvent<HTMLFormElement>) => {
     if (event) event.preventDefault();
@@ -94,11 +100,11 @@ const SymptomsStep: React.FC = () => {
   };
 
   if (!formData.potentialSymptomsResult) {
-    return <p>Carregando sintomas... Se demorar, volte e tente novamente.</p>;
+    return <p className="px-4 sm:px-0">Carregando sintomas... Se demorar, volte e tente novamente.</p>;
   }
 
   return (
-    <form id="current-step-form" onSubmit={handleSubmitSymptoms} className="space-y-3">
+    <form id="current-step-form" onSubmit={handleSubmitSymptoms} className="space-y-3 px-4 sm:px-0">
       <p className="text-muted-foreground text-sm">
         Selecione os sintomas que você está experienciando. Clique no título para ver mais detalhes.
       </p>
@@ -106,7 +112,7 @@ const SymptomsStep: React.FC = () => {
         <Accordion 
           type="multiple" 
           value={openAccordionItems} 
-          // onValueChange prop removed - accordion state is controlled by the switch
+          onValueChange={setOpenAccordionItems} // Allow Radix to manage open items
           className="w-full"
         >
           {formData.potentialSymptomsResult.map((symptom, index) => {
@@ -119,18 +125,19 @@ const SymptomsStep: React.FC = () => {
                 className={cn(
                   "transition-all",
                   isChecked ? "bg-primary/5" : "bg-card",
-                  openAccordionItems.includes(symptomId) && !isChecked ? "bg-muted/5" : "",
+                  // openAccordionItems.includes(symptomId) && !isChecked ? "bg-muted/5" : "",
                    index === formData.potentialSymptomsResult!.length - 1 ? "border-b-0" : ""
                 )}
               >
                 <AccordionTrigger
-                  // Removed onClick from AccordionTrigger as switch controls accordion state
                   className={cn(
                     "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card transition-colors",
-                    openAccordionItems.includes(symptomId) ? "hover:bg-muted/10" : "hover:bg-muted/5",
-                    isChecked && openAccordionItems.includes(symptomId) ? "bg-primary/10 hover:bg-primary/15" : "",
-                    isChecked && !openAccordionItems.includes(symptomId) ? "hover:bg-primary/10" : ""
+                    // openAccordionItems.includes(symptomId) ? "hover:bg-muted/10" : "hover:bg-muted/5",
+                    // isChecked && openAccordionItems.includes(symptomId) ? "bg-primary/10 hover:bg-primary/15" : "",
+                    // isChecked && !openAccordionItems.includes(symptomId) ? "hover:bg-primary/10" : ""
+                    isChecked ? "bg-primary/10 hover:bg-primary/15" : "hover:bg-muted/5"
                   )}
+                  onClick={() => handleAccordionToggle(symptomId)} // Toggle accordion explicitly
                 >
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
                     <Switch
@@ -140,7 +147,7 @@ const SymptomsStep: React.FC = () => {
                         handleSwitchChange(symptom, newCheckedState);
                       }}
                       onClick={(e) => e.stopPropagation()}
-                      className="shrink-0"
+                      className="shrink-0 h-4 w-8 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input [&>span]:h-3 [&>span]:w-3 [&>span[data-state=checked]]:translate-x-4 [&>span[data-state=unchecked]]:translate-x-0"
                       aria-labelledby={`symptom-label-${symptomId}`}
                     />
                     <Label
