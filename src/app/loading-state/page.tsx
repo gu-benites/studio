@@ -15,16 +15,37 @@ const stepsConfig = [
 const totalDuration = stepsConfig.reduce((sum, step) => sum + step.duration, 0);
 
 const LoadingStatePage: React.FC = () => {
-  const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
-  const [startTime, setStartTime] = React.useState(Date.now());
+  const [startTime, setStartTime] = React.useState(0);
   const [elapsedTime, setElapsedTime] = React.useState(0);
-  const [overallProgress, setOverallProgress] = React.useState(0);
-  const [displayedProgress, setDisplayedProgress] = React.useState(0);
+  const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
   const [stepTimer, setStepTimer] = React.useState(0);
   const [isLoadingComplete, setIsLoadingComplete] = React.useState(false);
+  const [overallProgress, setOverallProgress] = React.useState(0);
+  const [displayedProgress, setDisplayedProgress] = React.useState(0);
   const [isModalVisible, setIsModalVisible] = React.useState(false);
 
   const animationFrameIdRef = React.useRef<number | null>(null);
+  
+  // Refs for state values to be accessed in the animation loop to avoid stale closures
+  const stateRefs = React.useRef({
+    startTime: 0,
+    isLoadingComplete: false,
+    currentStepIndex: 0,
+    stepTimer: 0,
+    overallProgress: 0,
+  });
+
+  // Ref for intra-frame communication of step change
+  const stepChangedInFrameRef = React.useRef(false);
+
+  // Update refs whenever the corresponding state changes
+  React.useEffect(() => {
+    stateRefs.current.startTime = startTime;
+    stateRefs.current.isLoadingComplete = isLoadingComplete;
+    stateRefs.current.currentStepIndex = currentStepIndex;
+    stateRefs.current.stepTimer = stepTimer;
+    stateRefs.current.overallProgress = overallProgress;
+  }, [startTime, isLoadingComplete, currentStepIndex, stepTimer, overallProgress]);
 
   const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -33,98 +54,98 @@ const LoadingStatePage: React.FC = () => {
     return `${minutes}:${seconds}`;
   };
 
-  const startLoading = React.useCallback(() => {
-    setStartTime(Date.now());
-    setCurrentStepIndex(0);
-    setStepTimer(0);
-    setOverallProgress(0);
-    setDisplayedProgress(0);
-    setElapsedTime(0);
-    setIsLoadingComplete(false);
-    setIsModalVisible(true);
+  const animationLoop = React.useCallback(() => {
+    stepChangedInFrameRef.current = false; // Reset at the beginning of each frame
 
-    if (animationFrameIdRef.current) {
-      cancelAnimationFrame(animationFrameIdRef.current);
-    }
+    setElapsedTime(Date.now() - stateRefs.current.startTime);
 
-    const loop = () => {
-      setElapsedTime(Date.now() - startTime);
+    if (!stateRefs.current.isLoadingComplete && stateRefs.current.currentStepIndex < stepsConfig.length) {
+      setStepTimer(prevStepTimer => {
+        const newStepTimer = prevStepTimer + 16.67; // approx ms per frame
+        const currentStepConfig = stepsConfig[stateRefs.current.currentStepIndex];
+        
+        if (!currentStepConfig) return prevStepTimer;
+        const currentStepDuration = currentStepConfig.duration;
 
-      let stepChanged = false;
-      if (!isLoadingComplete && currentStepIndex < stepsConfig.length) {
-        setStepTimer(prev => {
-          const newStepTimer = prev + 16.67;
-          const currentStepDuration = stepsConfig[currentStepIndex].duration;
-
-          if (newStepTimer >= currentStepDuration) {
-            if (currentStepIndex === stepsConfig.length - 1) {
-              setIsLoadingComplete(true);
-            } else {
-              setCurrentStepIndex(i => i + 1);
-              stepChanged = true;
-              return 0; // Reset timer for new step
-            }
+        if (newStepTimer >= currentStepDuration) {
+          if (stateRefs.current.currentStepIndex === stepsConfig.length - 1) {
+            setIsLoadingComplete(true);
+          } else {
+            setCurrentStepIndex(i => i + 1);
+            stepChangedInFrameRef.current = true;
+            return 0; // Reset timer for the new step
           }
-          return newStepTimer;
-        });
-      }
-      
-      setOverallProgress(prevOverall => {
-          let completedDuration = 0;
-          for (let i = 0; i < currentStepIndex; i++) {
-              completedDuration += stepsConfig[i].duration;
-          }
-          const currentStepProgressTime = (currentStepIndex < stepsConfig.length)
-              ? Math.min(stepTimer, stepsConfig[currentStepIndex].duration)
-              : stepsConfig[stepsConfig.length -1].duration;
-          const totalProgressTime = completedDuration + currentStepProgressTime;
-          return Math.min(100, (totalProgressTime / totalDuration) * 100);
-      });
-
-
-      setDisplayedProgress(prevDisplayed => {
-        if (!isLoadingComplete || prevDisplayed < 100) {
-          const diff = overallProgress - prevDisplayed;
-          let increment = diff * 0.08;
-          if (Math.abs(diff) > 1) {
-            increment += (Math.random() - 0.4) * 0.6;
-          }
-          if (stepChanged && overallProgress < 99) {
-            increment += Math.random() * 2.5;
-          }
-          let newDisplayed = prevDisplayed + increment;
-          newDisplayed = Math.max(0, Math.min(100, newDisplayed));
-          newDisplayed = Math.max(newDisplayed, overallProgress - 10);
-          newDisplayed = Math.min(newDisplayed, overallProgress + 5);
-
-          if (overallProgress >= 100) {
-            newDisplayed += (100 - newDisplayed) * 0.2;
-            if (100 - newDisplayed < 0.1) {
-              newDisplayed = 100;
-            }
-          }
-          return newDisplayed;
         }
-        return prevDisplayed;
+        return newStepTimer;
       });
-      
-      animationFrameIdRef.current = requestAnimationFrame(loop);
-    };
+    }
+    
+    setOverallProgress(() => {
+      let completedDuration = 0;
+      for (let i = 0; i < stateRefs.current.currentStepIndex; i++) {
+          completedDuration += stepsConfig[i].duration;
+      }
+      const currentStepProgressTime = (stateRefs.current.currentStepIndex < stepsConfig.length)
+          ? Math.min(stateRefs.current.stepTimer, stepsConfig[stateRefs.current.currentStepIndex]?.duration || 0)
+          : (stepsConfig[stepsConfig.length - 1]?.duration || 0);
+      const totalProgressTime = completedDuration + currentStepProgressTime;
+      return Math.min(100, (totalProgressTime / totalDuration) * 100);
+    });
 
-    animationFrameIdRef.current = requestAnimationFrame(loop);
-  }, [startTime, isLoadingComplete, currentStepIndex, stepTimer, overallProgress]);
+    setDisplayedProgress(prevDisplayed => {
+      if (!stateRefs.current.isLoadingComplete || prevDisplayed < 100) {
+        const diff = stateRefs.current.overallProgress - prevDisplayed;
+        let increment = diff * 0.08;
+        if (Math.abs(diff) > 1) {
+          increment += (Math.random() - 0.4) * 0.6;
+        }
+        if (stepChangedInFrameRef.current && stateRefs.current.overallProgress < 99) {
+          increment += Math.random() * 2.5;
+        }
+        let newDisplayed = prevDisplayed + increment;
+        newDisplayed = Math.max(0, Math.min(100, newDisplayed));
+        newDisplayed = Math.max(newDisplayed, stateRefs.current.overallProgress - 10);
+        newDisplayed = Math.min(newDisplayed, stateRefs.current.overallProgress + 5);
+
+        if (stateRefs.current.overallProgress >= 100) {
+          newDisplayed += (100 - newDisplayed) * 0.2;
+          if (100 - newDisplayed < 0.1) {
+            newDisplayed = 100;
+          }
+        }
+        return newDisplayed;
+      }
+      return prevDisplayed;
+    });
+    
+    animationFrameIdRef.current = requestAnimationFrame(animationLoop);
+  }, [setElapsedTime, setStepTimer, setIsLoadingComplete, setCurrentStepIndex, setOverallProgress, setDisplayedProgress]);
+
 
   React.useEffect(() => {
-    startLoading();
+    // Initialize states and refs
+    const initialStartTime = Date.now();
+    setStartTime(initialStartTime);
+    stateRefs.current.startTime = initialStartTime;
+
+    setCurrentStepIndex(0); stateRefs.current.currentStepIndex = 0;
+    setStepTimer(0); stateRefs.current.stepTimer = 0;
+    setIsLoadingComplete(false); stateRefs.current.isLoadingComplete = false;
+    setOverallProgress(0); stateRefs.current.overallProgress = 0;
+    setDisplayedProgress(0);
+    setElapsedTime(0);
+    setIsModalVisible(true);
+
+    // Start the animation loop
+    animationFrameIdRef.current = requestAnimationFrame(animationLoop);
+
+    // Cleanup function
     return () => {
       if (animationFrameIdRef.current) {
         cancelAnimationFrame(animationFrameIdRef.current);
       }
     };
-  }, [startLoading]);
-  
-  const activeListItemText = stepsConfig[currentStepIndex]?.text || stepsConfig[stepsConfig.length - 1].text;
-
+  }, [animationLoop]); // animationLoop is stable
 
   return (
     <div className={cn(
@@ -155,7 +176,7 @@ const LoadingStatePage: React.FC = () => {
                 "transition-all duration-400 ease-in-out text-base min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center",
                 index < currentStepIndex && "text-muted-foreground line-through opacity-70 font-normal text-sm",
                 index === currentStepIndex && !isLoadingComplete && "text-foreground font-bold text-lg opacity-100 animate-ellipsis",
-                (index === currentStepIndex && isLoadingComplete) && "text-foreground font-bold text-lg opacity-100", // Last step active, no ellipsis
+                (index === currentStepIndex && isLoadingComplete) && "text-foreground font-bold text-lg opacity-100", 
                 index > currentStepIndex && "text-muted-foreground opacity-90 font-normal text-sm"
               )}
             >
@@ -191,3 +212,5 @@ const LoadingStatePage: React.FC = () => {
 };
 
 export default LoadingStatePage;
+
+    
