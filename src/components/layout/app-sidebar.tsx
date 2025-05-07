@@ -8,8 +8,6 @@ import {
   ChefHat,
   Palette,
   LoaderCircle,
-  Settings,
-  CreditCard,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -76,14 +74,14 @@ const AppSidebar: React.FC = () => {
   const currentIsUserAccountMenuExpanded = hasMounted ? isUserAccountMenuExpanded : false;
 
   const handleMouseEnter = () => {
-    if (hasMounted && !isClientMobile) { // Apply hover effect only on desktop
+    if (hasMounted && !isClientMobile) { 
       if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
       setIsHovering(true);
     }
   };
 
   const handleMouseLeave = () => {
-    if (hasMounted && !isClientMobile) { // Apply hover effect only on desktop
+    if (hasMounted && !isClientMobile) { 
       hoverTimeoutRef.current = setTimeout(() => setIsHovering(false), 100);
     }
   };
@@ -104,17 +102,17 @@ const AppSidebar: React.FC = () => {
   const mobileSidebarTranslate = currentIsSidebarOpen ? 'translate-x-0' : '-translate-x-full';
 
   const sidebarOuterClasses = cn(
-    'fixed inset-y-0 left-0 z-40 h-full', // Use h-full for proper fixed behavior
+    'fixed inset-y-0 left-0 z-40 h-full', 
     'transition-all duration-300 ease-in-out',
-    isHovering && isDesktopClient ? 'shadow-xl' : 'shadow-lg', // Dynamic shadow on hover
+    isHovering && isDesktopClient && !isEffectivelyExpanded ? 'shadow-xl' : 'shadow-lg',
     isDesktopClient ? desktopSidebarWidth : `w-full max-w-[287px] ${mobileSidebarTranslate}`
   );
   
   const sidebarInnerClasses = cn(
     "flex flex-col h-full", 
     "text-[hsl(var(--app-sidebar-foreground))] border-r border-[hsl(var(--app-sidebar-border))]",
-    "transition-colors duration-300 ease-in-out", // For smooth background transition
-    isHovering && isDesktopClient ? 'bg-[hsl(var(--app-sidebar-hover-background))]' : 'bg-[hsl(var(--app-sidebar-background))]',
+    "transition-colors duration-300 ease-in-out", 
+    isHovering && isDesktopClient && !isEffectivelyExpanded ? 'bg-[hsl(var(--app-sidebar-hover-background))]' : 'bg-[hsl(var(--app-sidebar-background))]',
     !isClientMobile && !isEffectivelyExpanded && "overflow-x-hidden" 
   );
 
@@ -132,9 +130,9 @@ const AppSidebar: React.FC = () => {
   };
 
 
-  if (!hasMounted) { // SSR/Initial render fallback - minimal collapsed sidebar
+  if (!hasMounted) { 
     const collapsedSidebarClasses = cn(
-      'fixed inset-y-0 left-0 z-40 h-full md:w-[48px]', // Use h-full
+      'fixed inset-y-0 left-0 z-40 h-full md:w-[48px]',
       'flex flex-col bg-[hsl(var(--app-sidebar-background))] text-[hsl(var(--app-sidebar-foreground))] border-r border-[hsl(var(--app-sidebar-border))] shadow-lg'
     );
     return (
