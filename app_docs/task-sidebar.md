@@ -23,26 +23,26 @@ This document outlines the tasks for implementing the sidebar, user account menu
         - [x] `PanelLeft` for opening/toggling unpinned desktop sidebar and mobile sidebar.
         - [x] `PanelLeftClose` for closing/toggling pinned desktop sidebar.
         - [x] `X` for closing mobile sidebar from within.
-    - [x] Subtask: Ensure icon size for navigation items, app logo, and profile image within the sidebar is 16x16 (`h-4 w-4`). Header toggle icons (`PanelLeft`, `PanelLeftClose`, `X`) can remain smaller (e.g., `h-5 w-5`).
-    - [x] Subtask: Ensure clickable area for each navigation icon (when sidebar is collapsed) is 32px (width) x 36px (height). Achieved via padding making overall item `w-8 h-9`.
+    - [x] Subtask: Ensure icon size for navigation items and app logo (ChefHat) within the sidebar is 16x16 (`h-4 w-4`). Profile image in sidebar bottom is 32x32 (`h-8 w-8`). Header toggle icons (`PanelLeft`, `PanelLeftClose`, `X`) are `h-5 w-5`.
+    - [x] Subtask: Ensure clickable area for each navigation icon (when sidebar is collapsed) is 32px (width) x 36px (height). Achieved via padding making overall item `w-8 h-9`. Profile avatar area when collapsed is full sidebar width (48px) and `h-[60px]` with avatar centered.
 
 - [x] **Task: Sidebar Content Display Rules**
-    - [x] Subtask: Desktop (Pinned/Expanded or User Menu Open): Show icons (16x16) and text labels for navigation items. App icon (ChefHat) 16x16. Profile image 16x16.
-    - [x] Subtask: Desktop (Unpinned/Collapsed): Show only icons (16x16) for navigation items, centered in their 32x36 clickable area. Profile image 16x16. Labels appear as tooltips or are accessible via `title` attribute.
-    - [x] Subtask: Mobile (Open): Show icons (16x16) and text labels for navigation items. App icon (ChefHat) 16x16. Profile image 16x16.
+    - [x] Subtask: Desktop (Pinned/Expanded or User Menu Open): Show icons (16x16) and text labels for navigation items. App icon (ChefHat) 16x16. Profile image 32x32.
+    - [x] Subtask: Desktop (Unpinned/Collapsed): Show only icons (16x16) for navigation items, centered in their 32x36 clickable area. Profile image 32x32, centered. Navigation item labels appear as tooltips. Profile avatar does not show a tooltip on hover.
+    - [x] Subtask: Mobile (Open): Show icons (16x16) and text labels for navigation items. App icon (ChefHat) 16x16. Profile image 32x32.
 
 - [x] **Task: Sidebar Toggle/Close Icon Positioning in Header**
-    - [x] Subtask: Desktop (Pinned/Expanded or User Menu Open): The `PanelLeftClose` or `PanelLeft` toggle icon is positioned to the left of (or as the first element before) the logo/title area in the sidebar header.
-    - [x] Subtask: Desktop (Unpinned/Collapsed): The `PanelLeft` icon is the primary toggle, aligned to the start of the header area (effectively centered within the 32x36 icon clickable area if padding is applied, or simply at the start if no extra title/logo).
+    - [x] Subtask: Desktop (Pinned/Expanded or User Menu Open): The `PanelLeftClose` or `PanelLeft` toggle icon is positioned to the left of (or as the first element before) the logo/title area in the sidebar header, aligned with other collapsed icons.
+    - [x] Subtask: Desktop (Unpinned/Collapsed): The `PanelLeft` icon is the primary toggle, aligned to the start of the header area (centered within the 48px width if no other elements).
     - [x] Subtask: Mobile (Open): `X` icon positioned to the right of the logo/title area in the sidebar header.
 
 ## 2. User Account Menu
 
 - [x] **Task: Implement User Account Menu (Integrated within Sidebar)**
     - [x] Subtask: Accessed when profile icon (user avatar) at the bottom of the sidebar is clicked.
-    - [x] Subtask: Desktop: Clicking avatar opens the User Account Menu AND expands/pins the sidebar. Clicking the avatar again (or a menu item leading to nav/modal) closes the User Account Menu AND collapses/unpins the sidebar. If sidebar was already expanded & pinned before avatar click, clicking avatar again to close menu will also collapse & unpin sidebar.
+    - [x] Subtask: Desktop: Clicking avatar opens the User Account Menu AND expands/pins the sidebar. Clicking the avatar again (or a menu item leading to nav/modal) closes the User Account Menu AND collapses/unpins the sidebar. If sidebar was already expanded & pinned before avatar click, clicking avatar again (or a menu item) to close menu will also collapse & unpin the sidebar.
     - [x] Subtask: Mobile (Sidebar open): Clicking avatar toggles the User Account Menu's visibility within the open sidebar.
-    - [x] Subtask: Mobile (Sidebar closed): Clicking avatar in `MobileHeader` (avatar is actually in main sidebar, so user must open sidebar first) or opening sidebar then clicking avatar, opens sidebar and then shows menu.
+    - [x] Subtask: Mobile (Sidebar closed): User must first open sidebar via `MobileHeader` toggle, then click avatar to open menu within sidebar.
     - [x] Subtask: User Account Menu appears as a section *within* the sidebar, directly above the avatar trigger, not as a popover.
     - [x] Subtask: Provides access to:
         - [x] Settings (Link to `/settings`)
@@ -86,7 +86,7 @@ This document outlines the tasks for implementing the sidebar, user account menu
 - [x] **Task: Ensure Correct Mobile Header and Sidebar Interaction**
     - [x] Subtask: `MobileHeader` component is displayed only on mobile screens.
     - [x] Subtask: `MobileHeader` contains a `PanelLeft` icon to toggle the mobile sidebar.
-    - [x] Subtask: When the mobile sidebar is closed, no other main navigation icons from the sidebar are visible in the `MobileHeader`.
+    - [x] Subtask: When the mobile sidebar is closed, no other main navigation icons from the sidebar are visible in the `MobileHeader`. Only the app logo/title (optional) and the `PanelLeft` toggle.
     - [x] Subtask: Opening the mobile sidebar displays it as an overlay, showing full navigation items (icons and text), and the User Account Menu section if triggered.
     - [x] Subtask: Mobile sidebar closes when a navigation item (main nav or User Account Menu nav link) within it is clicked.
 
@@ -101,3 +101,5 @@ This document outlines the tasks for implementing the sidebar, user account menu
     - [x] Ensure theme colors (`globals.css`) are applied correctly.
     - [x] Ensure smooth transitions for sidebar expand/collapse and User Account Menu display.
     - [x] Test responsiveness across desktop and mobile breakpoints.
+    - [x] Ensure consistent styling (hover, focus, active states) for all clickable elements in the sidebar and user account menu.
+
