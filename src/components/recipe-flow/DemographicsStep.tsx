@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -10,18 +9,51 @@ import { useRouter } from 'next/navigation';
 import { useRecipeForm } from '@/contexts/RecipeFormContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button'; // Not used for submit, layout handles it
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getPotentialCauses } from '@/services/aromarx-api-client';
-import type { RecipeFormData } from '@/contexts/RecipeFormContext';
+
+const ageCategories = [
+  { value: "baby", label: "Bebê (0-35 meses)", min: 0, max: 35, unit: "meses" },
+  { value: "child", label: "Criança (3-9 anos)", min: 3, max: 9, unit: "anos" },
+  { value: "teen", label: "Adolescente (10-17 anos)", min: 10, max: 17, unit: "anos" },
+  { value: "adult", label: "Adulto (18-64 anos)", min: 18, max: 64, unit: "anos" },
+  { value: "senior", label: "Idoso (65+ anos)", min: 65, max: 120, unit: "anos" }, // Assuming 120 as a practical upper limit
+];
 
 const demographicsSchema = z.object({
   gender: z.string().min(1, "Gênero é obrigatório."),
   ageCategory: z.string().min(1, "Categoria de idade é obrigatória."),
-  ageSpecific: z.string()
-    .min(1, "Idade específica é obrigatória.")
-    .regex(/^\d+$/, "Idade específica deve ser um número.")
-    .refine(val => parseInt(val) > 0 && parseInt(val) < 120, "Idade inválida."),
+  ageSpecific: z.string().min(1, "Idade específica é obrigatória."),
+}).superRefine((data, ctx) => {
+  const ageNum = parseInt(data.ageSpecific, 10);
+  if (isNaN(ageNum)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Idade específica deve ser um número.",
+      path: ["ageSpecific"],
+    });
+    return;
+  }
+
+  const categoryInfo = ageCategories.find(cat => cat.value === data.ageCategory);
+  if (!categoryInfo) {
+    // This case should ideally not be reached if ageCategory is correctly selected from the dropdown.
+    // If it occurs, it might indicate an issue with ageCategory value itself.
+    ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Categoria de idade inválida selecionada.",
+        path: ["ageCategory"],
+      });
+    return;
+  }
+
+  if (ageNum < categoryInfo.min || ageNum > categoryInfo.max) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Para ${categoryInfo.label.toLowerCase()}, a idade deve ser entre ${categoryInfo.min} e ${categoryInfo.max} ${categoryInfo.unit}.`,
+      path: ["ageSpecific"],
+    });
+  }
 });
 
 type DemographicsFormData = z.infer<typeof demographicsSchema>;
@@ -30,17 +62,39 @@ const DemographicsStep: React.FC = () => {
   const router = useRouter();
   const { formData, updateFormData, setCurrentStep, setIsLoading, setError } = useRecipeForm();
 
-  const { control, handleSubmit, formState: { errors, isValid, isSubmitting } } = useForm<DemographicsFormData>({
+  const { control, handleSubmit, formState: { errors, isValid, isSubmitting }, watch } = useForm<DemographicsFormData>({
     resolver: zodResolver(demographicsSchema),
     defaultValues: {
       gender: formData.gender || '',
       ageCategory: formData.ageCategory || '',
       ageSpecific: formData.ageSpecific || '',
     },
-    mode: 'onChange', // Validate on change for better UX
+    mode: 'onChange', 
   });
 
+  const watchedAgeCategory = watch("ageCategory");
+  const currentCategoryInfo = ageCategories.find(cat => cat.value === watchedAgeCategory);
+  const ageSpecificLabel = currentCategoryInfo ? `Idade Específica (${currentCategoryInfo.unit})` : "Idade Específica";
+  const ageSpecificPlaceholder = currentCategoryInfo ? `Ex: ${Math.floor((currentCategoryInfo.min + currentCategoryInfo.max) / 2)}` : "Ex: 30";
+
+
   const onSubmit: SubmitHandler<DemographicsFormData> = async (data) => {
+    let apiAgeCategoryValue = data.ageCategory;
+    let apiAgeSpecificValue = data.ageSpecific;
+
+    if (data.ageCategory === 'baby') {
+      apiAgeCategoryValue = 'child'; // Map 'baby' to 'child' for the API
+      const months = parseInt(data.ageSpecific, 10);
+      if (months < 12) {
+        apiAgeSpecificValue = '0';
+      } else if (months < 24) {
+        apiAgeSpecificValue = '1';
+      } else {
+        apiAgeSpecificValue = '2';
+      }
+    }
+    
+    // Store user's actual input in context/session storage
     updateFormData({
       gender: data.gender,
       ageCategory: data.ageCategory,
@@ -56,8 +110,8 @@ const DemographicsStep: React.FC = () => {
       const apiPayload = {
         healthConcern: formData.healthConcern,
         gender: data.gender,
-        ageCategory: data.ageCategory,
-        ageSpecific: data.ageSpecific,
+        ageCategory: apiAgeCategoryValue, // Use mapped category for API
+        ageSpecific: apiAgeSpecificValue,   // Use mapped age for API
       };
       const potentialCauses = await getPotentialCauses(apiPayload);
       updateFormData({ potentialCausesResult: potentialCauses });
@@ -71,11 +125,6 @@ const DemographicsStep: React.FC = () => {
     }
   };
   
-  // Access layout's Next button via form submission
-  // The RecipeStepLayout will provide navigation buttons.
-  // We need to trigger form submission when its "Next" is clicked.
-  // This is implicitly handled if this component is the main form inside the layout.
-
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div>
@@ -109,10 +158,9 @@ const DemographicsStep: React.FC = () => {
                 <SelectValue placeholder="Selecione a categoria de idade" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="child">Criança</SelectItem>
-                <SelectItem value="teen">Adolescente</SelectItem>
-                <SelectItem value="adult">Adulto</SelectItem>
-                <SelectItem value="senior">Idoso</SelectItem>
+                {ageCategories.map(cat => (
+                  <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           )}
@@ -121,20 +169,15 @@ const DemographicsStep: React.FC = () => {
       </div>
 
       <div>
-        <Label htmlFor="ageSpecific">Idade Específica</Label>
+        <Label htmlFor="ageSpecific">{ageSpecificLabel}</Label>
         <Controller
           name="ageSpecific"
           control={control}
-          render={({ field }) => <Input id="ageSpecific" type="number" placeholder="Ex: 30" {...field} />}
+          render={({ field }) => <Input id="ageSpecific" type="number" placeholder={ageSpecificPlaceholder} {...field} />}
         />
         {errors.ageSpecific && <p className="text-sm text-destructive mt-1">{errors.ageSpecific.message}</p>}
       </div>
       
-      {/* Submit button is part of RecipeStepLayout, it will trigger this form's onSubmit */}
-      {/* Add a hidden submit button to allow RecipeStepLayout to trigger form submission programmatically if needed,
-          or ensure the layout's button has type="submit" and is part of this form,
-          or pass onSubmit to the layout. The RecipeStepLayout is designed to wrap this form.
-      */}
        <button type="submit" disabled={!isValid || isSubmitting} className="hidden" aria-hidden="true">
         Internal Submit
       </button>
