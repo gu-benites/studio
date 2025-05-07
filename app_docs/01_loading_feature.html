@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Loading Modal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Base styles */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Gradient definitions */
+        :root {
+            --gradient-start: #7a5cff; /* Purple */
+            --gradient-end: #f649a3;   /* Pink */
+            --color-purple-base: 122, 92, 255; /* RGB for purple */
+        }
+
+        /* Container for the pulsing circles */
+        .pulse-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Base style for all concentric circles */
+        .pulse-circle {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            animation: pulseRing 2.5s infinite ease-in-out;
+        }
+
+        /* Styles for 8 Circles (Using only Purple) */
+        .pulse-circle-8 { /* Outermost */
+            width: 100%; height: 100%;
+            background-color: rgba(var(--color-purple-base), 0.15);
+            animation-delay: 0.7s;
+        }
+        .pulse-circle-7 {
+            width: 92.5%; height: 92.5%;
+            background-color: rgba(var(--color-purple-base), 0.2);
+            animation-delay: 0.6s;
+        }
+        .pulse-circle-6 {
+            width: 85%; height: 85%;
+            background-color: rgba(var(--color-purple-base), 0.25);
+            animation-delay: 0.5s;
+        }
+        .pulse-circle-5 {
+            width: 77.5%; height: 77.5%;
+            background-color: rgba(var(--color-purple-base), 0.35);
+            animation-delay: 0.4s;
+        }
+        .pulse-circle-4 {
+            width: 70%; height: 70%;
+            background-color: rgba(var(--color-purple-base), 0.45);
+            animation-delay: 0.3s;
+        }
+        .pulse-circle-3 {
+            width: 62.5%; height: 62.5%;
+            background-color: rgba(var(--color-purple-base), 0.55);
+            animation-delay: 0.2s;
+        }
+        .pulse-circle-2 {
+            width: 55%; height: 55%;
+            background-color: rgba(var(--color-purple-base), 0.7);
+            animation-delay: 0.1s;
+        }
+        .pulse-circle-1 { /* Innermost */
+            width: 47.5%; height: 47.5%;
+            background-color: rgba(var(--color-purple-base), 0.85);
+            animation-delay: 0s;
+        }
+
+        /* Keyframes for the ring pulsing effect (opacity) */
+        @keyframes pulseRing {
+            0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        /* Progress bar gradient */
+        .gradient-progress {
+            background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+             transition: width 0.3s ease-out;
+        }
+
+        /* Ellipsis Animation */
+        .ellipsis::after {
+            display: inline-block;
+            animation: ellipsis 1.6s infinite;
+            content: "\00a0";
+            width: 1.5em;
+            text-align: left;
+            vertical-align: bottom;
+        }
+        @keyframes ellipsis {
+            0%   { content: "\00a0"; }
+            25%  { content: "."; }
+            50%  { content: ".."; }
+            75%  { content: "..."; }
+            100% { content: "\00a0"; }
+        }
+
+        /* Step List Styles */
+        #step-list li {
+            transition: all 0.4s ease-in-out;
+            color: #D1D5DB;
+            font-size: 1rem;
+            font-weight: 400;
+            opacity: 0.9;
+            text-decoration: none;
+            min-height: 1.75rem;
+            line-height: 1.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #step-list li.step-active {
+            color: #1F2937;
+            font-weight: 700;
+            font-size: 1.125rem;
+            opacity: 1;
+            text-decoration: none;
+        }
+        #step-list li.step-completed {
+            color: #6B7280;
+            font-size: 1rem;
+            font-weight: 400;
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+        #step-list li.step-active.ellipsis::after {
+            color: inherit;
+            font-size: inherit;
+        }
+
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div id="modal-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center transition-opacity duration-300 ease-out">
+
+        <div id="loading-modal" class="bg-white rounded-xl shadow-2xl p-6 md:p-8 w-full max-w-md text-center transform transition-all duration-300 ease-out scale-95 opacity-0">
+
+            <div class="mx-auto mb-8 h-16 w-16 md:h-20 md:w-20 relative">
+                <div class="pulse-container">
+                    <div class="pulse-circle pulse-circle-8"></div>
+                    <div class="pulse-circle pulse-circle-7"></div>
+                    <div class="pulse-circle pulse-circle-6"></div>
+                    <div class="pulse-circle pulse-circle-5"></div>
+                    <div class="pulse-circle pulse-circle-4"></div>
+                    <div class="pulse-circle pulse-circle-3"></div>
+                    <div class="pulse-circle pulse-circle-2"></div>
+                    <div class="pulse-circle pulse-circle-1"></div>
+                </div>
+            </div>
+
+            <ul id="step-list" class="space-y-2 mb-6">
+                <li data-step="1">Connecting to Server</li>
+                <li data-step="2">Fetching User Data</li>
+                <li data-step="3">Initializing Components</li>
+                <li data-step="4">Applying Preferences</li>
+                <li data-step="5">Finalizing Setup</li>
+            </ul>
+
+            <div class="mb-4">
+                <div class="bg-gray-200 rounded-full h-2.5 w-full overflow-hidden">
+                    <div id="progress-bar-fill" class="gradient-progress h-full rounded-full" style="width: 0%;"
+                         role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <div class="flex justify-between text-xs md:text-sm text-gray-600 mt-2 px-1">
+                    <span id="progress-percentage">0% Complete</span>
+                    <span id="time-elapsed">Time elapsed: 00:00</span>
+                </div>
+            </div>
+
+            <p id="footer-info" class="text-xs md:text-sm text-gray-500">
+                This process usually takes about 1 minute. Please keep this window open.
+            </p>
+
+            </div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const steps = [
+            { id: 1, text: "Connecting to Server", duration: 1500 },
+            { id: 2, text: "Fetching User Data", duration: 2500 },
+            { id: 3, text: "Initializing Components", duration: 3000 },
+            { id: 4, text: "Applying Preferences", duration: 2000 },
+            { id: 5, text: "Finalizing Setup", duration: 1000 }, // Duration for the last step still matters for progress calculation
+        ];
+        const totalDuration = steps.reduce((sum, step) => sum + step.duration, 0);
+        // const completionDelay = 1000; // No longer needed
+
+        // --- DOM Elements ---
+        const modalOverlayElement = document.getElementById('modal-overlay');
+        const loadingModalElement = document.getElementById('loading-modal');
+        const stepListElement = document.getElementById('step-list');
+        const progressBarFillElement = document.getElementById('progress-bar-fill');
+        const progressPercentageElement = document.getElementById('progress-percentage');
+        const timeElapsedElement = document.getElementById('time-elapsed');
+        const listItems = stepListElement.querySelectorAll('li[data-step]');
+        // const closeButton = document.getElementById('close-button'); // For manual close testing
+
+        // --- State Variables ---
+        let currentStepIndex = 0;
+        let startTime = Date.now();
+        let elapsedTime = 0;
+        let overallProgress = 0;
+        let displayedProgress = 0;
+        let stepTimer = 0;
+        let animationFrameId = null;
+        let activeListItem = null;
+        let isLoadingComplete = false; // Flag to indicate actual process is done
+
+        // --- Functions ---
+
+        /** Formats time in milliseconds to MM:SS */
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+            return `${minutes}:${seconds}`;
+        }
+
+        /** Updates step list styling */
+        function updateStepHighlighting() {
+            // Mark the PREVIOUS step as completed
+            // Only do this if it's not the very first step being highlighted
+            if (activeListItem && currentStepIndex > 0) {
+                 activeListItem.classList.remove('step-active', 'ellipsis');
+                 activeListItem.classList.add('step-completed');
+            }
+
+            // Highlight the CURRENT step
+            if (currentStepIndex < steps.length) {
+                activeListItem = stepListElement.querySelector(`li[data-step="${steps[currentStepIndex].id}"]`);
+                if (activeListItem) {
+                    activeListItem.classList.remove('step-completed');
+                    activeListItem.classList.add('step-active', 'ellipsis');
+                }
+                stepTimer = 0; // Reset timer for the new step
+            }
+            // Note: We no longer mark the *last* step as completed here
+            // because we want it to stay active visually.
+        }
+
+
+        /** Function to manually close the modal (example) */
+        function closeModal() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId); // Stop the animation loop
+                animationFrameId = null;
+            }
+            loadingModalElement.classList.remove('scale-100', 'opacity-100');
+            loadingModalElement.classList.add('scale-95', 'opacity-0');
+            modalOverlayElement.classList.remove('opacity-100');
+            modalOverlayElement.classList.add('opacity-0');
+            setTimeout(() => modalOverlayElement.style.display = 'none', 300);
+        }
+
+        /** Main animation loop - MODIFIED TO PERSIST ON LAST STEP */
+        function animationLoop() {
+            elapsedTime = Date.now() - startTime;
+
+            // --- Step Progression Logic ---
+            let stepChanged = false;
+            // Only advance steps if the loading process isn't actually complete
+            if (!isLoadingComplete && currentStepIndex < steps.length) {
+                stepTimer += 16.67;
+                const currentStepDuration = steps[currentStepIndex].duration;
+
+                // Check if the current step's *duration* has elapsed
+                if (stepTimer >= currentStepDuration) {
+                    // If it's the last step that just finished its duration
+                    if (currentStepIndex === steps.length - 1) {
+                        isLoadingComplete = true; // Mark the process as done
+                        console.log("Loading process complete (modal persists).");
+                        // Don't increment currentStepIndex - keep it on the last step
+                        // Don't call updateStepHighlighting - keep last step active
+                    } else {
+                        // If it's not the last step, advance normally
+                        currentStepIndex++;
+                        updateStepHighlighting();
+                        stepChanged = true;
+                    }
+                }
+            }
+
+            // --- Overall Progress Calculation (Actual Time-Based) ---
+            // This calculation continues even after isLoadingComplete is true
+            // to ensure the bar reaches 100% based on total duration.
+            let completedDuration = 0;
+            // Sum duration of steps *before* the current one
+            for (let i = 0; i < currentStepIndex; i++) {
+                 completedDuration += steps[i].duration;
+            }
+             // Add progress within the current step (or full duration if completed)
+            const currentStepProgressTime = (currentStepIndex < steps.length)
+                 ? Math.min(stepTimer, steps[currentStepIndex].duration)
+                 : steps[steps.length -1].duration; // If past last step index, use its full duration
+
+            const totalProgressTime = completedDuration + currentStepProgressTime;
+            overallProgress = Math.min(100, (totalProgressTime / totalDuration) * 100);
+
+
+            // --- Displayed Progress Calculation (With Randomness) ---
+            if (!isLoadingComplete || displayedProgress < 100) { // Only update displayed progress if not 100% yet
+                const diff = overallProgress - displayedProgress;
+                let increment = diff * 0.08;
+                if (Math.abs(diff) > 1) {
+                    increment += (Math.random() - 0.4) * 0.6;
+                }
+                if (stepChanged && overallProgress < 99) {
+                    increment += Math.random() * 2.5;
+                }
+                displayedProgress += increment;
+                displayedProgress = Math.max(0, Math.min(100, displayedProgress));
+                displayedProgress = Math.max(displayedProgress, overallProgress - 10);
+                displayedProgress = Math.min(displayedProgress, overallProgress + 5);
+
+                // Force displayed progress to 100 if overall is 100
+                if (overallProgress >= 100) {
+                    displayedProgress += (100 - displayedProgress) * 0.2;
+                     if (100 - displayedProgress < 0.1) {
+                         displayedProgress = 100;
+                     }
+                }
+            }
+
+
+            // --- Update UI Elements ---
+            const displayPercent = Math.floor(displayedProgress);
+            progressBarFillElement.style.width = `${displayedProgress}%`;
+            progressBarFillElement.setAttribute('aria-valuenow', displayPercent);
+            progressPercentageElement.textContent = `${displayPercent}% Complete`;
+            timeElapsedElement.textContent = `Time elapsed: ${formatTime(elapsedTime)}`;
+
+            // --- Loop Control ---
+            // Keep the loop running indefinitely until manually stopped
+            animationFrameId = requestAnimationFrame(animationLoop);
+
+            // REMOVED the old completion logic block that hid the modal.
+        }
+
+        /** Initializes and starts the loading modal */
+        function startLoading() {
+            startTime = Date.now();
+            currentStepIndex = 0;
+            stepTimer = 0;
+            overallProgress = 0;
+            displayedProgress = 0;
+            elapsedTime = 0;
+            activeListItem = null;
+            isLoadingComplete = false; // Reset completion flag
+
+            // Reset UI
+            listItems.forEach(li => {
+                li.classList.remove('step-active', 'step-completed', 'ellipsis');
+            });
+             progressBarFillElement.style.width = `0%`;
+             progressBarFillElement.setAttribute('aria-valuenow', '0');
+             progressPercentageElement.textContent = `0% Complete`;
+             timeElapsedElement.textContent = `Time elapsed: 00:00`;
+
+            // Make modal visible
+            modalOverlayElement.style.display = 'flex';
+             setTimeout(() => {
+                 modalOverlayElement.classList.add('opacity-100');
+                 loadingModalElement.classList.add('scale-100', 'opacity-100');
+             }, 10);
+
+            updateStepHighlighting(); // Highlight first step
+
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            animationFrameId = requestAnimationFrame(animationLoop);
+        }
+
+        // --- Initialization ---
+        window.onload = startLoading;
+
+        // --- Optional Manual Close Listener ---
+        // if (closeButton) {
+        //     closeButton.addEventListener('click', closeModal);
+        // }
+
+    </script>
+
+</body>
+</html>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { LucideIcon } from 'lucide-react';
@@ -6,9 +7,8 @@ import {
   PanelLeftClose,
   Home,
   ChefHat,
-  // Settings, // No longer in main nav
-  // List,     // No longer in main nav
-  // X, // No longer needed as PanelLeftClose will be used for mobile close
+  Palette, // Added for Design System
+  LoaderCircle, // Added for Loading State
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -34,8 +34,8 @@ interface NavItem {
 
 const mainNavItems: NavItem[] = [
   { href: '/', icon: Home, label: 'Recipe Generator' },
-  // { href: '/create-recipe', icon: ChefHat, label: 'Create Recipe' }, 
-  // { href: '/my-recipes', icon: List, label: 'My Recipes' },
+  { href: '/design-system', icon: Palette, label: 'Design System' },
+  { href: '/loading-state', icon: LoaderCircle, label: 'Loading State' },
 ];
 
 const AppSidebar: React.FC = () => {
@@ -60,21 +60,12 @@ const AppSidebar: React.FC = () => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsClientMobile(mobile);
-      if (!mobile && isSidebarOpen && !isSidebarPinned && !isUserAccountMenuExpanded) {
-        // If switching from mobile to desktop, and sidebar was open (mobile drawer) but not pinned/user menu, collapse it
-        // This case is less common as sidebar state is usually reset anyway.
-      }
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
-  }, [isSidebarOpen, isSidebarPinned, isUserAccountMenuExpanded]);
+  }, []);
 
-
-  React.useEffect(() => {
-    // Mobile sidebar closing on navigation is handled by individual link clicks
-    // or UserAccountMenu's handleNavigationOrModalAction
-  }, [pathname, isClientMobile, isSidebarOpen]);
 
   const handleMouseEnter = () => {
     if (!isClientMobile && !isSidebarPinned && !isSidebarOpen && !isUserAccountMenuExpanded) { 
@@ -119,7 +110,7 @@ const AppSidebar: React.FC = () => {
     'fixed inset-y-0 left-0 z-40 flex flex-col bg-[hsl(var(--app-sidebar-background))] text-[hsl(var(--app-sidebar-foreground))] border-r border-[hsl(var(--app-sidebar-border))] transition-all duration-300 ease-in-out shadow-lg',
     isClientMobile ? 'w-full max-w-[287px]' : desktopSidebarWidth,
     isClientMobile ? mobileSidebarTranslate : 'md:translate-x-0 md:relative',
-    (isHovering && !isDesktopExpanded && !isClientMobile && !isSidebarOpen && !isUserAccountMenuExpanded) && 'bg-[hsl(var(--app-sidebar-hover-background))]'
+    (isHovering && !isDesktopExpanded && !isClientMobile && !isUserAccountMenuExpanded) && 'bg-[hsl(var(--app-sidebar-hover-background))]'
   );
   
 
@@ -136,76 +127,47 @@ const AppSidebar: React.FC = () => {
       <aside className={sidebarClasses} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
         <div className={cn(
           "flex flex-col flex-grow overflow-y-auto",
-          // Add overflow-x-hidden only for desktop collapsed state
            !isClientMobile && !isEffectivelyExpanded && "overflow-x-hidden"
         )}>
           {/* Sidebar Header */}
           <div className={cn(
             "flex items-center border-b border-[hsl(var(--app-sidebar-border))] h-[60px] shrink-0",
-            // Case 1: Mobile and Open - Use same layout as Desktop Expanded
-            isMobileExpanded ? "items-center px-3 gap-3" : 
-            // Case 2: Desktop and Expanded (isSidebarPinned or isUserAccountMenuExpanded)
-            (!isClientMobile && isEffectivelyExpanded) ? "items-center px-3 gap-3" : 
-            // Case 3: Desktop and Collapsed
-            (!isClientMobile && !isEffectivelyExpanded) ? "justify-center px-[6px]" : 
-            "" // Fallback
+            isMobileExpanded || (!isClientMobile && isEffectivelyExpanded) 
+              ? "px-3 gap-3" 
+              : "justify-center px-[calc((48px-32px)/2)]" 
           )}>
-
-            {/* DESKTOP: Toggle icon is primary element. Logo appears next to it if expanded. */}
-            {!isClientMobile && (
-              <>
-                <Button
-                    variant="ghost"
-                    size="icon" 
-                    onClick={toggleDesktopSidebarPin}
-                    className={cn(
-                        "h-9 w-9 shrink-0", 
-                        "hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))]",
-                        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--app-sidebar-background))]"
-                    )}
-                    aria-label={isSidebarPinned ? 'Unpin and collapse sidebar' : 'Pin and expand sidebar'}
-                >
-                    {isSidebarPinned ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeft className="h-5 w-5" />}
-                </Button>
-                {isEffectivelyExpanded && ( 
-                  <Link 
-                    href="/" 
-                    className="flex items-center gap-2 text-lg font-semibold text-primary overflow-hidden"
-                  >
-                    <ChefHat className="h-4 w-4 shrink-0" /> 
-                    <span className="truncate">RecipeSage</span>
-                  </Link>
+            <Button
+                variant="ghost"
+                size="icon" 
+                onClick={isClientMobile ? toggleMobileSidebar : toggleDesktopSidebarPin}
+                className={cn(
+                    "h-9 w-9 shrink-0", 
+                    "hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))]",
+                    "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--app-sidebar-background))]"
                 )}
-              </>
-            )}
-
-            {/* MOBILE (when sidebar is open): Close icon is to the left, Logo is to the right. */}
-            {isMobileExpanded && (
-              <>
-                <Button
-                    variant="ghost"
-                    size="icon" 
-                    onClick={toggleMobileSidebar} 
-                    className="h-9 w-9 hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--app-sidebar-background))]"
-                    aria-label="Close sidebar"
-                >
-                    <PanelLeftClose className="h-5 w-5" />
-                </Button>
-                <Link 
-                  href="/" 
-                  className="flex items-center gap-2 text-lg font-semibold text-primary overflow-hidden"
-                  onClick={() => { if (isClientMobile) closeSidebarCompletely();}}
-                >
-                  <ChefHat className="h-4 w-4 shrink-0" /> 
-                  <span className="truncate">RecipeSage</span>
-                </Link>
-              </>
+                aria-label={
+                  isClientMobile 
+                    ? (isSidebarOpen ? 'Close sidebar' : 'Open sidebar')
+                    : (isSidebarPinned ? 'Unpin and collapse sidebar' : 'Pin and expand sidebar')
+                }
+            >
+              {isEffectivelyExpanded ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeft className="h-5 w-5" />}
+            </Button>
+            {isEffectivelyExpanded && ( 
+              <Link 
+                href="/" 
+                className="flex items-center gap-2 text-lg font-semibold text-primary overflow-hidden"
+                onClick={() => { if (isClientMobile) closeSidebarCompletely();}}
+              >
+                <ChefHat className="h-4 w-4 shrink-0" /> 
+                <span className="truncate">RecipeSage</span>
+              </Link>
             )}
           </div>
           
           <nav className={cn(
             "flex-grow py-4 space-y-1", 
-            isEffectivelyExpanded ? "px-3" : "px-[calc((48px-32px)/2)]" // px-[8px] for collapsed
+            isEffectivelyExpanded ? "px-3" : "px-[calc((48px-32px)/2)]" 
             )}>
             {mainNavItems.map((item) => {
               const navLinkContent = (
@@ -263,8 +225,6 @@ const AppSidebar: React.FC = () => {
                 ? 'bg-[hsl(var(--app-sidebar-active-background))] text-[hsl(var(--app-sidebar-active-foreground))]'
                 : 'hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))]'
             )}
-            // Tooltip for avatar is intentionally removed based on previous feedback.
-            // title="User account" 
           >
             <Image
               src="https://picsum.photos/seed/useravatar/64/64" 
