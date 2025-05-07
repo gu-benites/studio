@@ -4,11 +4,28 @@
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import React from 'react'; 
-import { ArrowRight, AlertTriangle, ArrowUp, Plus, FileEdit, Search } from 'lucide-react'; // Added Search
+import { ArrowRight, AlertTriangle, ArrowUp, Search, SendHorizonal, Sparkles } from 'lucide-react'; // Removed Plus, FileEdit, added SendHorizonal
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input"; // Added Input
-import { Label } from "@/components/ui/label"; // Added Label import
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label"; 
+
+// Define colors from the AromaChat design system for this page specifically
+// These would ideally come from a theme context or CSS variables if used app-wide
+const aromaColors = {
+  primary: '#7a5cff',
+  secondary: '#FF7A5C',
+  accent: '#5CFF7A',
+  text: '#4B4763',
+  textMuted: '#6f6b89',
+  gradStart: '#7b61ff',
+  gradEnd: '#ff5fa1',
+  alertBg: 'rgba(255, 244, 229, 0.8)', // For demonstration, direct values are used.
+  alertText: '#d97706',
+  alertBorder: 'rgba(245, 158, 11, 0.5)',
+  alertIcon: '#d97706',
+};
+
 
 const DesignSystemPage: NextPage = () => {
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -150,7 +167,7 @@ const DesignSystemPage: NextPage = () => {
                     <li className="transition-all duration-400 ease-in-out text-sm font-normal opacity-70 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center line-through text-aroma-text-muted"><span className="font-bold mr-1">✓</span>Enter Health Concern</li>
                     <li className="transition-all duration-400 ease-in-out text-sm font-normal opacity-70 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center line-through text-aroma-text-muted"><span className="font-bold mr-1">✓</span>Provide Demographics</li>
                     <li 
-                      className="transition-all duration-400 ease-in-out text-lg font-bold opacity-100 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center relative text-aroma-text after:inline-block after:ml-1 after:w-[1.5em] after:text-left after:align-bottom after:content-['\\00a0'] after:animate-ellipsis" 
+                      className="transition-all duration-400 ease-in-out text-lg font-bold opacity-100 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center relative text-aroma-text after:inline-block after:ml-1 after:w-[1.5em] after:text-left after:align-bottom after:content-[''] after:animate-ellipsis" 
                     >
                       Select Causes
                     </li>
@@ -236,33 +253,30 @@ const DesignSystemPage: NextPage = () => {
                 <div>
                   <Label htmlFor="chat-input-example" className="block text-sm font-medium text-aroma-text mb-2">Chat Input (New Style)</Label>
                   <form onSubmit={handleFormSubmit} className="space-y-2">
-                    <div className="flex items-center w-full border border-input rounded-xl focus-within:ring-2 focus-within:ring-aroma-primary focus-within:border-aroma-primary transition-all duration-300 ease-in-out bg-card p-1 pr-1.5 shadow-sm">
-                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground h-9 w-9">
-                        <Plus className="w-5 h-5" />
-                      </Button>
-                       <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground h-9 w-9">
-                        <FileEdit className="w-5 h-5" />
-                      </Button>
-                      <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
-                      <Input
-                        type="text"
-                        id="chat-input-example"
-                        name="chat-input"
-                        placeholder="Lorem Ipsum is simply dummy text..."
-                        className="flex-grow py-2.5 px-3 bg-transparent border-none outline-none text-card-foreground placeholder:text-muted-foreground text-sm h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
-                      />
-                      <Button 
-                        type="submit"
-                        size="icon"
-                        className="h-9 w-9 bg-aroma-secondary text-primary-foreground rounded-md hover:bg-aroma-secondary/90 focus:ring-aroma-secondary focus:ring-offset-card"
-                        aria-label="Send message"
-                      >
-                        <ArrowUp className="w-5 h-5" />
-                      </Button>
+                    <div className="group relative rounded-xl border-input p-px hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end transition-all duration-200 ease-in-out">
+                       <div className="flex items-center w-full bg-card rounded-[calc(theme(borderRadius.xl)-1px)] p-1 pr-1.5 shadow-sm">
+                        <Search className="h-5 w-5 text-muted-foreground mx-2 pointer-events-none" />
+                        <Separator orientation="vertical" className="h-6 mr-2 bg-border" />
+                        <Input
+                          type="text"
+                          id="chat-input-example"
+                          name="chat-input"
+                          placeholder="Lorem Ipsum is simply dummy text..."
+                          className="flex-grow py-2.5 px-2 bg-transparent border-none outline-none text-card-foreground placeholder:text-muted-foreground text-sm h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+                        />
+                        <Button 
+                          type="submit"
+                          size="icon"
+                          className="h-9 w-9 bg-aroma-secondary text-primary-foreground rounded-md hover:bg-aroma-secondary/90 focus:ring-aroma-secondary focus:ring-offset-card"
+                          aria-label="Send message"
+                        >
+                          <ArrowUp className="w-5 h-5" />
+                        </Button>
+                      </div>
                     </div>
                      <p className="text-xs text-muted-foreground text-center">Claude 3.7 Sonnet ✓</p>
                   </form>
-                  <p className="text-sm mt-2 text-aroma-text-muted">Represents: New chat-style input with action button. Border transitions on focus.</p>
+                  <p className="text-sm mt-2 text-aroma-text-muted">Represents: New chat-style input with action button. Gradient border on focus/hover.</p>
                 </div>
               </div>
             </div>
@@ -324,3 +338,4 @@ const DesignSystemPage: NextPage = () => {
 };
 
 export default DesignSystemPage;
+
