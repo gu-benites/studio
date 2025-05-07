@@ -7,15 +7,18 @@ import { LogoutConfirmationDialog } from '@/components/logout-confirmation-dialo
 import { SubscriptionModal } from '@/components/subscription-modal';
 import { Toaster } from "@/components/ui/toaster";
 import { UIStateProvider } from '@/contexts/UIStateContext';
+import { RecipeFormProvider } from '@/contexts/RecipeFormContext'; // Import RecipeFormProvider
 import React from 'react';
 
 export function ClientRoot({ children }: { children: ReactNode }) {
   return (
     <UIStateProvider>
-      <AppLayoutClient>{children}</AppLayoutClient>
-      <LogoutConfirmationDialog />
-      <SubscriptionModal />
-      <Toaster />
+      <RecipeFormProvider> {/* Wrap with RecipeFormProvider */}
+        <AppLayoutClient>{children}</AppLayoutClient>
+        <LogoutConfirmationDialog />
+        <SubscriptionModal />
+        <Toaster />
+      </RecipeFormProvider>
     </UIStateProvider>
   );
 }

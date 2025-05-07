@@ -1,26 +1,29 @@
 
 "use client";
 
-import { Search, SendHorizonal, Zap, TriangleAlert, Loader2, Sparkles, ArrowRight } from 'lucide-react'; // Added ArrowRight
+import { Search, ArrowRight, Zap, TriangleAlert, Loader2, Sparkles } from 'lucide-react';
 import * as React from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useRouter } from 'next/navigation'; // Import useRouter
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
 
 import { generateRecipeSuggestions, type GenerateRecipeSuggestionsOutput } from '@/ai/flows/generate-suggestions';
 import { generateRecipe, type GenerateRecipeOutput, type GenerateRecipeInput } from '@/ai/flows/generate-recipe';
 import { cn } from '@/lib/utils';
+import { useRecipeForm } from '@/contexts/RecipeFormContext'; // Import useRecipeForm
 
-const recipeInputSchema = z.object({
-  recipeIdea: z.string().min(3, { message: "Please enter at least 3 characters." }),
+const healthConcernSchema = z.object({ // Renamed from recipeInputSchema
+  healthConcern: z.string().min(3, { message: "Please enter at least 3 characters." }), // Renamed from recipeIdea
 });
-type RecipeInputFormData = z.infer<typeof recipeInputSchema>;
+type HealthConcernFormData = z.infer<typeof healthConcernSchema>; // Renamed
 
 const suggestionChips = [
   { label: "Relaxar", category: "comfort food" },
@@ -30,23 +33,26 @@ const suggestionChips = [
 ];
 
 export const RecipeGenerator: React.FC = () => {
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [isGeneratingRecipe, setIsGeneratingRecipe] = React.useState(false);
+  const [isFetchingSuggestions, setIsFetchingSuggestions] = React.useState(false);
+  const [isGeneratingFullRecipe, setIsGeneratingFullRecipe] = React.useState(false); // For direct recipe generation if kept
   const [error, setError] = React.useState<string | null>(null);
   const [recipeSuggestions, setRecipeSuggestions] = React.useState<string[]>([]);
   const [generatedRecipe, setGeneratedRecipe] = React.useState<GenerateRecipeOutput | null>(null);
+  
+  const router = useRouter(); // Initialize useRouter
+  const { updateFormData, resetFormData, setCurrentStep } = useRecipeForm(); // Get context functions
 
   const {
     register,
     handleSubmit,
     setValue,
     formState: { errors },
-  } = useForm<RecipeInputFormData>({
-    resolver: zodResolver(recipeInputSchema),
+  } = useForm<HealthConcernFormData>({ // Updated type
+    resolver: zodResolver(healthConcernSchema), // Updated schema
   });
 
   const handleFetchSuggestions = async (category: string) => {
-    setIsLoading(true);
+    setIsFetchingSuggestions(true);
     setError(null);
     setRecipeSuggestions([]);
     setGeneratedRecipe(null);
@@ -57,39 +63,58 @@ export const RecipeGenerator: React.FC = () => {
       console.error("Error fetching suggestions:", err);
       setError("Failed to fetch recipe suggestions. Please try again.");
     } finally {
-      setIsLoading(false);
+      setIsFetchingSuggestions(false);
     }
   };
 
-  const handleGenerateRecipe: SubmitHandler<RecipeInputFormData> = async (data) => {
-    setIsGeneratingRecipe(true);
+  // This handler is for the multi-step flow
+  const handleStartRecipeFlow: SubmitHandler<HealthConcernFormData> = (data) => {
+    setIsGeneratingFullRecipe(false); // Ensure this is false if we are starting the flow
+    setIsFetchingSuggestions(false);
     setError(null);
     setGeneratedRecipe(null);
-    setRecipeSuggestions([]); // Clear suggestions when generating specific recipe
+    setRecipeSuggestions([]);
+
+    resetFormData(); // Clear any previous multi-step form data
+    updateFormData({ healthConcern: data.healthConcern });
+    setCurrentStep('demographics'); // Set current step in context
+    router.push('/create-recipe/demographics'); // Navigate to the next step
+  };
+  
+  // This handler is for the original direct recipe generation (if we want to keep it)
+  const handleGenerateDirectRecipe = async (concern: string) => {
+    setIsGeneratingFullRecipe(true);
+    setError(null);
+    setGeneratedRecipe(null);
+    setRecipeSuggestions([]);
     try {
       const input: GenerateRecipeInput = {
-        recipeIdea: data.recipeIdea,
+        recipeIdea: concern, // The AI flow still expects recipeIdea
         dietaryRestrictions: "None", 
         availableIngredients: "Basic pantry staples",
       };
       const result: GenerateRecipeOutput = await generateRecipe(input);
       setGeneratedRecipe(result);
     } catch (err) {
-      console.error("Error generating recipe:", err);
+      console.error("Error generating direct recipe:", err);
       setError("Failed to generate the recipe. Please try again.");
     } finally {
-      setIsGeneratingRecipe(false);
+      setIsGeneratingFullRecipe(false);
     }
   };
-  
+
   const handleSuggestionChipClick = (category: string, label: string) => {
-    setValue("recipeIdea", label); 
+    setValue("healthConcern", label); // Updated field name
+    // Decide if chip click should fetch suggestions or start flow. For now, fetch suggestions.
     handleFetchSuggestions(category);
   };
 
   const handleSuggestedRecipeClick = (suggestion: string) => {
-    setValue("recipeIdea", suggestion);
-    handleSubmit(handleGenerateRecipe)(); 
+    setValue("healthConcern", suggestion); // Updated field name
+    // This could either start the multi-step flow or directly generate.
+    // For now, let's assume it directly generates if this feature is kept.
+    // If not, it should populate the field and user clicks "Criar Receita" to start the flow.
+    handleGenerateDirectRecipe(suggestion); 
   }
 
   return (
@@ -97,7 +122,6 @@ export const RecipeGenerator: React.FC = () => {
       <div className="w-full max-w-2xl text-center">
         <h1 
             className="text-4xl sm:text-5xl font-bold mb-3 bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end bg-clip-text text-transparent"
-            style={{WebkitTextFillColor: 'transparent', MozTextFillColor: 'transparent'}}
             >
           Qual receita você quer criar hoje?
         </h1>
@@ -105,42 +129,33 @@ export const RecipeGenerator: React.FC = () => {
           Descreva sua ideia ou escolha uma categoria e deixe nossa IA te surpreender!
         </p>
 
-        <form onSubmit={handleSubmit(handleGenerateRecipe)} className="space-y-6">
-          <div className="relative group rounded-xl border border-input p-px hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end transition-all duration-200 ease-in-out">
-            <div className="relative flex items-center bg-card rounded-[calc(theme(borderRadius.xl)-1px)] shadow-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+        <form onSubmit={handleSubmit(handleStartRecipeFlow)} className="space-y-6">
+          {/* Using the "Chat Input (New Style)" from design system */}
+          <div className="group relative rounded-md border border-input p-px hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start/50 to-aroma-grad-end/50 transition-all duration-200 ease-in-out focus-within:from-aroma-grad-start focus-within:to-aroma-grad-end">
+            <div className="flex items-center w-full bg-card rounded-[calc(theme(borderRadius.md)-1px)] p-1 pr-1.5 shadow-sm">
+              <Search className="h-5 w-5 text-muted-foreground mx-3 pointer-events-none" />
+              <Separator orientation="vertical" className="h-6 mr-2 bg-border" />
               <Input
-                {...register("recipeIdea")}
+                {...register("healthConcern")} // Updated field name
                 type="text"
-                placeholder="Ex: Bolo de chocolate fofinho, macarrão rápido para o jantar..."
-                className="w-full pl-10 pr-4 py-3 h-14 text-base border-none bg-transparent shadow-none outline-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground text-foreground"
-                aria-invalid={errors.recipeIdea ? "true" : "false"}
+                placeholder="Ex: dor de cabeça, insônia, ansiedade..."
+                className="flex-grow py-2.5 px-2 bg-transparent border-none outline-none text-card-foreground placeholder:text-muted-foreground text-sm h-12 focus-visible:ring-0 focus-visible:ring-offset-0"
+                aria-invalid={errors.healthConcern ? "true" : "false"} // Updated field name
               />
+              <Button 
+                type="submit"
+                size="icon"
+                className="h-9 w-9 bg-aroma-secondary text-primary-foreground rounded-md hover:bg-aroma-secondary/90 focus:ring-aroma-secondary focus:ring-offset-card"
+                aria-label="Criar Receita"
+                disabled={isGeneratingFullRecipe || isFetchingSuggestions}
+              >
+                {isGeneratingFullRecipe || isFetchingSuggestions ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
+              </Button>
             </div>
           </div>
-            {errors.recipeIdea && (
-              <p className="text-sm text-destructive mt-1 text-left">{errors.recipeIdea.message}</p>
-            )}
-
-          <Button 
-            type="submit" 
-            className={cn(
-              "w-full sm:w-auto h-auto py-3.5 px-8 text-base font-semibold rounded-3xl text-primary-foreground",
-              "bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end",
-              "shadow-button-normal hover:shadow-button-focus hover:-translate-y-0.5",
-              "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aroma-primary",
-              "transition-all duration-300 ease-in-out"
-            )}
-            disabled={isGeneratingRecipe || isLoading}
-          >
-            {isGeneratingRecipe ? (
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-            ) : (
-              // Using ArrowRight to match design system main button
-              <ArrowRight strokeWidth={2.5} className="mr-2 h-4 w-4" /> 
-            )}
-            Criar Receita
-          </Button>
+          {errors.healthConcern && ( // Updated field name
+            <p className="text-sm text-destructive mt-1 text-left">{errors.healthConcern.message}</p> // Updated field name
+          )}
         </form>
 
         <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -170,7 +185,7 @@ export const RecipeGenerator: React.FC = () => {
           </Alert>
         )}
 
-        {isLoading && (
+        {isFetchingSuggestions && (
           <div className="mt-8 flex flex-col items-center text-muted-foreground">
             <Loader2 className="h-8 w-8 animate-spin mb-2 text-primary" />
             <p>Buscando sugestões...</p>
@@ -181,7 +196,7 @@ export const RecipeGenerator: React.FC = () => {
           <Card className="mt-8 text-left shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl text-primary">Sugestões de Receitas</CardTitle>
-              <CardDescription>Encontramos algumas ideias para você:</CardDescription>
+              <CardDescription>Encontramos algumas ideias para você. Clique em uma para gerar a receita completa ou refinar sua busca.</CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="space-y-3">
@@ -190,7 +205,7 @@ export const RecipeGenerator: React.FC = () => {
                     <Button 
                       variant="link" 
                       className="p-0 h-auto text-base text-primary hover:underline"
-                      onClick={() => handleSuggestedRecipeClick(suggestion)}
+                      onClick={() => handleSuggestedRecipeClick(suggestion)} // This may need to change if direct generation is removed
                     >
                       {suggestion}
                     </Button>
@@ -201,7 +216,7 @@ export const RecipeGenerator: React.FC = () => {
           </Card>
         )}
 
-        {generatedRecipe && (
+        {generatedRecipe && ( // This section is for direct recipe generation result
           <Card className="mt-8 text-left shadow-xl">
             <CardHeader>
               <CardTitle className="text-3xl font-bold text-primary">{generatedRecipe.recipeName}</CardTitle>
@@ -226,4 +241,3 @@ export const RecipeGenerator: React.FC = () => {
     </div>
   );
 };
-
