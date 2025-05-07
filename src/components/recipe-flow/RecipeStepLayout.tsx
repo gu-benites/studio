@@ -21,11 +21,12 @@ interface RecipeStepLayoutProps {
   isNextDisabled?: boolean;
   hideNextButton?: boolean;
   hidePreviousButton?: boolean;
+  stepInstructions?: string; // New prop for step-specific instructions
 }
 
 const FLOW_STEPS = ['demographics', 'causes', 'symptoms', 'properties'];
 const FOOTER_HEIGHT_CLASS = "h-[60px]"; 
-const CONTENT_PADDING_BOTTOM_CLASS = "pb-[76px]"; // 60px footer + 16px extra padding
+const CONTENT_PADDING_BOTTOM_CLASS = "pb-[76px]";
 
 const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   stepTitle,
@@ -38,6 +39,7 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   isNextDisabled = false,
   hideNextButton = false,
   hidePreviousButton = false,
+  stepInstructions, // Destructure new prop
 }) => {
   const router = useRouter();
   const { isLoading: globalIsLoading, error, currentStep, resetFormData } = useRecipeForm(); 
@@ -66,7 +68,6 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
       if (formElement && typeof formElement.requestSubmit === 'function') {
         formElement.requestSubmit();
       } else if (formElement && typeof formElement.submit === 'function') {
-        // Fallback for older browsers or simple forms not using requestSubmit
         formElement.submit();
       }
     }
@@ -94,13 +95,12 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
 
   return (
     <div className="flex flex-col flex-1 min-h-0"> 
-      <div className="flex-grow overflow-y-auto"> 
+      <div className={cn("flex-grow overflow-y-auto", CONTENT_PADDING_BOTTOM_CLASS)}> 
         <div className={cn(
             "container mx-auto py-8 max-w-3xl",
-            "px-0 sm:px-4 md:px-6 lg:px-8", // Edge-to-edge on mobile, padded on larger screens
-            CONTENT_PADDING_BOTTOM_CLASS 
+            "px-0 sm:px-4 md:px-6 lg:px-8",
         )}>
-          <div className="mb-6 px-4 sm:px-0"> {/* Padding for progress bar on mobile */}
+          <div className="mb-6 px-4 sm:px-0">
             <Progress 
               value={progressPercentage} 
               className="h-1.5 w-full bg-muted [&>div]:bg-gradient-to-r [&>div]:from-aroma-grad-start [&>div]:to-aroma-grad-end"
@@ -108,9 +108,15 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
           </div>
           
           <h1 className="text-3xl font-bold mb-2 text-center text-primary px-4 sm:px-0">{stepTitle}</h1>
-          <p className="text-muted-foreground text-center mb-8 px-4 sm:px-0">
+          <p className="text-muted-foreground text-center mb-4 px-4 sm:px-0">
             Preencha as informações abaixo para continuar.
           </p>
+          
+          {stepInstructions && (
+            <p className="text-muted-foreground text-center mb-6 px-4 sm:px-0 text-sm">
+              {stepInstructions}
+            </p>
+          )}
           
           {error && (
             <div className="mb-4 p-4 bg-destructive/10 text-destructive border border-destructive/20 rounded-md mx-4 sm:mx-0">
@@ -121,8 +127,8 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
 
           <div className={cn(
             "bg-card shadow-lg border",
-            "p-0 sm:p-6 md:p-8", // No padding on mobile, padded on larger screens
-            "rounded-none sm:rounded-lg" // No border radius on mobile if edge-to-edge
+            "p-0 sm:p-6 md:p-8", 
+            "rounded-none sm:rounded-lg"
             )}>
             {children}
           </div>
@@ -143,16 +149,16 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
         >
           <div className="flex gap-2 items-center">
             {!hidePreviousButton && currentStep !== FLOW_STEPS[0] && (
-              <Button variant="outline" onClick={handlePrevious} disabled={globalIsLoading} className="h-8 px-3 text-sm sm:h-auto sm:px-4"> 
-                <ArrowLeft className="mr-1.5 h-4 w-4" />
+              <Button variant="outline" onClick={handlePrevious} disabled={globalIsLoading} className="h-8 px-3 text-xs sm:text-sm sm:h-auto sm:px-4"> 
+                <ArrowLeft className="mr-1.5 h-3 w-3 sm:h-4 sm:w-4" />
                 Anterior
               </Button>
             )}
           </div>
 
           {showStartOverButton && (
-              <Button variant="ghost" onClick={handleStartOverClick} disabled={globalIsLoading} className="h-8 px-3 text-sm sm:h-auto sm:px-4 text-muted-foreground hover:text-foreground">
-                  <RotateCcw className="mr-1.5 h-4 w-4" />
+              <Button variant="ghost" onClick={handleStartOverClick} disabled={globalIsLoading} className="h-8 px-3 text-xs sm:text-sm sm:h-auto sm:px-4 text-muted-foreground hover:text-foreground">
+                  <RotateCcw className="mr-1.5 h-3 w-3 sm:h-4 sm:w-4" />
                   Recomeçar
               </Button>
           )}
@@ -163,16 +169,16 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
               form={onNext ? undefined : formId} 
               onClick={handleNextClick} 
               disabled={isNextDisabled || globalIsLoading}
-              className="h-8 px-3 text-sm sm:h-auto sm:px-4" 
+              className="h-8 px-3 text-xs sm:text-sm sm:h-auto sm:px-4" 
             >
               {globalIsLoading && !onNext ? ( 
-                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-1.5 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
               ) : (
-                <ArrowRight className="mr-1.5 h-4 w-4" />
+                <ArrowRight className="mr-1.5 h-3 w-3 sm:h-4 sm:w-4" />
               )}
               {nextButtonText}
             </Button>
-          ) : <div className="h-8 w-0" /> }
+          ) : <div className="h-8 w-0 sm:h-auto" /> }
         </footer>
       )}
     </div>

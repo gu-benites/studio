@@ -26,7 +26,7 @@ const CausesStep: React.FC = () => {
   useEffect(() => {
     if (formData.selectedCauses) {
       setSelectedCausesState(formData.selectedCauses);
-      const initiallyOpen = formData.selectedCauses.map(c => c.cause_name);
+      const initiallyOpen = formData.selectedCauses.map(c => c.cause_name).filter(name => name != null) as string[];
       setOpenAccordionItems(Array.from(new Set(initiallyOpen)));
     }
   }, [formData.selectedCauses]);
@@ -43,23 +43,28 @@ const CausesStep: React.FC = () => {
         setOpenAccordionItems(prevOpen => Array.from(new Set([...prevOpen, cause.cause_name])));
         return [...prevSelected, cause];
       } else if (!checked && isCurrentlySelected) {
-        setOpenAccordionItems(prevOpen => prevOpen.filter(item => item !== cause.cause_name));
+        // setOpenAccordionItems(prevOpen => prevOpen.filter(item => item !== cause.cause_name)); // Keep open on uncheck via switch
         return prevSelected.filter(c => c.cause_name !== cause.cause_name);
       }
       return prevSelected;
     });
   }, []);
 
-  const handleAccordionToggle = useCallback((causeName: string) => {
-    setOpenAccordionItems(prevOpen => {
-      const isOpen = prevOpen.includes(causeName);
-      if (isOpen) {
-        return prevOpen.filter(item => item !== causeName);
-      } else {
-        return [...prevOpen, causeName];
+  const handleAccordionToggle = useCallback((cause: PotentialCause) => {
+    const causeName = cause.cause_name;
+    const isSelected = selectedCausesState.some(c => c.cause_name === causeName);
+    const isOpen = openAccordionItems.includes(causeName);
+
+    if (isOpen) {
+      setOpenAccordionItems(prevOpen => prevOpen.filter(item => item !== causeName));
+    } else {
+      setOpenAccordionItems(prevOpen => [...prevOpen, causeName]);
+      // If opening and not selected, select it
+      if (!isSelected) {
+        handleSwitchChange(cause, true);
       }
-    });
-  }, []);
+    }
+  }, [openAccordionItems, selectedCausesState, handleSwitchChange]);
 
 
   const handleSubmitCauses = async (event?: React.FormEvent<HTMLFormElement>) => {
@@ -102,15 +107,13 @@ const CausesStep: React.FC = () => {
   }
   
   return (
-    <form id="current-step-form" onSubmit={handleSubmitCauses} className="space-y-3 px-4 sm:px-0">
-      <p className="text-muted-foreground text-sm">
-        Selecione as causas que você acredita estarem relacionadas ao seu problema de saúde. Clique no título para ver mais detalhes.
-      </p>
-      <div className="rounded-lg border overflow-hidden shadow-sm">
+    <form id="current-step-form" onSubmit={handleSubmitCauses} className="space-y-3">
+      {/* Instruction paragraph removed from here */}
+      <div className={cn("rounded-lg border overflow-hidden shadow-sm", "sm:mx-0 -mx-6 md:-mx-8")}>
         <Accordion 
           type="multiple" 
           value={openAccordionItems} 
-          onValueChange={setOpenAccordionItems} // Allow Radix to manage open items based on clicks
+          onValueChange={setOpenAccordionItems}
           className="w-full"
         >
           {formData.potentialCausesResult.map((cause, index) => {
@@ -123,19 +126,15 @@ const CausesStep: React.FC = () => {
                 className={cn(
                   "transition-all",
                   isChecked ? "bg-primary/5" : "bg-card",
-                  // openAccordionItems.includes(causeId) && !isChecked ? "bg-muted/5" : "", // Keep open visual distinct if not checked
                   index === formData.potentialCausesResult!.length - 1 ? "border-b-0" : ""
                 )}
               >
                 <AccordionTrigger 
                   className={cn(
                     "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card transition-colors",
-                    // openAccordionItems.includes(causeId) ? "hover:bg-muted/10" : "hover:bg-muted/5",
-                    // isChecked && openAccordionItems.includes(causeId) ? "bg-primary/10 hover:bg-primary/15" : "",
-                    // isChecked && !openAccordionItems.includes(causeId) ? "hover:bg-primary/10" : ""
-                     isChecked ? "bg-primary/10 hover:bg-primary/15" : "hover:bg-muted/5"
+                    isChecked ? "bg-primary/10 hover:bg-primary/15" : "hover:bg-muted/5"
                   )}
-                  onClick={() => handleAccordionToggle(causeId)} // Toggle accordion explicitly
+                  onClick={() => handleAccordionToggle(cause)}
                 >
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
                     <Switch
@@ -152,10 +151,6 @@ const CausesStep: React.FC = () => {
                       htmlFor={`cause-switch-${causeId}`}
                       id={`cause-label-${causeId}`}
                       className="font-medium text-base cursor-pointer flex-1 truncate"
-                      onClick={(e) => {
-                        e.stopPropagation(); 
-                        handleSwitchChange(cause, !isChecked);
-                      }}
                     >
                       {cause.cause_name}
                     </Label>

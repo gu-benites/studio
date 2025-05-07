@@ -23,10 +23,15 @@ const stepTitles: Record<string, string> = {
   properties: "Propriedades Terapêuticas e Óleos",
 };
 
+const stepInstructionsText: Record<string, string> = {
+  causes: "Selecione as causas que você acredita estarem relacionadas ao seu problema de saúde. Clique no título para ver mais detalhes.",
+  symptoms: "Selecione os sintomas que você está experienciando. Clique no título para ver mais detalhes.",
+};
+
 const CreateRecipeStepPage = () => {
   const params = useParams();
   const router = useRouter();
-  const { formData, currentStep, setCurrentStep, isFormValid, setIsLoading, setError } = useRecipeForm(); // Removed healthConcern as it's in formData
+  const { formData, currentStep, setCurrentStep, isFormValid, setIsLoading, setError } = useRecipeForm();
   const step = Array.isArray(params.step) ? params.step[0] : params.step;
 
   useEffect(() => {
@@ -36,7 +41,7 @@ const CreateRecipeStepPage = () => {
   }, [step, setCurrentStep]);
   
   useEffect(() => {
-    if (!formData.healthConcern && step && step !== 'demographics' && step !== 'properties') { // Allow properties to load if data exists
+    if (!formData.healthConcern && step && step !== 'demographics' && step !== 'properties') {
         // console.warn("Health concern not found for this step, consider redirecting.");
         // router.push('/'); // Uncomment if strict redirection is needed
     }
@@ -44,6 +49,7 @@ const CreateRecipeStepPage = () => {
 
   const StepComponent = step ? stepComponents[step] : null;
   const stepTitle = step ? stepTitles[step] || "Etapa Desconhecida" : "Carregando Etapa...";
+  const instructions = step ? stepInstructionsText[step] : undefined;
 
 
   const onNextProperties = useCallback(async () => {
@@ -51,13 +57,10 @@ const CreateRecipeStepPage = () => {
     if (internalSubmitButton) {
       internalSubmitButton.click();
     } else {
-      // This case should ideally not be reached if PropertiesOilsStep handles its own submission
-      // or if the "Next" button is hidden by layout config.
       console.warn("Ação para 'Próxima Etapa' não encontrada em PropertiesOilsStep.");
     }
   }, []);
 
-  // Determine if oils are still fetching for the properties step's next button disable logic
   const isFetchingOils = step === 'properties' && 
                         (!formData.suggestedOilsByProperty || 
                          (formData.medicalPropertiesResult?.therapeutic_properties && Object.keys(formData.suggestedOilsByProperty || {}).length < formData.medicalPropertiesResult.therapeutic_properties.length));
@@ -90,7 +93,7 @@ const CreateRecipeStepPage = () => {
             onNext: onNextProperties, 
             nextButtonText: "Gerar Receita (Em Breve)", 
             isNextDisabled: formData.isLoading || isFetchingOils, 
-            hideNextButton: true, // Hide layout's next button for this step
+            hideNextButton: true, 
         }
       default:
         return {
@@ -99,7 +102,7 @@ const CreateRecipeStepPage = () => {
             hideNextButton: false,
         };
     }
-  }, [step, isFormValid, formData.isLoading, onNextProperties, isFetchingOils]); // Added isFetchingOils
+  }, [step, isFormValid, formData.isLoading, onNextProperties, isFetchingOils]); 
 
 
   if (!step || !StepComponent) {
@@ -117,6 +120,7 @@ const CreateRecipeStepPage = () => {
         isNextDisabled={navProps.isNextDisabled} 
         hideNextButton={navProps.hideNextButton}
         formId={'current-step-form'} 
+        stepInstructions={instructions} // Pass instructions here
     >
       <StepComponent />
     </RecipeStepLayout>
