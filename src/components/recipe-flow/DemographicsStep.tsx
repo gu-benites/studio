@@ -61,7 +61,7 @@ const DemographicsStep: React.FC = () => {
   const router = useRouter();
   const { formData, updateFormData, setCurrentStep, setIsLoading, setError, updateFormValidity } = useRecipeForm();
 
-  const { control, handleSubmit, formState: { errors, isValid, isSubmitting }, watch } = useForm<DemographicsFormData>({
+  const { control, handleSubmit, formState: { errors, isValid, isSubmitting }, watch, reset } = useForm<DemographicsFormData>({
     resolver: zodResolver(demographicsSchema),
     defaultValues: {
       gender: formData.gender as "male" | "female" || undefined,
@@ -70,6 +70,18 @@ const DemographicsStep: React.FC = () => {
     },
     mode: 'onChange', 
   });
+
+  // Initialize form with context data if available
+  useEffect(() => {
+    if (formData.gender && formData.ageCategory && formData.ageSpecific) {
+      reset({
+        gender: formData.gender as "male" | "female",
+        ageCategory: formData.ageCategory,
+        ageSpecific: formData.ageSpecific,
+      });
+    }
+  }, [formData.gender, formData.ageCategory, formData.ageSpecific, reset]);
+
 
   useEffect(() => {
     updateFormValidity(isValid);
@@ -85,18 +97,19 @@ const DemographicsStep: React.FC = () => {
     let apiAgeCategoryValue = data.ageCategory;
     let apiAgeSpecificValue = data.ageSpecific;
 
+    // API expects "child" for babies and age in years (0, 1, or 2)
     if (data.ageCategory === 'baby') {
       apiAgeCategoryValue = 'child'; 
       const months = parseInt(data.ageSpecific, 10);
-      if (months < 12) apiAgeSpecificValue = '0';
-      else if (months < 24) apiAgeSpecificValue = '1';
-      else apiAgeSpecificValue = '2';
+      if (months < 12) apiAgeSpecificValue = '0'; // 0 years old
+      else if (months < 24) apiAgeSpecificValue = '1'; // 1 year old
+      else apiAgeSpecificValue = '2'; // 2 years old
     }
     
     updateFormData({
       gender: data.gender,
-      ageCategory: data.ageCategory,
-      ageSpecific: data.ageSpecific,
+      ageCategory: data.ageCategory, // Store original category for display/logic
+      ageSpecific: data.ageSpecific,   // Store original specific age
     });
     
     setIsLoading(true);
@@ -105,14 +118,14 @@ const DemographicsStep: React.FC = () => {
       if (!formData.healthConcern) {
         throw new Error("Problema de saúde não definido.");
       }
-      const apiPayload = {
+      const apiPayload = { // This payload is for the API call
         healthConcern: formData.healthConcern,
         gender: data.gender,
-        ageCategory: apiAgeCategoryValue,
-        ageSpecific: apiAgeSpecificValue,
+        ageCategory: apiAgeCategoryValue, // Use potentially modified category for API
+        ageSpecific: apiAgeSpecificValue,   // Use potentially modified age for API
       };
       const potentialCauses = await getPotentialCauses(apiPayload);
-      updateFormData({ potentialCausesResult: potentialCauses });
+      updateFormData({ potentialCausesResult: potentialCauses }); // Store the API result
       setCurrentStep('causes');
       router.push('/create-recipe/causes');
     } catch (apiError: any) {
