@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { ReactNode } from 'react';
@@ -21,12 +22,12 @@ interface RecipeStepLayoutProps {
   isNextDisabled?: boolean;
   hideNextButton?: boolean;
   hidePreviousButton?: boolean;
-  stepInstructions?: string; // New prop for step-specific instructions
+  stepInstructions?: string;
 }
 
 const FLOW_STEPS = ['demographics', 'causes', 'symptoms', 'properties'];
 const FOOTER_HEIGHT_CLASS = "h-[60px]"; 
-const CONTENT_PADDING_BOTTOM_CLASS = "pb-[76px]";
+const CONTENT_PADDING_BOTTOM_CLASS = "pb-[76px]"; // Footer height (60px) + some buffer (16px)
 
 const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   stepTitle,
@@ -39,7 +40,7 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   isNextDisabled = false,
   hideNextButton = false,
   hidePreviousButton = false,
-  stepInstructions, // Destructure new prop
+  stepInstructions,
 }) => {
   const router = useRouter();
   const { isLoading: globalIsLoading, error, currentStep, resetFormData } = useRecipeForm(); 
@@ -98,7 +99,7 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
       <div className={cn("flex-grow overflow-y-auto", CONTENT_PADDING_BOTTOM_CLASS)}> 
         <div className={cn(
             "container mx-auto py-8 max-w-3xl",
-            "px-0 sm:px-4 md:px-6 lg:px-8",
+            "px-4 sm:px-0" 
         )}>
           <div className="mb-6 px-4 sm:px-0">
             <Progress 
@@ -125,11 +126,8 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
             </div>
           )}
 
-          <div className={cn(
-            "bg-card shadow-lg border",
-            "p-0 sm:p-6 md:p-8", 
-            "rounded-none sm:rounded-lg"
-            )}>
+          {/* This div (div[2] from XPath) is now a simple full-width wrapper */}
+          <div className="w-full">
             {children}
           </div>
         </div>
@@ -138,7 +136,7 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
       {hasMounted && (
         <footer 
           className={cn(
-            "fixed bottom-0 z-10 bg-background border-t border-border",
+            "fixed bottom-0 z-10 bg-background/95 backdrop-blur-sm border-t border-border",
             FOOTER_HEIGHT_CLASS, 
             "flex items-center justify-between px-4 sm:px-6",
             "right-0", 
@@ -149,7 +147,7 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
         >
           <div className="flex gap-2 items-center">
             {!hidePreviousButton && currentStep !== FLOW_STEPS[0] && (
-              <Button variant="outline" onClick={handlePrevious} disabled={globalIsLoading} className="h-8 px-3 text-xs sm:text-sm sm:h-auto sm:px-4"> 
+              <Button variant="outline" onClick={handlePrevious} disabled={globalIsLoading} className="h-8 px-3 text-xs sm:text-sm sm:max-h-[32px] sm:px-3"> 
                 <ArrowLeft className="mr-1.5 h-3 w-3 sm:h-4 sm:w-4" />
                 Anterior
               </Button>
@@ -157,7 +155,7 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
           </div>
 
           {showStartOverButton && (
-              <Button variant="ghost" onClick={handleStartOverClick} disabled={globalIsLoading} className="h-8 px-3 text-xs sm:text-sm sm:h-auto sm:px-4 text-muted-foreground hover:text-foreground">
+              <Button variant="ghost" onClick={handleStartOverClick} disabled={globalIsLoading} className="h-8 px-3 text-xs sm:text-sm sm:max-h-[32px] sm:px-3 text-muted-foreground hover:text-foreground">
                   <RotateCcw className="mr-1.5 h-3 w-3 sm:h-4 sm:w-4" />
                   Recomeçar
               </Button>
@@ -169,7 +167,7 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
               form={onNext ? undefined : formId} 
               onClick={handleNextClick} 
               disabled={isNextDisabled || globalIsLoading}
-              className="h-8 px-3 text-xs sm:text-sm sm:h-auto sm:px-4" 
+              className="h-8 px-3 text-xs sm:text-sm sm:max-h-[32px] sm:px-3" 
             >
               {globalIsLoading && !onNext ? ( 
                 <Loader2 className="mr-1.5 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
@@ -178,7 +176,7 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
               )}
               {nextButtonText}
             </Button>
-          ) : <div className="h-8 w-0 sm:h-auto" /> }
+          ) : <div className="h-8 w-0 sm:h-auto sm:max-h-[32px]" /> }
         </footer>
       )}
     </div>
