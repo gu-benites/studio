@@ -1,3 +1,4 @@
+
 // src/app/design-system/page.tsx
 "use client";
 
@@ -119,14 +120,14 @@ const DesignSystemPage: NextPage = () => {
               <div className="p-6 pt-6 flex justify-center items-center min-h-[150px]">
                 <div className="w-20 h-20 relative">
                   {/* Pulsing circles using theme primary color with opacity */}
-                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-primary/80" style={{ animationDelay: '-0.1s', width: '40%', height: '40%' }}></div>
-                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-primary/70" style={{ animationDelay: '0s',   width: '47.5%', height: '47.5%' }}></div>
-                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-primary/60" style={{ animationDelay: '0.1s',  width: '55%', height: '55%' }}></div>
-                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-primary/50" style={{ animationDelay: '0.2s',  width: '62.5%', height: '62.5%' }}></div>
-                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-primary/40" style={{ animationDelay: '0.3s',  width: '70%', height: '70%' }}></div>
-                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-primary/30" style={{ animationDelay: '0.4s',  width: '77.5%', height: '77.5%' }}></div>
-                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-primary/20" style={{ animationDelay: '0.5s',  width: '85%', height: '85%' }}></div>
-                  <div className="absolute left-1/2 top-1/2 rounded-full animate-pulseRing bg-primary/10" style={{ animationDelay: '0.6s',  width: '92.5%', height: '92.5%' }}></div>
+                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-primary/80" style={{ animationDelay: '-0.1s', width: '40%', height: '40%' }}></div>
+                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-primary/70" style={{ animationDelay: '0s',   width: '47.5%', height: '47.5%' }}></div>
+                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-primary/60" style={{ animationDelay: '0.1s',  width: '55%', height: '55%' }}></div>
+                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-primary/50" style={{ animationDelay: '0.2s',  width: '62.5%', height: '62.5%' }}></div>
+                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-primary/40" style={{ animationDelay: '0.3s',  width: '70%', height: '70%' }}></div>
+                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-primary/30" style={{ animationDelay: '0.4s',  width: '77.5%', height: '77.5%' }}></div>
+                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-primary/20" style={{ animationDelay: '0.5s',  width: '85%', height: '85%' }}></div>
+                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-primary/10" style={{ animationDelay: '0.6s',  width: '92.5%', height: '92.5%' }}></div>
                 </div>
               </div>
               <p className="text-sm p-6 pt-0 text-center text-aroma-text-muted">Represents: Custom loading component or styled &lt;CircularProgress&gt;.</p>
@@ -237,7 +238,7 @@ const DesignSystemPage: NextPage = () => {
                 <div>
                   <Label htmlFor="chat-input-example" className="block text-sm font-medium text-aroma-text mb-2">Chat Input (New Style)</Label>
                   <form onSubmit={handleFormSubmit} className="space-y-2">
-                    <div className="group relative rounded-md border border-input p-px hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end transition-all duration-200 ease-in-out">
+                  <div className="group relative rounded-md border border-input p-px hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start/50 to-aroma-grad-end/50 transition-all duration-200 ease-in-out focus-within:from-aroma-grad-start focus-within:to-aroma-grad-end">
                        <div className="flex items-center w-full bg-card rounded-[calc(theme(borderRadius.md)-1px)] p-1 pr-1.5 shadow-sm">
                         <Search className="h-5 w-5 text-muted-foreground mx-3 pointer-events-none" />
                         <Separator orientation="vertical" className="h-6 mr-2 bg-border" />
@@ -321,3 +322,4 @@ const DesignSystemPage: NextPage = () => {
 };
 
 export default DesignSystemPage;
+
