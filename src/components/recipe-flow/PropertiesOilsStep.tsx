@@ -31,11 +31,12 @@ interface SuggestedOil {
 
 interface SuggestedOilsForProperty {
   property_id: string;
-  property_name: string;
-  property_name_in_english: string;
-  description: string;
+  property_name: string; 
+  property_name_in_english: string; 
+  description: string; 
   suggested_oils: SuggestedOil[];
 }
+
 
 const PropertiesOilsStep: React.FC = () => {
   const router = useRouter();
@@ -143,7 +144,7 @@ const PropertiesOilsStep: React.FC = () => {
                     <ul className="space-y-2">
                       {formData.suggestedOilsByProperty[prop.property_id].suggested_oils.map(oil => (
                         <li key={oil.name_english} className="p-2 border rounded-md bg-background">
-                           <p className="font-medium">{oil.name_local_language} ({oil.name_english}) <Badge variant="secondary">Relevância: {oil.relevancy}/5</Badge></p>
+                           <div className="font-medium">{oil.name_local_language} ({oil.name_english}) <Badge variant="secondary">Relevância: {oil.relevancy}/5</Badge></div>
                            <p className="text-xs text-muted-foreground">{oil.oil_description}</p>
                         </li>
                       ))}
