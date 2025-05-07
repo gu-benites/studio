@@ -27,7 +27,6 @@ const CausesStep: React.FC = () => {
   useEffect(() => {
     if (formData.selectedCauses) {
       setSelectedCausesState(formData.selectedCauses);
-      // If there are pre-selected causes, open their accordions
       const preSelectedCauseNames = formData.selectedCauses.map(c => c.cause_name);
       setOpenAccordionItems(prevOpen => {
         const newOpen = new Set([...prevOpen, ...preSelectedCauseNames]);
@@ -49,13 +48,16 @@ const CausesStep: React.FC = () => {
       newSelectedCauses = selectedCausesState.filter(c => c.cause_name !== causeId);
     } else {
       newSelectedCauses = [...selectedCausesState, cause];
+      // If item is being selected and its accordion is closed, open it
+      if (!openAccordionItems.includes(causeId)) {
+        setOpenAccordionItems(prev => [...prev, causeId]);
+      }
     }
     setSelectedCausesState(newSelectedCauses);
-
-    // If item is being selected and its accordion is closed, open it
-    if (!isCurrentlySelected && !openAccordionItems.includes(causeId)) {
-      setOpenAccordionItems(prev => [...prev, causeId]);
-    }
+  };
+  
+  const handleAccordionToggle = (value: string[]) => {
+    setOpenAccordionItems(value);
   };
 
   const handleSubmitCauses = async (event?: React.FormEvent<HTMLFormElement>) => {
@@ -102,74 +104,70 @@ const CausesStep: React.FC = () => {
       <p className="text-muted-foreground text-sm">
         Selecione as causas que você acredita estarem relacionadas ao seu problema de saúde. Clique no título para ver mais detalhes.
       </p>
-      <Accordion 
-        type="multiple" 
-        value={openAccordionItems} 
-        onValueChange={setOpenAccordionItems} 
-        className="w-full space-y-2"
-      >
-        {formData.potentialCausesResult.map((cause) => {
-          const causeId = cause.cause_name; // Using cause_name as unique ID
-          const isChecked = selectedCausesState.some(c => c.cause_name === causeId);
-          return (
-            <AccordionItem 
-              value={causeId} 
-              key={causeId} 
-              className={cn(
-                "border rounded-lg overflow-hidden shadow-sm transition-all",
-                isChecked ? "border-primary bg-primary/5" : "bg-card",
-                openAccordionItems.includes(causeId) && !isChecked ? "bg-muted/20" : ""
-              )}
-            >
-              <AccordionTrigger 
+      <div className="rounded-lg border overflow-hidden shadow-sm">
+        <Accordion 
+          type="multiple" 
+          value={openAccordionItems} 
+          onValueChange={handleAccordionToggle}
+          className="w-full"
+        >
+          {formData.potentialCausesResult.map((cause, index) => {
+            const causeId = cause.cause_name; 
+            const isChecked = selectedCausesState.some(c => c.cause_name === causeId);
+            return (
+              <AccordionItem 
+                value={causeId} 
+                key={causeId} 
                 className={cn(
-                  "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card transition-colors",
-                  openAccordionItems.includes(causeId) ? "hover:bg-muted/30" : "hover:bg-muted/20",
-                  isChecked && openAccordionItems.includes(causeId) ? "bg-primary/10 hover:bg-primary/15" : "",
-                  isChecked && !openAccordionItems.includes(causeId) ? "hover:bg-primary/10" : ""
+                  "transition-all",
+                  isChecked ? "bg-primary/5" : "bg-card",
+                  openAccordionItems.includes(causeId) && !isChecked ? "bg-muted/5" : "",
+                  // Remove bottom border for the last item if wrapper has border
+                  index === formData.potentialCausesResult!.length - 1 ? "border-b-0" : ""
                 )}
               >
-                <div className="flex items-center space-x-3 flex-1 min-w-0">
-                  <Checkbox
-                    id={`cause-checkbox-${causeId}`}
-                    checked={isChecked}
-                    onCheckedChange={() => handleToggleCauseSelection(cause)}
-                    onClick={(e) => e.stopPropagation()}
-                    className="shrink-0 border-muted-foreground data-[state=checked]:border-primary"
-                    aria-labelledby={`cause-label-${causeId}`}
-                  />
-                  <Label
-                    htmlFor={`cause-checkbox-${causeId}`}
-                    id={`cause-label-${causeId}`}
-                    className="font-medium text-base cursor-pointer flex-1 truncate"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        const checkbox = document.getElementById(`cause-checkbox-${causeId}`) as HTMLButtonElement | null;
-                        if (checkbox) {
-                            checkbox.click(); // Toggles checkbox
-                             // If selecting and accordion is closed, open it.
-                            if (!isChecked && !openAccordionItems.includes(causeId)) {
-                                setOpenAccordionItems(prev => [...prev, causeId]);
-                            }
-                        }
-                    }}
-                  >
-                    {cause.cause_name}
-                  </Label>
-                </div>
-                {/* Chevron is part of AccordionTrigger */}
-              </AccordionTrigger>
-              <AccordionContent className="px-4 pb-4 pt-1 space-y-1">
-                <p className="text-sm text-muted-foreground">{cause.cause_suggestion}</p>
-                <p className="text-xs text-muted-foreground/80">{cause.explanation}</p>
-              </AccordionContent>
-            </AccordionItem>
-          );
-        })}
-      </Accordion>
+                <AccordionTrigger 
+                  className={cn(
+                    "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card transition-colors",
+                    openAccordionItems.includes(causeId) ? "hover:bg-muted/10" : "hover:bg-muted/5",
+                    isChecked && openAccordionItems.includes(causeId) ? "bg-primary/10 hover:bg-primary/15" : "",
+                    isChecked && !openAccordionItems.includes(causeId) ? "hover:bg-primary/10" : ""
+                  )}
+                >
+                  <div className="flex items-center space-x-3 flex-1 min-w-0">
+                    <Checkbox
+                      id={`cause-checkbox-${causeId}`}
+                      checked={isChecked}
+                      onCheckedChange={() => handleToggleCauseSelection(cause)}
+                      onClick={(e) => e.stopPropagation()} // Prevent accordion toggle
+                      className="shrink-0 border-muted-foreground data-[state=checked]:border-primary"
+                      aria-labelledby={`cause-label-${causeId}`}
+                    />
+                    <Label
+                      htmlFor={`cause-checkbox-${causeId}`}
+                      id={`cause-label-${causeId}`}
+                      className="font-medium text-base cursor-pointer flex-1 truncate"
+                      onClick={(e) => {
+                          e.stopPropagation(); // Prevent accordion toggle
+                          handleToggleCauseSelection(cause);
+                      }}
+                    >
+                      {cause.cause_name}
+                    </Label>
+                  </div>
+                  {/* Chevron is part of AccordionTrigger */}
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4 pt-1 space-y-1 bg-background">
+                  <p className="text-sm text-muted-foreground">{cause.cause_suggestion}</p>
+                  <p className="text-xs text-muted-foreground/80">{cause.explanation}</p>
+                </AccordionContent>
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
+      </div>
     </form>
   );
 };
 
 export default CausesStep;
-

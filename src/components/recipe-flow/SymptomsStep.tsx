@@ -51,12 +51,16 @@ const SymptomsStep: React.FC = () => {
       newSelectedSymptoms = selectedSymptomsState.filter(s => s.symptom_name !== symptomId);
     } else {
       newSelectedSymptoms = [...selectedSymptomsState, { symptom_name: symptom.symptom_name }];
+      // If item is being selected and its accordion is closed, open it
+      if (!openAccordionItems.includes(symptomId)) {
+        setOpenAccordionItems(prev => [...prev, symptomId]);
+      }
     }
     setSelectedSymptomsState(newSelectedSymptoms);
+  };
 
-    if (!isCurrentlySelected && !openAccordionItems.includes(symptomId)) {
-      setOpenAccordionItems(prev => [...prev, symptomId]);
-    }
+  const handleAccordionToggle = (value: string[]) => {
+    setOpenAccordionItems(value);
   };
 
   const handleSubmitSymptoms = async (event?: React.FormEvent<HTMLFormElement>) => {
@@ -103,73 +107,68 @@ const SymptomsStep: React.FC = () => {
       <p className="text-muted-foreground text-sm">
         Selecione os sintomas que você está experienciando. Clique no título para ver mais detalhes.
       </p>
-      <Accordion 
-        type="multiple" 
-        value={openAccordionItems} 
-        onValueChange={setOpenAccordionItems} 
-        className="w-full space-y-2"
-      >
-        {formData.potentialSymptomsResult.map((symptom) => {
-          const symptomId = symptom.symptom_name; // Using symptom_name as unique ID
-          const isChecked = selectedSymptomsState.some(s => s.symptom_name === symptomId);
-          return (
-            <AccordionItem 
-              value={symptomId} 
-              key={symptomId} 
-              className={cn(
-                "border rounded-lg overflow-hidden shadow-sm transition-all",
-                isChecked ? "border-primary bg-primary/5" : "bg-card",
-                openAccordionItems.includes(symptomId) && !isChecked ? "bg-muted/20" : ""
-              )}
-            >
-              <AccordionTrigger 
+      <div className="rounded-lg border overflow-hidden shadow-sm">
+        <Accordion 
+          type="multiple" 
+          value={openAccordionItems} 
+          onValueChange={handleAccordionToggle}
+          className="w-full"
+        >
+          {formData.potentialSymptomsResult.map((symptom, index) => {
+            const symptomId = symptom.symptom_name; 
+            const isChecked = selectedSymptomsState.some(s => s.symptom_name === symptomId);
+            return (
+              <AccordionItem 
+                value={symptomId} 
+                key={symptomId} 
                 className={cn(
-                  "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card transition-colors",
-                  openAccordionItems.includes(symptomId) ? "hover:bg-muted/30" : "hover:bg-muted/20",
-                  isChecked && openAccordionItems.includes(symptomId) ? "bg-primary/10 hover:bg-primary/15" : "",
-                  isChecked && !openAccordionItems.includes(symptomId) ? "hover:bg-primary/10" : ""
+                  "transition-all",
+                  isChecked ? "bg-primary/5" : "bg-card",
+                  openAccordionItems.includes(symptomId) && !isChecked ? "bg-muted/5" : "",
+                   index === formData.potentialSymptomsResult!.length - 1 ? "border-b-0" : ""
                 )}
               >
-                <div className="flex items-center space-x-3 flex-1 min-w-0">
-                  <Checkbox
-                    id={`symptom-checkbox-${symptomId}`}
-                    checked={isChecked}
-                    onCheckedChange={() => handleToggleSymptomSelection(symptom)}
-                    onClick={(e) => e.stopPropagation()}
-                    className="shrink-0 border-muted-foreground data-[state=checked]:border-primary"
-                    aria-labelledby={`symptom-label-${symptomId}`}
-                  />
-                  <Label
-                    htmlFor={`symptom-checkbox-${symptomId}`}
-                    id={`symptom-label-${symptomId}`}
-                    className="font-medium text-base cursor-pointer flex-1 truncate"
-                     onClick={(e) => {
-                        e.stopPropagation();
-                        const checkbox = document.getElementById(`symptom-checkbox-${symptomId}`) as HTMLButtonElement | null;
-                        if(checkbox) {
-                            checkbox.click(); // Toggles checkbox
-                            // If selecting and accordion is closed, open it.
-                            if (!isChecked && !openAccordionItems.includes(symptomId)) {
-                                setOpenAccordionItems(prev => [...prev, symptomId]);
-                            }
-                        }
-                    }}
-                  >
-                    {symptom.symptom_name}
-                  </Label>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-4 pb-4 pt-1 space-y-1">
-                <p className="text-sm text-muted-foreground">{symptom.symptom_suggestion}</p>
-                <p className="text-xs text-muted-foreground/80">{symptom.explanation}</p>
-              </AccordionContent>
-            </AccordionItem>
-          );
-        })}
-      </Accordion>
+                <AccordionTrigger 
+                  className={cn(
+                    "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card transition-colors",
+                    openAccordionItems.includes(symptomId) ? "hover:bg-muted/10" : "hover:bg-muted/5",
+                    isChecked && openAccordionItems.includes(symptomId) ? "bg-primary/10 hover:bg-primary/15" : "",
+                    isChecked && !openAccordionItems.includes(symptomId) ? "hover:bg-primary/10" : ""
+                  )}
+                >
+                  <div className="flex items-center space-x-3 flex-1 min-w-0">
+                    <Checkbox
+                      id={`symptom-checkbox-${symptomId}`}
+                      checked={isChecked}
+                      onCheckedChange={() => handleToggleSymptomSelection(symptom)}
+                      onClick={(e) => e.stopPropagation()} // Prevent accordion toggle
+                      className="shrink-0 border-muted-foreground data-[state=checked]:border-primary"
+                      aria-labelledby={`symptom-label-${symptomId}`}
+                    />
+                    <Label
+                      htmlFor={`symptom-checkbox-${symptomId}`}
+                      id={`symptom-label-${symptomId}`}
+                      className="font-medium text-base cursor-pointer flex-1 truncate"
+                      onClick={(e) => {
+                          e.stopPropagation(); // Prevent accordion toggle
+                          handleToggleSymptomSelection(symptom);
+                      }}
+                    >
+                      {symptom.symptom_name}
+                    </Label>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4 pt-1 space-y-1 bg-background">
+                  <p className="text-sm text-muted-foreground">{symptom.symptom_suggestion}</p>
+                  <p className="text-xs text-muted-foreground/80">{symptom.explanation}</p>
+                </AccordionContent>
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
+      </div>
     </form>
   );
 };
 
 export default SymptomsStep;
-
