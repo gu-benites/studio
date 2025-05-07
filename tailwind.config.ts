@@ -73,16 +73,24 @@ export default {
         'aroma-text-muted': 'hsl(var(--aroma-text-muted-hsl))',
         'aroma-grad-start': 'hsl(var(--aroma-grad-start-hsl))',
         'aroma-grad-end': 'hsl(var(--aroma-grad-end-hsl))',
-        'alert-bg': 'hsl(var(--alert-bg-hsl))', // Note: HSL might not fully represent rgba alpha
+        'alert-bg': 'hsl(var(--alert-bg-hsl))',
         'alert-text': 'hsl(var(--alert-text-hsl))',
-        'alert-border': 'hsl(var(--alert-border-hsl))', // Note: HSL might not fully represent rgba alpha
+        'alert-border': 'hsl(var(--alert-border-hsl))',
         'alert-icon': 'hsl(var(--alert-icon-hsl))',
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
+  			sm: 'calc(var(--radius) - 4px)',
+        xl: "1rem",
+        '2xl': "1.5rem", 
+        '3xl': "1.75rem", 
   		},
+      boxShadow: {
+        'button-focus': '0px 6px 18px hsl(var(--aroma-primary-hsl) / 0.3)', 
+        'button-normal': '0 4px 12px hsl(var(--aroma-text-hsl) / 0.1)', 
+        'card': '0 1px 3px 0 hsl(var(--aroma-text-hsl) / 0.1), 0 1px 2px -1px hsl(var(--aroma-text-hsl) / 0.1)',
+     },
   		keyframes: {
   			'accordion-down': {
   				from: {

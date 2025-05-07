@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Search, SendHorizonal, Zap, TriangleAlert, Loader2, Sparkles } from 'lucide-react';
+import { Search, SendHorizonal, Zap, TriangleAlert, Loader2, Sparkles, ArrowRight } from 'lucide-react'; // Added ArrowRight
 import * as React from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 import { generateRecipeSuggestions, type GenerateRecipeSuggestionsOutput } from '@/ai/flows/generate-suggestions';
 import { generateRecipe, type GenerateRecipeOutput, type GenerateRecipeInput } from '@/ai/flows/generate-recipe';
+import { cn } from '@/lib/utils';
 
 const recipeInputSchema = z.object({
   recipeIdea: z.string().min(3, { message: "Please enter at least 3 characters." }),
@@ -68,7 +69,6 @@ export const RecipeGenerator: React.FC = () => {
     try {
       const input: GenerateRecipeInput = {
         recipeIdea: data.recipeIdea,
-        // For simplicity, hardcoding these. In a real app, these would be inputs.
         dietaryRestrictions: "None", 
         availableIngredients: "Basic pantry staples",
       };
@@ -83,20 +83,20 @@ export const RecipeGenerator: React.FC = () => {
   };
   
   const handleSuggestionChipClick = (category: string, label: string) => {
-    setValue("recipeIdea", label); // Set input field value
+    setValue("recipeIdea", label); 
     handleFetchSuggestions(category);
   };
 
   const handleSuggestedRecipeClick = (suggestion: string) => {
     setValue("recipeIdea", suggestion);
-    handleSubmit(handleGenerateRecipe)(); // Trigger form submission with the suggestion
+    handleSubmit(handleGenerateRecipe)(); 
   }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-full p-4 sm:p-8">
       <div className="w-full max-w-2xl text-center">
         <h1 
-            className="text-4xl sm:text-5xl font-bold mb-3 bg-gradient-to-r from-primary via-pink-500 to-orange-500 bg-clip-text text-transparent"
+            className="text-4xl sm:text-5xl font-bold mb-3 bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end bg-clip-text text-transparent"
             style={{WebkitTextFillColor: 'transparent', MozTextFillColor: 'transparent'}}
             >
           Qual receita você quer criar hoje?
@@ -106,29 +106,38 @@ export const RecipeGenerator: React.FC = () => {
         </p>
 
         <form onSubmit={handleSubmit(handleGenerateRecipe)} className="space-y-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              {...register("recipeIdea")}
-              type="text"
-              placeholder="Ex: Bolo de chocolate fofinho, macarrão rápido para o jantar..."
-              className="pl-10 pr-4 py-3 h-14 text-base rounded-xl shadow-sm focus:ring-2 focus:ring-primary"
-              aria-invalid={errors.recipeIdea ? "true" : "false"}
-            />
+          <div className="relative group rounded-xl border border-input p-px hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end transition-all duration-200 ease-in-out">
+            <div className="relative flex items-center bg-card rounded-[calc(theme(borderRadius.xl)-1px)] shadow-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+              <Input
+                {...register("recipeIdea")}
+                type="text"
+                placeholder="Ex: Bolo de chocolate fofinho, macarrão rápido para o jantar..."
+                className="w-full pl-10 pr-4 py-3 h-14 text-base border-none bg-transparent shadow-none outline-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground text-foreground"
+                aria-invalid={errors.recipeIdea ? "true" : "false"}
+              />
+            </div>
+          </div>
             {errors.recipeIdea && (
               <p className="text-sm text-destructive mt-1 text-left">{errors.recipeIdea.message}</p>
             )}
-          </div>
 
           <Button 
             type="submit" 
-            className="w-full sm:w-auto h-12 px-8 text-base font-semibold rounded-xl shadow-md bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 transition-all duration-300 ease-in-out transform hover:scale-105"
+            className={cn(
+              "w-full sm:w-auto h-auto py-3.5 px-8 text-base font-semibold rounded-3xl text-primary-foreground",
+              "bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end",
+              "shadow-button-normal hover:shadow-button-focus hover:-translate-y-0.5",
+              "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aroma-primary",
+              "transition-all duration-300 ease-in-out"
+            )}
             disabled={isGeneratingRecipe || isLoading}
           >
             {isGeneratingRecipe ? (
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
             ) : (
-              <SendHorizonal className="mr-2 h-5 w-5" />
+              // Using ArrowRight to match design system main button
+              <ArrowRight strokeWidth={2.5} className="mr-2 h-4 w-4" /> 
             )}
             Criar Receita
           </Button>
@@ -139,7 +148,9 @@ export const RecipeGenerator: React.FC = () => {
             <Badge
               key={chip.label}
               variant="outline"
-              className="px-4 py-2 text-sm rounded-full cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors shadow-sm border-primary/50 text-primary"
+              className="px-4 py-2 text-sm rounded-full cursor-pointer transition-colors shadow-sm 
+                         bg-primary/10 text-primary border-primary/30 
+                         hover:bg-primary/20 hover:text-primary"
               onClick={() => handleSuggestionChipClick(chip.category, chip.label)}
               role="button"
               tabIndex={0}
@@ -169,7 +180,7 @@ export const RecipeGenerator: React.FC = () => {
         {recipeSuggestions.length > 0 && (
           <Card className="mt-8 text-left shadow-lg">
             <CardHeader>
-              <CardTitle className="text-2xl">Sugestões de Receitas</CardTitle>
+              <CardTitle className="text-2xl text-primary">Sugestões de Receitas</CardTitle>
               <CardDescription>Encontramos algumas ideias para você:</CardDescription>
             </CardHeader>
             <CardContent>
@@ -197,13 +208,13 @@ export const RecipeGenerator: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <h3 className="text-xl font-semibold mb-2">Ingredientes:</h3>
+                <h3 className="text-xl font-semibold mb-2 text-foreground">Ingredientes:</h3>
                 <ul className="list-disc list-inside space-y-1 text-muted-foreground whitespace-pre-line">
                   {generatedRecipe.ingredients.split('\n').map((item, index) => item.trim() && <li key={index}>{item.trim().replace(/^- /, '')}</li>)}
                 </ul>
               </div>
               <div>
-                <h3 className="text-xl font-semibold mb-2">Instruções:</h3>
+                <h3 className="text-xl font-semibold mb-2 text-foreground">Instruções:</h3>
                 <ol className="list-decimal list-inside space-y-2 text-muted-foreground whitespace-pre-line">
                  {generatedRecipe.instructions.split('\n').map((step, index) => step.trim() && <li key={index}>{step.trim().replace(/^\d+\.\s*/, '')}</li>)}
                 </ol>
@@ -211,18 +222,8 @@ export const RecipeGenerator: React.FC = () => {
             </CardContent>
           </Card>
         )}
-
-        {/* Optional Informational Banner */}
-        {/* 
-        <Alert className="mt-12 text-left bg-blue-50 border-blue-200 dark:bg-blue-900/30 dark:border-blue-700">
-          <Zap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-          <AlertTitle className="text-blue-700 dark:text-blue-300">Dica Rápida!</AlertTitle>
-          <AlertDescription className="text-blue-600 dark:text-blue-400">
-            Para melhores resultados, seja específico na sua ideia de receita. Por exemplo, ao invés de "bolo", tente "bolo de cenoura com cobertura de cream cheese".
-          </AlertDescription>
-        </Alert>
-        */}
       </div>
     </div>
   );
 };
+
