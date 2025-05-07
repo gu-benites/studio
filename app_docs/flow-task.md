@@ -24,8 +24,9 @@ Implement a multi-step, guided user flow that collects health-related informatio
         - Note: `RecipeGenerator.tsx` already uses a Zod schema (`recipeInputSchema`) for `recipeIdea` which includes `min(3)`. This validation is suitable.
     - [ ] Subtask 1.2.3: On 'Criar Receita' button click (adapting `RecipeGenerator.tsx`'s `handleGenerateRecipe` or creating a new handler for the flow):
         - [ ] Store the health concern (from `recipeIdea` input) in the main state and `sessionStorage`.
-        - [ ] **Rename `recipeIdea` to `healthConcern` in the main state and `sessionStorage` to reflect its purpose in this flow.**
+        - [x] **Rename `recipeIdea` to `healthConcern` in the main state and `sessionStorage` to reflect its purpose in this flow.**
         - [ ] Transition the user to the "Demographics" step.
+    - [ ] Subtask 1.2.4: Update the health concern input field in `RecipeGenerator.tsx` to match the "Chat Input (New Style)" from the design system page (`src/app/design-system/page.tsx`).
 
 ---
 
@@ -230,3 +231,4 @@ Implement a multi-step, guided user flow that collects health-related informatio
 *   Accessibility (ARIA attributes, keyboard navigation) should be considered throughout UI development.
 
 This task list will be updated as development progresses and more insights are gained.
+
