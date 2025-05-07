@@ -91,7 +91,6 @@ const DemographicsStep: React.FC = () => {
               <SelectContent>
                 <SelectItem value="male">Masculino</SelectItem>
                 <SelectItem value="female">Feminino</SelectItem>
-                <SelectItem value="other">Outro</SelectItem>
               </SelectContent>
             </Select>
           )}

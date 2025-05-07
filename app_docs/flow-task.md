@@ -41,7 +41,7 @@ Implement a multi-step, guided user flow that collects health-related informatio
     - [x] Subtask 2.1.1: Design and implement the UI for the "Demographics" step.
         - Component: `DemographicsStep.tsx` (as part of the `/create-recipe/demographics` route).
         - Elements:
-            - Input for "Gender" (select dropdown: male, female, other).
+            - Input for "Gender" (select dropdown: male, female).
             - Input for "Age Category" (select dropdown: child, teen, adult, senior).
             - Input for "Specific Age" (number input).
             - "Previous" and "Next" buttons (handled by `RecipeStepLayout`).
