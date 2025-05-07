@@ -7,8 +7,8 @@ import { ArrowLeft, ArrowRight, Loader2, RotateCcw } from 'lucide-react';
 import { useRecipeForm } from '@/contexts/RecipeFormContext';
 import { Progress } from '@/components/ui/progress'; 
 import { cn } from '@/lib/utils';
-import { useUIState } from '@/contexts/UIStateContext'; // Import useUIState
-import React from 'react'; // Import React
+import { useUIState } from '@/contexts/UIStateContext';
+import React from 'react';
 
 interface RecipeStepLayoutProps {
   stepTitle: string;
@@ -24,8 +24,8 @@ interface RecipeStepLayoutProps {
 }
 
 const FLOW_STEPS = ['demographics', 'causes', 'symptoms', 'properties'];
-const FOOTER_HEIGHT_CLASS = "h-[80px]"; 
-const FOOTER_PADDING_CLASS = "pb-[80px]"; 
+const FOOTER_HEIGHT_CLASS = "h-[60px]"; 
+const FOOTER_PADDING_CLASS = "pb-[60px]"; 
 
 const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   stepTitle,
@@ -41,14 +41,16 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
 }) => {
   const router = useRouter();
   const { isLoading: globalIsLoading, error, currentStep, resetFormData } = useRecipeForm(); 
-  const { isSidebarPinned, isUserAccountMenuExpanded } = useUIState(); // Get sidebar state
+  const { isSidebarPinned, isUserAccountMenuExpanded } = useUIState();
   const [isDesktopClientView, setIsDesktopClientView] = React.useState(false);
+  const [hasMounted, setHasMounted] = React.useState(false);
 
   React.useEffect(() => {
+    setHasMounted(true);
     const checkDesktop = () => {
-      setIsDesktopClientView(window.innerWidth >= 768); // Tailwind 'md' breakpoint (768px)
+      setIsDesktopClientView(window.innerWidth >= 768); 
     };
-    checkDesktop(); // Initial check
+    checkDesktop();
     window.addEventListener('resize', checkDesktop);
     return () => window.removeEventListener('resize', checkDesktop);
   }, []);
@@ -90,80 +92,79 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   const showStartOverButton = currentStep && FLOW_STEPS.includes(currentStep);
 
   return (
-    <div className={cn("container mx-auto py-8 px-4 sm:px-6 lg:px-8 max-w-3xl", FOOTER_PADDING_CLASS)}>
-      <div className="mb-6">
-        <div className="bg-muted rounded-full h-2.5 w-full overflow-hidden">
-          <div 
-            className="h-full rounded-full bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end transition-all duration-500 ease-out" 
-            style={{ width: `${progressPercentage}%` }}
-            role="progressbar"
-            aria-valuenow={progressPercentage}
-            aria-valuemin={0}
-            aria-valuemax={100}
-          ></div>
-        </div>
-      </div>
-      
-      <h1 className="text-3xl font-bold mb-2 text-center text-primary">{stepTitle}</h1>
-      <p className="text-muted-foreground text-center mb-8">
-        Preencha as informações abaixo para continuar.
-      </p>
-      
-      {error && (
-        <div className="mb-4 p-4 bg-destructive/10 text-destructive border border-destructive/20 rounded-md">
-          <p className="font-semibold">Erro:</p>
-          <p>{error}</p>
-        </div>
-      )}
-
-      <div className="bg-card p-6 sm:p-8 rounded-lg shadow-lg border">
-        {children}
-      </div>
-
-      <footer 
-        className={cn(
-          "fixed bottom-0 z-10 bg-background border-t border-border",
-          FOOTER_HEIGHT_CLASS,
-          "flex items-center justify-between px-4 sm:px-6 lg:px-8",
-          // Default full width for mobile, or when desktop view not yet determined
-          "right-0", 
-          isDesktopClientView 
-            ? (desktopSidebarIsEffectivelyExpanded ? "md:left-[287px]" : "md:left-[48px]") 
-            : "left-0" // Full width on mobile or before desktop check
-        )}
-      >
-        <div className="flex gap-2 items-center">
-          {!hidePreviousButton && currentStep !== FLOW_STEPS[0] && (
-            <Button variant="outline" onClick={handlePrevious} disabled={globalIsLoading}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Anterior
-            </Button>
+    <div className={cn("flex flex-col min-h-0 flex-1")}>
+      <div className={cn("flex-grow overflow-y-auto", FOOTER_PADDING_CLASS)}>
+        <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8 max-w-3xl">
+          <div className="mb-6">
+            <Progress value={progressPercentage} className="h-2.5 w-full [&>div]:bg-gradient-to-r [&>div]:from-aroma-grad-start [&>div]:to-aroma-grad-end" />
+          </div>
+          
+          <h1 className="text-3xl font-bold mb-2 text-center text-primary">{stepTitle}</h1>
+          <p className="text-muted-foreground text-center mb-8">
+            Preencha as informações abaixo para continuar.
+          </p>
+          
+          {error && (
+            <div className="mb-4 p-4 bg-destructive/10 text-destructive border border-destructive/20 rounded-md">
+              <p className="font-semibold">Erro:</p>
+              <p>{error}</p>
+            </div>
           )}
-        </div>
 
-        {showStartOverButton && (
-            <Button variant="ghost" onClick={handleStartOverClick} disabled={globalIsLoading} className="text-muted-foreground hover:text-foreground">
-                <RotateCcw className="mr-2 h-4 w-4" />
-                Recomeçar
-            </Button>
-        )}
-        
-        {!hideNextButton ? (
-          <Button 
-            type="button" 
-            form={onNext ? undefined : formId} 
-            onClick={handleNextClick} 
-            disabled={isNextDisabled || globalIsLoading}
-          >
-            {globalIsLoading && !onNext ? ( 
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <ArrowRight className="mr-2 h-4 w-4" />
+          <div className="bg-card p-6 sm:p-8 rounded-lg shadow-lg border">
+            {children}
+          </div>
+        </div>
+      </div>
+
+      {hasMounted && (
+        <footer 
+          className={cn(
+            "fixed bottom-0 z-10 bg-background border-t border-border",
+            FOOTER_HEIGHT_CLASS,
+            "flex items-center justify-between px-4 sm:px-6",
+            "right-0", 
+            isDesktopClientView 
+              ? (desktopSidebarIsEffectivelyExpanded ? "md:left-[287px]" : "md:left-[48px]") 
+              : "left-0"
+          )}
+        >
+          <div className="flex gap-2 items-center h-full">
+            {!hidePreviousButton && currentStep !== FLOW_STEPS[0] && (
+              <Button variant="outline" onClick={handlePrevious} disabled={globalIsLoading} className="h-full px-4">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Anterior
+              </Button>
             )}
-            {nextButtonText}
-          </Button>
-        ) : <div />} 
-      </footer>
+          </div>
+
+          {showStartOverButton && (
+              <Button variant="ghost" onClick={handleStartOverClick} disabled={globalIsLoading} className="h-full px-4 text-muted-foreground hover:text-foreground">
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Recomeçar
+              </Button>
+          )}
+          
+          {!hideNextButton ? (
+            <div className="h-full">
+              <Button 
+                type="button" 
+                form={onNext ? undefined : formId} 
+                onClick={handleNextClick} 
+                disabled={isNextDisabled || globalIsLoading}
+                className="h-full px-4"
+              >
+                {globalIsLoading && !onNext ? ( 
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <ArrowRight className="mr-2 h-4 w-4" />
+                )}
+                {nextButtonText}
+              </Button>
+            </div>
+          ) : <div />} 
+        </footer>
+      )}
     </div>
   );
 };
