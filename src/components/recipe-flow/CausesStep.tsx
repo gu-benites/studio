@@ -26,14 +26,15 @@ const CausesStep: React.FC = () => {
   useEffect(() => {
     if (formData.selectedCauses) {
       setSelectedCausesState(formData.selectedCauses);
+      // Open accordions for already selected causes when the component mounts or formData.selectedCauses changes
       const preSelectedCauseNames = formData.selectedCauses.map(c => c.cause_name);
       setOpenAccordionItems(prevOpen => {
-        // Open accordions for already selected causes
         const newOpen = new Set([...prevOpen, ...preSelectedCauseNames]);
         return Array.from(newOpen);
       });
     }
   }, [formData.selectedCauses]);
+
 
   useEffect(() => {
     updateFormValidity(selectedCausesState.length > 0);
@@ -46,6 +47,8 @@ const CausesStep: React.FC = () => {
     let newSelectedCauses: PotentialCause[];
     if (isCurrentlySelected) {
       newSelectedCauses = selectedCausesState.filter(c => c.cause_name !== causeId);
+      // If item is being deselected, close its accordion
+      setOpenAccordionItems(prev => prev.filter(item => item !== causeId));
     } else {
       newSelectedCauses = [...selectedCausesState, cause];
       // If item is being selected and its accordion is closed, open it
@@ -122,7 +125,6 @@ const CausesStep: React.FC = () => {
                   "transition-all",
                   isChecked ? "bg-primary/5" : "bg-card",
                   openAccordionItems.includes(causeId) && !isChecked ? "bg-muted/5" : "",
-                  // Remove bottom border for the last item if wrapper has border
                   index === formData.potentialCausesResult!.length - 1 ? "border-b-0" : ""
                 )}
               >

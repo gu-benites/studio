@@ -29,6 +29,7 @@ const SymptomsStep: React.FC = () => {
   useEffect(() => {
     if (formData.selectedSymptoms) {
       setSelectedSymptomsState(formData.selectedSymptoms);
+      // Open accordions for already selected symptoms when the component mounts or formData.selectedSymptoms changes
       const preSelectedSymptomNames = formData.selectedSymptoms.map(s => s.symptom_name);
       setOpenAccordionItems(prevOpen => {
         const newOpen = new Set([...prevOpen, ...preSelectedSymptomNames]);
@@ -48,6 +49,8 @@ const SymptomsStep: React.FC = () => {
     let newSelectedSymptoms: Pick<PotentialSymptom, 'symptom_name'>[];
     if (isCurrentlySelected) {
       newSelectedSymptoms = selectedSymptomsState.filter(s => s.symptom_name !== symptomId);
+      // If item is being deselected, close its accordion
+      setOpenAccordionItems(prev => prev.filter(item => item !== symptomId));
     } else {
       newSelectedSymptoms = [...selectedSymptomsState, { symptom_name: symptom.symptom_name }];
       // If item is being selected and its accordion is closed, open it
