@@ -9,14 +9,17 @@ import { cn } from '@/lib/utils';
 
 export function AppLayoutClient({ children }: { children: ReactNode }) {
   const { 
-    isSidebarOpen: contextSidebarOpen,
+    isSidebarOpen: contextSidebarOpen, // True if sidebar is visually expanded (pinned or user menu open)
+    isSidebarPinned,
+    isUserAccountMenuExpanded,
     activeUserMenuSubItem, 
     setActiveUserMenuSubItem, 
-    isUserAccountMenuExpanded, 
     closeUserAccountMenuSimple 
   } = useUIState();
 
   React.useEffect(() => {
+    // This effect ensures that if the sidebar is programmatically closed (e.g. by screen resize or other logic not directly related to user menu interaction),
+    // the user account menu and its sub-items are also reset.
     if (!contextSidebarOpen) {
       if (activeUserMenuSubItem) {
         setActiveUserMenuSubItem(null);
@@ -38,9 +41,14 @@ export function AppLayoutClient({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  const isDesktopClient = hasMounted && !isClientMobile;
+  // Determine if the sidebar is effectively expanded on desktop for margin calculation
+  const isDesktopSidebarEffectivelyExpanded = isDesktopClient && (isSidebarPinned || isUserAccountMenuExpanded);
+
+
   return (
     // Main flex container: h-full to take parent's height (body min-h-screen).
-    // Added overflow-hidden to ensure this container itself does not scroll.
+    // overflow-hidden to ensure this container itself does not scroll.
     <div className="flex h-full bg-background overflow-hidden"> 
       <AppSidebar /> 
       
@@ -49,9 +57,11 @@ export function AppLayoutClient({ children }: { children: ReactNode }) {
           - flex-col for stacking MobileHeader and main.
           - overflow-y-auto to allow its own content to scroll.
           - min-h-0 is important for flex children with overflow to ensure they don't expand their parent indefinitely.
+          - Dynamic margin-left on desktop to account for the fixed sidebar.
       */}
       <div className={cn(
-        "flex flex-col flex-1 overflow-y-auto min-h-0",
+        "flex flex-col flex-1 overflow-y-auto min-h-0 transition-all duration-300 ease-in-out",
+        isDesktopClient && (isDesktopSidebarEffectivelyExpanded ? "md:ml-[287px]" : "md:ml-[48px]")
       )}> 
         {hasMounted && isClientMobile && <MobileHeader />}
         {/* Main content area itself: flex-1 to fill the scrollable wrapper. */}
