@@ -71,12 +71,7 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
             aria-valuemax={100}
           ></div>
         </div>
-        {currentStepIndex >= 0 && (
-          <div className="flex justify-between text-xs text-muted-foreground mt-2 px-1">
-            <span>Passo {currentStepIndex + 1} de {FLOW_STEPS.length}</span>
-            <span>{Math.round(progressPercentage)}% Completo</span>
-          </div>
-        )}
+        {/* Removed the text display for step count and percentage */}
       </div>
       
       <h1 className="text-3xl font-bold mb-2 text-center text-primary">{stepTitle}</h1>
