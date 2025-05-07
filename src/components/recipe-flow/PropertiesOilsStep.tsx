@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -6,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useRecipeForm } from '@/contexts/RecipeFormContext';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button'; // Import Button
-import { Loader2, FlaskConical, RotateCcw } from 'lucide-react'; // Added RotateCcw for start over
+import { Button } from '@/components/ui/button'; 
+import { Loader2, FlaskConical } from 'lucide-react'; 
 import { getSuggestedOils } from '@/services/aromarx-api-client';
 import type { RecipeFormData } from '@/contexts/RecipeFormContext';
 
@@ -75,7 +74,6 @@ const PropertiesOilsStep: React.FC = () => {
   }, [therapeuticProperties, formData.healthConcern, formData.gender, formData.ageCategory, formData.ageSpecific, formData.selectedCauses, formData.selectedSymptoms, formData.suggestedOilsByProperty, updateFormData, setError, oilsFetchedFor, isFetchingOils]);
 
   useEffect(() => {
-    // Only fetch if not already fetching and properties are available
     if (therapeuticProperties.length > 0 && !isFetchingOils && Object.keys(oilsFetchedFor).length < therapeuticProperties.length) {
         fetchAllSuggestedOils();
     }
@@ -83,13 +81,7 @@ const PropertiesOilsStep: React.FC = () => {
 
 
   const handleSubmitNext = async () => {
-    // Placeholder for future "Generate Recipe" step
     alert("Próxima etapa: Geração da Receita (Em Desenvolvimento)");
-  };
-
-  const handleStartOver = () => {
-    resetFormData();
-    router.push('/');
   };
 
   if (!formData.medicalPropertiesResult) {
@@ -154,18 +146,9 @@ const PropertiesOilsStep: React.FC = () => {
         ))}
       </Accordion>
       
-      {/* This button is now for explicit Next step for the layout if needed */}
       <button onClick={handleSubmitNext} className="hidden" aria-hidden="true" id="properties-oils-submit">
         Internal Submit Trigger for Layout
       </button>
-
-      {/* Start Over Button */}
-      <div className="mt-8 flex justify-center">
-        <Button onClick={handleStartOver} variant="outline">
-          <RotateCcw className="mr-2 h-4 w-4" />
-          Iniciar Nova Consulta
-        </Button>
-      </div>
     </div>
   );
 };

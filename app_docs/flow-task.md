@@ -1,4 +1,3 @@
-
 # Recipe Creation Flow - Task List
 
 This document outlines the tasks required to implement the main feature of the AromaChat application: creating a personalized essential oil recipe based on a user's health concern. This plan is derived from `recipe_creation.md`, `01_api_calls_n_responses.txt`, and assumes a standard multi-step form flow as might be detailed in `aromachat-flowchart.mermaid`.
@@ -42,8 +41,8 @@ Implement a multi-step, guided user flow that collects health-related informatio
         - Component: `DemographicsStep.tsx` (as part of the `/create-recipe/demographics` route).
         - Elements:
             - Input for "Gender" (select dropdown: male, female).
-            - Input for "Age Category" (select dropdown: child, teen, adult, senior).
-            - Input for "Specific Age" (number input).
+            - Input for "Age Category" (select dropdown: baby, child, teen, adult, senior).
+            - Input for "Specific Age" (number input, conditional for months/years based on age category).
             - "Previous" and "Next" buttons (handled by `RecipeStepLayout`).
     - [x] Subtask 2.1.2: Implement form validation for demographic inputs.
         - Implemented using Zod in `DemographicsStep.tsx`.
@@ -61,10 +60,10 @@ Implement a multi-step, guided user flow that collects health-related informatio
             {
               "health_concern": "...", // From Step 1
               "gender": "...",
-              "age_category": "...",
-              "age_specific": "...",
+              "age_category": "...", // API expects 'child' for babies
+              "age_specific": "...", // API expects age in years (0,1,2 for babies)
               "step": "PotentialCauses",
-              "user_language": "PT_BR" // Or make this configurable later
+              "user_language": "PT_BR" 
             }
             ```
         - Implemented in `getPotentialCauses` in `aromarx-api-client.ts`.
@@ -144,7 +143,7 @@ Implement a multi-step, guided user flow that collects health-related informatio
             ```json
             {
               // ...all previous data (health_concern, demographics, selected_causes)
-              "selected_symptoms": [/* array of selected symptom objects */],
+              "selected_symptoms": [/* array of selected symptom objects {symptom_name: string} */],
               "step": "MedicalProperties",
               "user_language": "PT_BR"
             }
@@ -207,7 +206,7 @@ Implement a multi-step, guided user flow that collects health-related informatio
     - [x] Subtask 5.3.3: On "Next" button click:
         - Store selected/confirmed oils in the main state (`RecipeFormContext`) and `sessionStorage`. (No selection yet, so this part is pending actual selection feature)
         - Transition to the "Final Recipe Generation" step (currently a placeholder for a future phase).
-        - Current "Next" button in `PropertiesOilsStep` shows an alert for "Em Desenvolvimento".
+        - Current "Next" button in `PropertiesOilsStep` is hidden by layout. The "Start Over" button is provided by layout.
 
 ---
 
@@ -232,9 +231,11 @@ Implement a multi-step, guided user flow that collects health-related informatio
 - [x] **Task 7.1: Overall Flow Navigation**
     - [x] Subtask 7.1.1: Ensure "Previous" buttons correctly navigate to the prior step and repopulate data from state/`sessionStorage`.
         - Implemented via `RecipeStepLayout` and router.
-    - [ ] Subtask 7.1.2: Implement a progress indicator (e.g., stepper component) to show the user their current position in the flow. (Not yet implemented)
+    - [x] Subtask 7.1.2: Implement a progress indicator (e.g., stepper component) to show the user their current position in the flow. 
+        - Basic progress bar implemented in `RecipeStepLayout`.
     - [x] Subtask 7.1.3: Ensure the UI is responsive across different screen sizes.
         - Basic responsiveness handled by ShadCN components and Tailwind.
+    - [x] Subtask 7.1.4: Implement a 'Start Over' button in the `RecipeStepLayout` visible from Demographics step onwards, which resets the form and navigates to the home page.
 
 - [x] **Task 7.2: Loading & Error States**
     - [x] Subtask 7.2.1: Standardize loading indicators across all API-dependent steps.
@@ -260,3 +261,4 @@ Implement a multi-step, guided user flow that collects health-related informatio
 *   Accessibility (ARIA attributes, keyboard navigation) should be considered throughout UI development.
 
 This task list will be updated as development progresses and more insights are gained.
+

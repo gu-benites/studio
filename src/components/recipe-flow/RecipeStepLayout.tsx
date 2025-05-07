@@ -1,12 +1,11 @@
-
 "use client";
 
 import type { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, RotateCcw } from 'lucide-react'; // Added RotateCcw
 import { useRecipeForm } from '@/contexts/RecipeFormContext';
-import { Progress } from '@/components/ui/progress'; // ShadCN progress component
+import { Progress } from '@/components/ui/progress'; 
 import { cn } from '@/lib/utils';
 
 interface RecipeStepLayoutProps {
@@ -38,18 +37,16 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   hidePreviousButton = false,
 }) => {
   const router = useRouter();
-  const { isLoading: globalIsLoading, error, currentStep } = useRecipeForm(); 
+  const { isLoading: globalIsLoading, error, currentStep, resetFormData } = useRecipeForm(); 
 
   const handleNextClick = async () => {
     if (onNext) {
       await onNext();
     } else {
-      // If onNext is not provided, try to submit the form
       const formElement = document.getElementById(formId) as HTMLFormElement | null;
       if (formElement && typeof formElement.requestSubmit === 'function') {
         formElement.requestSubmit();
       } else if (formElement && typeof formElement.submit === 'function') {
-        // Fallback for older browsers or if requestSubmit is not available
         formElement.submit();
       }
     }
@@ -65,8 +62,15 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
     }
   };
 
+  const handleStartOverClick = () => {
+    resetFormData();
+    router.push('/');
+  };
+
   const currentStepIndex = currentStep ? FLOW_STEPS.indexOf(currentStep) : -1;
   const progressPercentage = currentStepIndex >= 0 ? ((currentStepIndex + 1) / FLOW_STEPS.length) * 100 : 0;
+
+  const showStartOverButton = currentStep && FLOW_STEPS.includes(currentStep);
 
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8 max-w-3xl">
@@ -100,32 +104,39 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
       </div>
 
       <div className="mt-8 flex justify-between items-center">
-        {!hidePreviousButton ? (
-          <Button variant="outline" onClick={handlePrevious} disabled={globalIsLoading}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Anterior
-          </Button>
-        ) : <div />}
+        <div className="flex gap-2 items-center">
+          {showStartOverButton && (
+            <Button variant="outline" onClick={handleStartOverClick} disabled={globalIsLoading}>
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Recomeçar
+            </Button>
+          )}
+          {!hidePreviousButton && currentStep !== FLOW_STEPS[0] && ( // Hide Previous on first step
+            <Button variant="outline" onClick={handlePrevious} disabled={globalIsLoading}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Anterior
+            </Button>
+          )}
+        </div>
         
         {!hideNextButton ? (
           <Button 
-            type="button" // Changed to button to prevent accidental form submission if formId is present but onNext is used.
-            form={onNext ? undefined : formId} // Only associate with form if onNext is NOT provided
-            onClick={handleNextClick} // Always use this handler
+            type="button" 
+            form={onNext ? undefined : formId} 
+            onClick={handleNextClick} 
             disabled={isNextDisabled || globalIsLoading}
           >
-            {globalIsLoading && !onNext ? ( // Show loader only if it's a form submit driven by layout and globalIsLoading
+            {globalIsLoading && !onNext ? ( 
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <ArrowRight className="mr-2 h-4 w-4" />
             )}
             {nextButtonText}
           </Button>
-        ) : <div />}
+        ) : <div />} 
       </div>
     </div>
   );
 };
 
 export default RecipeStepLayout;
-
