@@ -7,6 +7,8 @@ import { ArrowLeft, ArrowRight, Loader2, RotateCcw } from 'lucide-react';
 import { useRecipeForm } from '@/contexts/RecipeFormContext';
 import { Progress } from '@/components/ui/progress'; 
 import { cn } from '@/lib/utils';
+import { useUIState } from '@/contexts/UIStateContext'; // Import useUIState
+import React from 'react'; // Import React
 
 interface RecipeStepLayoutProps {
   stepTitle: string;
@@ -22,8 +24,8 @@ interface RecipeStepLayoutProps {
 }
 
 const FLOW_STEPS = ['demographics', 'causes', 'symptoms', 'properties'];
-const FOOTER_HEIGHT_CLASS = "h-[80px]"; // Approx 80px, adjust as needed
-const FOOTER_PADDING_CLASS = "pb-[80px]"; // Match footer height for content padding
+const FOOTER_HEIGHT_CLASS = "h-[80px]"; 
+const FOOTER_PADDING_CLASS = "pb-[80px]"; 
 
 const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   stepTitle,
@@ -39,6 +41,20 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
 }) => {
   const router = useRouter();
   const { isLoading: globalIsLoading, error, currentStep, resetFormData } = useRecipeForm(); 
+  const { isSidebarPinned, isUserAccountMenuExpanded } = useUIState(); // Get sidebar state
+  const [isDesktopClientView, setIsDesktopClientView] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkDesktop = () => {
+      setIsDesktopClientView(window.innerWidth >= 768); // Tailwind 'md' breakpoint (768px)
+    };
+    checkDesktop(); // Initial check
+    window.addEventListener('resize', checkDesktop);
+    return () => window.removeEventListener('resize', checkDesktop);
+  }, []);
+
+  const desktopSidebarIsEffectivelyExpanded = isDesktopClientView && (isSidebarPinned || isUserAccountMenuExpanded);
+
 
   const handleNextClick = async () => {
     if (onNext) {
@@ -64,8 +80,6 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   };
 
   const handleStartOverClick = () => {
-    // Consider adding a confirmation dialog here if destructive
-    // For now, directly resets as per previous implementation.
     resetFormData();
     router.push('/');
   };
@@ -76,7 +90,6 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   const showStartOverButton = currentStep && FLOW_STEPS.includes(currentStep);
 
   return (
-    // The main container for the step, with padding at the bottom to account for the fixed footer
     <div className={cn("container mx-auto py-8 px-4 sm:px-6 lg:px-8 max-w-3xl", FOOTER_PADDING_CLASS)}>
       <div className="mb-6">
         <div className="bg-muted rounded-full h-2.5 w-full overflow-hidden">
@@ -107,15 +120,17 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
         {children}
       </div>
 
-      {/* Fixed Footer Navigation */}
       <footer 
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-10 bg-background border-t border-border",
+          "fixed bottom-0 z-10 bg-background border-t border-border",
           FOOTER_HEIGHT_CLASS,
-          "flex items-center justify-between px-4 sm:px-6 lg:px-8" // Standard padding
+          "flex items-center justify-between px-4 sm:px-6 lg:px-8",
+          // Default full width for mobile, or when desktop view not yet determined
+          "right-0", 
+          isDesktopClientView 
+            ? (desktopSidebarIsEffectivelyExpanded ? "md:left-[287px]" : "md:left-[48px]") 
+            : "left-0" // Full width on mobile or before desktop check
         )}
-        // The `left` and `right` properties need to adjust based on the sidebar's state
-        // This will be handled by the parent (`AppLayoutClient`) applying margin to the scrollable content area
       >
         <div className="flex gap-2 items-center">
           {!hidePreviousButton && currentStep !== FLOW_STEPS[0] && (
