@@ -1,11 +1,10 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRecipeForm } from '@/contexts/RecipeFormContext';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch'; 
+import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { getMedicalProperties } from '@/services/aromarx-api-client';
 import type { RecipeFormData } from '@/contexts/RecipeFormContext';
@@ -21,7 +20,7 @@ interface PotentialSymptom {
 const SymptomsStep: React.FC = () => {
   const router = useRouter();
   const { formData, updateFormData, setCurrentStep, setIsLoading, setError, updateFormValidity } = useRecipeForm();
-  
+
   const [selectedSymptomsState, setSelectedSymptomsState] = useState<Pick<PotentialSymptom, 'symptom_name'>[]>(
     formData.selectedSymptoms || []
   );
@@ -39,36 +38,38 @@ const SymptomsStep: React.FC = () => {
     updateFormValidity(selectedSymptomsState.length > 0);
   }, [selectedSymptomsState, updateFormValidity]);
 
- const handleToggleSymptom = useCallback((symptom: PotentialSymptom) => {
-    setSelectedSymptomsState(prevSelected => {
-      const isCurrentlySelected = prevSelected.some(s => s.symptom_name === symptom.symptom_name);
-      let newSelectedSymptoms;
-      let newOpenItems = [...openAccordionItems];
+ const handleToggleSymptom = useCallback((toggledSymptom: PotentialSymptom) => {
+    const symptomId = toggledSymptom.symptom_name;
 
-      if (isCurrentlySelected) {
-        newSelectedSymptoms = prevSelected.filter(s => s.symptom_name !== symptom.symptom_name);
-        newOpenItems = newOpenItems.filter(item => item !== symptom.symptom_name);
-      } else {
-        newSelectedSymptoms = [...prevSelected, { symptom_name: symptom.symptom_name }];
-        if (!newOpenItems.includes(symptom.symptom_name)) {
-          newOpenItems.push(symptom.symptom_name);
+    setSelectedSymptomsState(prevSelected => {
+        const isCurrentlySelected = prevSelected.some(s => s.symptom_name === symptomId);
+        if (isCurrentlySelected) { // Turning OFF
+            return prevSelected.filter(s => s.symptom_name !== symptomId);
+        } else { // Turning ON
+            return [...prevSelected, { symptom_name: symptomId }];
         }
-      }
-      setOpenAccordionItems(newOpenItems);
-      return newSelectedSymptoms;
     });
-  }, [openAccordionItems]);
+    
+    setOpenAccordionItems(prevOpen => {
+        const isNowSelected = !selectedSymptomsState.some(s => s.symptom_name === symptomId);
+        if (isNowSelected) { // Turning ON
+            return [...new Set([...prevOpen, symptomId])];
+        } else { // Turning OFF
+            return prevOpen.filter(item => item !== symptomId);
+        }
+    });
+  }, [selectedSymptomsState]); // Depends on selectedSymptomsState
 
 
   const handleSubmitSymptoms = async (event?: React.FormEvent<HTMLFormElement>) => {
     if (event) event.preventDefault();
-    
+
     if (selectedSymptomsState.length === 0) {
         setError("Por favor, selecione ao menos um sintoma.");
         return;
     }
     updateFormData({ selectedSymptoms: selectedSymptomsState });
-    
+
     setIsLoading(true);
     setError(null);
     try {
@@ -78,8 +79,8 @@ const SymptomsStep: React.FC = () => {
       const apiPayload = {
         healthConcern: formData.healthConcern,
         gender: formData.gender,
-        ageCategory: formData.ageCategory, 
-        ageSpecific: formData.ageSpecific, 
+        ageCategory: formData.ageCategory,
+        ageSpecific: formData.ageSpecific,
         selectedCauses: formData.selectedCauses,
         selectedSymptoms: selectedSymptomsState,
       };
@@ -102,22 +103,22 @@ const SymptomsStep: React.FC = () => {
   return (
     <form id="current-step-form" onSubmit={handleSubmitSymptoms} className="space-y-3">
       <div className={cn(
-        "bg-card rounded-lg border shadow-lg overflow-hidden",
+        "bg-card rounded-lg border shadow-sm overflow-hidden",
         "-mx-4 sm:mx-0"
       )}>
-        <Accordion 
-          type="multiple" 
-          value={openAccordionItems} 
+        <Accordion
+          type="multiple"
+          value={openAccordionItems}
           onValueChange={setOpenAccordionItems}
           className="w-full"
         >
           {formData.potentialSymptomsResult.map((symptom, index) => {
-            const symptomId = symptom.symptom_name; 
+            const symptomId = symptom.symptom_name;
             const isChecked = selectedSymptomsState.some(s => s.symptom_name === symptomId);
             return (
-              <AccordionItem 
-                value={symptomId} 
-                key={symptomId} 
+              <AccordionItem
+                value={symptomId}
+                key={symptomId}
                 className={cn(
                   "transition-all",
                   isChecked ? "bg-primary/5" : "bg-card",
@@ -129,6 +130,12 @@ const SymptomsStep: React.FC = () => {
                     "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card transition-colors",
                     isChecked ? "bg-primary/10 hover:bg-primary/15" : "hover:bg-muted/50"
                   )}
+                  onClick={(e) => {
+                    if ((e.target as HTMLElement).closest(`#symptom-switch-${symptomId}`) || (e.target as HTMLElement).closest(`#symptom-label-${symptomId}`)) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                  }}
                 >
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
                     <Switch
@@ -137,11 +144,16 @@ const SymptomsStep: React.FC = () => {
                       onCheckedChange={() => handleToggleSymptom(symptom)}
                       className="shrink-0 h-4 w-8 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input [&>span]:h-3 [&>span]:w-3 [&>span[data-state=checked]]:translate-x-4 [&>span[data-state=unchecked]]:translate-x-0"
                       aria-labelledby={`symptom-label-${symptomId}`}
+                      onClick={(e) => e.stopPropagation()}
                     />
                     <Label
                       htmlFor={`symptom-switch-${symptomId}`}
                       id={`symptom-label-${symptomId}`}
                       className="font-medium text-base cursor-pointer flex-1 truncate"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        document.getElementById(`symptom-switch-${symptomId}`)?.click();
+                      }}
                     >
                       {symptom.symptom_name}
                     </Label>

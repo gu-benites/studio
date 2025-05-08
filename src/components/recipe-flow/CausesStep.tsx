@@ -1,11 +1,10 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRecipeForm } from '@/contexts/RecipeFormContext';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch'; 
+import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { getPotentialSymptoms } from '@/services/aromarx-api-client';
 import type { RecipeFormData } from '@/contexts/RecipeFormContext';
@@ -15,7 +14,7 @@ interface PotentialCause {
   cause_name: string;
   cause_suggestion: string;
   explanation: string;
-  id?: string; 
+  id?: string;
 }
 
 const CausesStep: React.FC = () => {
@@ -37,39 +36,42 @@ const CausesStep: React.FC = () => {
     updateFormValidity(selectedCausesState.length > 0);
   }, [selectedCausesState, updateFormValidity]);
 
-  const handleToggleCause = useCallback((cause: PotentialCause) => {
+  const handleToggleCause = useCallback((toggledCause: PotentialCause) => {
+    const causeId = toggledCause.cause_name;
+    // Update selected causes
     setSelectedCausesState(prevSelected => {
-      const isCurrentlySelected = prevSelected.some(c => c.cause_name === cause.cause_name);
-      let newSelectedCauses;
-      let newOpenItems = [...openAccordionItems];
-
-      if (isCurrentlySelected) {
-        newSelectedCauses = prevSelected.filter(c => c.cause_name !== cause.cause_name);
-        // When deselecting, also close its accordion item
-        newOpenItems = newOpenItems.filter(item => item !== cause.cause_name);
-      } else {
-        newSelectedCauses = [...prevSelected, cause];
-        // When selecting, also open its accordion item if not already open
-        if (!newOpenItems.includes(cause.cause_name)) {
-          newOpenItems.push(cause.cause_name);
+        const isCurrentlySelected = prevSelected.some(c => c.cause_name === causeId);
+        if (isCurrentlySelected) { // Means it's being turned OFF
+            return prevSelected.filter(c => c.cause_name !== causeId);
+        } else { // Means it's being turned ON
+            return [...prevSelected, toggledCause];
         }
-      }
-      setOpenAccordionItems(newOpenItems);
-      return newSelectedCauses;
     });
-  }, [openAccordionItems]);
+
+    // Update open accordion items based on the new selection state
+    setOpenAccordionItems(prevOpen => {
+        const isNowSelected = !selectedCausesState.some(c => c.cause_name === causeId); // Check against previous state to determine new state
+        if (isNowSelected) { // Turning ON
+             // Open accordion: add if not present
+            return [...new Set([...prevOpen, causeId])];
+        } else { // Turning OFF
+            // Close accordion: remove if present
+            return prevOpen.filter(item => item !== causeId);
+        }
+    });
+  }, [selectedCausesState]); // Depends on selectedCausesState to determine if it's turning on or off
 
 
   const handleSubmitCauses = async (event?: React.FormEvent<HTMLFormElement>) => {
-    if (event) event.preventDefault(); 
-    
+    if (event) event.preventDefault();
+
     if (selectedCausesState.length === 0) {
         setError("Por favor, selecione ao menos uma causa.");
         return;
     }
-    
+
     updateFormData({ selectedCauses: selectedCausesState });
-    
+
     setIsLoading(true);
     setError(null);
     try {
@@ -79,8 +81,8 @@ const CausesStep: React.FC = () => {
       const apiPayload = {
         healthConcern: formData.healthConcern,
         gender: formData.gender,
-        ageCategory: formData.ageCategory, 
-        ageSpecific: formData.ageSpecific, 
+        ageCategory: formData.ageCategory,
+        ageSpecific: formData.ageSpecific,
         selectedCauses: selectedCausesState,
       };
       const potentialSymptoms = await getPotentialSymptoms(apiPayload);
@@ -98,55 +100,62 @@ const CausesStep: React.FC = () => {
   if (!formData.potentialCausesResult) {
     return <p className="px-4 sm:px-0">Carregando causas... Se demorar, volte e tente novamente.</p>;
   }
-  
+
   return (
     <form id="current-step-form" onSubmit={handleSubmitCauses} className="space-y-3">
       <div className={cn(
-        "bg-card rounded-lg border shadow-lg overflow-hidden",
-        "-mx-4 sm:mx-0" // Negative margin for mobile to be edge-to-edge within px-4 container, mx-0 for sm+
+        "bg-card rounded-lg border shadow-sm overflow-hidden",
+        "-mx-4 sm:mx-0"
       )}>
-        <Accordion 
-          type="multiple" 
-          value={openAccordionItems} 
-          onValueChange={setOpenAccordionItems} // Allows accordion to be controlled independently by user clicks on trigger
+        <Accordion
+          type="multiple"
+          value={openAccordionItems}
+          onValueChange={setOpenAccordionItems}
           className="w-full"
         >
           {formData.potentialCausesResult.map((cause, index) => {
-            const causeId = cause.cause_name; 
+            const causeId = cause.cause_name;
             const isChecked = selectedCausesState.some(c => c.cause_name === causeId);
             return (
-              <AccordionItem 
-                value={causeId} 
-                key={causeId} 
+              <AccordionItem
+                value={causeId}
+                key={causeId}
                 className={cn(
                   "transition-all",
-                  isChecked ? "bg-primary/5" : "bg-card", // Keep bg-card for non-checked
+                  isChecked ? "bg-primary/5" : "bg-card",
                   index === formData.potentialCausesResult!.length - 1 ? "border-b-0" : ""
                 )}
               >
-                <AccordionTrigger 
+                <AccordionTrigger
                   className={cn(
                     "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card transition-colors",
-                    isChecked ? "bg-primary/10 hover:bg-primary/15" : "hover:bg-muted/50" 
+                    isChecked ? "bg-primary/10 hover:bg-primary/15" : "hover:bg-muted/50"
                   )}
-                  // AccordionTrigger now directly toggles its own open state
-                  // Switch interaction is separate
+                  onClick={(e) => {
+                    // Prevent accordion toggle if click is on switch or label (handled by switch)
+                    if ((e.target as HTMLElement).closest(`#cause-switch-${causeId}`) || (e.target as HTMLElement).closest(`#cause-label-${causeId}`)) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                  }}
                 >
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
                     <Switch
                       id={`cause-switch-${causeId}`}
                       checked={isChecked}
-                      onCheckedChange={() => handleToggleCause(cause)} // Use unified toggle handler
+                      onCheckedChange={() => handleToggleCause(cause)}
                       className="shrink-0 h-6 w-11 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input [&>span]:h-5 [&>span]:w-5 [&>span[data-state=checked]]:translate-x-5 [&>span[data-state=unchecked]]:translate-x-0"
                       aria-labelledby={`cause-label-${causeId}`}
+                      onClick={(e) => e.stopPropagation()} // Prevent click from bubbling to AccordionTrigger
                     />
                     <Label
                       htmlFor={`cause-switch-${causeId}`}
                       id={`cause-label-${causeId}`}
                       className="font-medium text-base cursor-pointer flex-1 truncate"
                       onClick={(e) => {
-                        // Allow label click to toggle switch
-                        // handleToggleCause(cause) is handled by onCheckedChange of Switch
+                        e.stopPropagation(); // Prevent click from bubbling to AccordionTrigger
+                        // Programmatically click the switch to ensure its onCheckedChange fires
+                        document.getElementById(`cause-switch-${causeId}`)?.click();
                       }}
                     >
                       {cause.cause_name}
