@@ -9,7 +9,7 @@ import type {
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+const TOAST_REMOVE_DELAY = 1000000 // Effectively infinite for manual dismissal
 
 type ToasterToast = ToastProps & {
   id: string
@@ -59,6 +59,7 @@ interface State {
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
 const addToRemoveQueue = (toastId: string) => {
+  if (typeof window === 'undefined') return; // Guard against server-side execution
   if (toastTimeouts.has(toastId)) {
     return
   }
@@ -93,15 +94,16 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
-      if (toastId) {
-        addToRemoveQueue(toastId)
-      } else {
-        state.toasts.forEach((toast) => {
-          addToRemoveQueue(toast.id)
-        })
+      if (typeof window !== 'undefined') { // Guard for client-side only
+        if (toastId) {
+          addToRemoveQueue(toastId)
+        } else {
+          state.toasts.forEach((toast) => {
+            addToRemoveQueue(toast.id)
+          })
+        }
       }
+
 
       return {
         ...state,
@@ -175,6 +177,8 @@ function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
 
   React.useEffect(() => {
+    if (typeof window === 'undefined') return; // Guard against server-side execution
+
     listeners.push(setState)
     return () => {
       const index = listeners.indexOf(setState)
@@ -182,7 +186,7 @@ function useToast() {
         listeners.splice(index, 1)
       }
     }
-  }, [state])
+  }, [state]) // state dependency is fine here
 
   return {
     ...state,

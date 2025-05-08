@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { LucideIcon } from 'lucide-react';
@@ -9,7 +8,12 @@ import {
   ChefHat,
   Palette,
   LoaderCircle,
-  FlaskConical, // Added icon for Dilution Calculator
+  FlaskConical, 
+  Settings,
+  HelpCircle,
+  CreditCard,
+  LogOut,
+  Beaker, // Added for Chemical Visualizer
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -31,14 +35,24 @@ interface NavItem {
   href: string;
   icon: LucideIcon;
   label: string;
+  mobileOnly?: boolean; 
+  desktopOnly?: boolean;
 }
 
 const mainNavItems: NavItem[] = [
   { href: '/', icon: Home, label: 'Recipe Generator' },
-  { href: '/dilution-calculator', icon: FlaskConical, label: 'Dilution Calculator' }, // Added new item
+  { href: '/dilution-calculator', icon: FlaskConical, label: 'Dilution Calculator' },
+  { href: '/chemical-visualizer', icon: Beaker, label: 'Chemical Visualizer' }, // New Item
   { href: '/design-system', icon: Palette, label: 'Design System' },
   { href: '/loading-state', icon: LoaderCircle, label: 'Loading State' },
 ];
+
+const userMenuItems: NavItem[] = [
+    { href: '/settings', icon: Settings, label: 'Settings' },
+    { icon: CreditCard, label: 'My Subscription', onClickKey: 'subscription' },
+    { icon: HelpCircle, label: 'Help Center', onClickKey: 'help' },
+    { icon: LogOut, label: 'Sign Out', onClickKey: 'logout'},
+] as any;
 
 
 const AppSidebar: React.FC = () => {
@@ -77,7 +91,7 @@ const AppSidebar: React.FC = () => {
   const currentIsUserAccountMenuExpanded = hasMounted ? isUserAccountMenuExpanded : false;
 
   const handleMouseEnter = () => {
-    if (hasMounted && !isClientMobile && !currentIsSidebarOpen) { 
+    if (hasMounted && !isClientMobile && !currentIsSidebarPinned && !currentIsUserAccountMenuExpanded) { 
       if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
       setIsHovering(true);
     }
@@ -99,15 +113,15 @@ const AppSidebar: React.FC = () => {
   
   const isDesktopExpanded = isDesktopClient && (currentIsSidebarPinned || currentIsUserAccountMenuExpanded);
   const isMobileExpanded = hasMounted && isClientMobile && currentIsSidebarOpen;
-  const isEffectivelyExpanded = isDesktopExpanded || isMobileExpanded;
+  const isEffectivelyExpanded = isDesktopExpanded || isMobileExpanded || (isDesktopClient && !currentIsSidebarPinned && isHovering && !currentIsUserAccountMenuExpanded);
   
-  const desktopSidebarWidth = isDesktopExpanded ? 'md:w-[287px]' : 'md:w-[48px]';
+  const desktopSidebarWidth = isEffectivelyExpanded ? 'md:w-[287px]' : 'md:w-[48px]';
   const mobileSidebarTranslate = currentIsSidebarOpen ? 'translate-x-0' : '-translate-x-full';
 
   const sidebarOuterClasses = cn(
     'fixed inset-y-0 left-0 z-40 h-full', 
     'transition-all duration-300 ease-in-out',
-    isHovering && isDesktopClient && !isEffectivelyExpanded && !currentIsSidebarPinned ? 'shadow-xl' : 'shadow-lg',
+    isHovering && isDesktopClient && !currentIsSidebarPinned && !currentIsUserAccountMenuExpanded ? 'shadow-xl' : 'shadow-lg',
     isDesktopClient ? desktopSidebarWidth : `w-full max-w-[287px] ${mobileSidebarTranslate}`
   );
   
@@ -115,8 +129,11 @@ const AppSidebar: React.FC = () => {
     "flex flex-col h-full", 
     "text-[hsl(var(--app-sidebar-foreground))] border-r border-[hsl(var(--app-sidebar-border))]",
     "transition-colors duration-300 ease-in-out", 
-    isHovering && isDesktopClient && !isEffectivelyExpanded && !currentIsSidebarPinned ? 'bg-[hsl(var(--app-sidebar-hover-background))]' : 'bg-[hsl(var(--app-sidebar-background))]',
-    !isClientMobile && !isEffectivelyExpanded && "overflow-x-hidden" 
+    (isHovering && isDesktopClient && !currentIsSidebarPinned && !currentIsUserAccountMenuExpanded) || (currentIsSidebarPinned || currentIsUserAccountMenuExpanded) ? 
+      'bg-[hsl(var(--app-sidebar-background))]' : 
+      'bg-[hsl(var(--app-sidebar-background))]', // Base background
+    !isClientMobile && !isEffectivelyExpanded && "overflow-x-hidden",
+    (isDesktopClient && isHovering && !currentIsSidebarPinned && !currentIsUserAccountMenuExpanded) ? 'bg-[hsl(var(--app-sidebar-hover-background))]' : '',
   );
 
   const handleAvatarClick = () => {
@@ -142,7 +159,7 @@ const AppSidebar: React.FC = () => {
       <TooltipProvider delayDuration={0}>
         <aside className={collapsedSidebarClasses}>
           <div className={"flex flex-col h-full"}>
-            <div className="flex items-center border-b border-[hsl(var(--app-sidebar-border))] h-[60px] shrink-0 justify-center px-[calc((48px-32px)/2)]">
+            <div className="flex items-center border-b border-[hsl(var(--app-sidebar-border))] h-[var(--footer-nav-height)] shrink-0 justify-center px-[calc((48px-32px)/2)]">
               <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))]">
                 <PanelLeft className="h-5 w-5" />
               </Button>
@@ -167,7 +184,7 @@ const AppSidebar: React.FC = () => {
               ))}
             </nav>
             <div className="mt-auto border-t border-[hsl(var(--app-sidebar-border))] shrink-0">
-              <button className="flex w-full items-center justify-center h-[60px] px-[calc((48px-32px)/2)] hover:bg-[hsl(var(--app-sidebar-hover-background))]">
+              <button className="flex w-full items-center justify-center h-[var(--footer-nav-height)] px-[calc((48px-32px)/2)] hover:bg-[hsl(var(--app-sidebar-hover-background))]">
                 <Image src="https://picsum.photos/seed/useravatar/64/64" alt="User Avatar" width={32} height={32} className="rounded-full shrink-0" data-ai-hint="profile avatar" />
               </button>
             </div>
@@ -195,7 +212,7 @@ const AppSidebar: React.FC = () => {
       >
         <div className={sidebarInnerClasses}>
           <div className={cn(
-            "flex items-center border-b border-[hsl(var(--app-sidebar-border))] h-[60px] shrink-0", 
+            "flex items-center border-b border-[hsl(var(--app-sidebar-border))] h-[var(--footer-nav-height)] shrink-0", 
             isEffectivelyExpanded 
               ? "px-3 gap-3" 
               : "justify-center px-[calc((48px-32px)/2)]" 
@@ -280,7 +297,7 @@ const AppSidebar: React.FC = () => {
             {currentIsUserAccountMenuExpanded && isEffectivelyExpanded && (
               <UserAccountMenu />
             )}
-            <TooltipProvider delayDuration={(isDesktopClient && !isEffectivelyExpanded) ? 0 : 999999}>
+             <TooltipProvider delayDuration={(isDesktopClient && !isEffectivelyExpanded && !isHovering) ? 0 : 999999}> {/* Only enable tooltip if collapsed AND not hovering */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
@@ -288,7 +305,7 @@ const AppSidebar: React.FC = () => {
                     className={cn(
                       "flex w-full items-center gap-3 text-left text-sm font-medium transition-colors",
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 focus-visible:ring-offset-[hsl(var(--app-sidebar-background))]",
-                      isEffectivelyExpanded ? "p-3 h-[60px]" : "justify-center h-[60px] w-full px-[calc((48px-32px)/2)]", 
+                      isEffectivelyExpanded ? "p-3 h-[var(--footer-nav-height)]" : "justify-center h-[var(--footer-nav-height)] w-full px-[calc((48px-32px)/2)]", 
                       currentIsUserAccountMenuExpanded && isEffectivelyExpanded 
                         ? 'bg-[hsl(var(--app-sidebar-active-background))] text-[hsl(var(--app-sidebar-active-foreground))]'
                         : 'hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))]'
@@ -314,7 +331,7 @@ const AppSidebar: React.FC = () => {
                     )}
                   </button>
                 </TooltipTrigger>
-                {(isDesktopClient && !isEffectivelyExpanded) && (
+                {(isDesktopClient && !isEffectivelyExpanded && !isHovering) && ( // Tooltip conditions
                    <TooltipContent side="right" sideOffset={8}>
                      <p>User Name</p>
                      <p className="text-xs text-muted-foreground">user@example.com</p>

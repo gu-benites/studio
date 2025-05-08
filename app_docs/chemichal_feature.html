@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PubChem Compound Visualizer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            width: calc(100% - 40px);
+            max-width: 950px; /* Slightly wider for new layout */
+            margin: 10px 20px;
+        }
+
+        .control-panel { /* General styling for panels */
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+
+        /* Search Panel */
+        #searchPanel {
+            /* Styles for the top panel containing search and status */
+        }
+
+        #fetchControlsContainer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        #searchTypeSelect {
+            padding: 10px; border: 1px solid #ccc; border-radius: 4px;
+            font-size: 16px; background-color: white;
+        }
+        #searchInput {
+            flex-grow: 1; padding: 10px; border: 1px solid #ccc;
+            border-radius: 4px; font-size: 16px;
+        }
+        #fetchControlsContainer button {
+            padding: 10px 15px; background-color: #007bff; color: white;
+            border: none; border-radius: 4px; font-size: 16px;
+            cursor: pointer; transition: background-color 0.3s ease;
+        }
+        #fetchControlsContainer button:hover { background-color: #0056b3; }
+
+        #searchResultsContainer {
+            margin-top: 10px; margin-bottom: 10px; max-height: 150px;
+            overflow-y: auto; border: 1px solid #eee;
+            border-radius: 4px; padding: 0;
+        }
+        #searchResultsContainer ul { list-style-type: none; padding: 0; margin: 0; }
+        #searchResultsContainer li {
+            padding: 8px 12px; cursor: pointer;
+            border-bottom: 1px solid #f0f0f0; font-size: 14px;
+        }
+        #searchResultsContainer li:last-child { border-bottom: none; }
+        #searchResultsContainer li:hover { background-color: #e9f5ff; }
+        #searchResultsContainer li .cid { font-weight: bold; color: #0056b3; }
+        #searchResultsContainer li .title { color: #333; }
+
+        #statusMessage {
+            margin-top: 10px; font-size: 14px; color: #555;
+            width: 100%; text-align: center; min-height: 20px;
+        }
+
+        /* Top Row: Info/2D (Left) and 3D Controls (Right) */
+        #topRowLayoutContainer {
+            display: flex;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            gap: 20px; /* Space between left and right columns */
+            margin-bottom: 15px;
+        }
+
+        #topLeftColumn { /* Contains compound details and 2D image */
+            flex: 1; /* Adjust flex basis as needed, e.g., 60% */
+            min-width: 300px;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column; /* Stack details and image */
+        }
+
+        #compoundDetailsHeader { /* For Name and Formula */
+            margin-bottom: 15px; /* Space before 2D image */
+        }
+        #compoundName {
+            font-size: 22px; font-weight: bold;
+            margin-bottom: 8px; color: #333;
+        }
+        #molecularFormula {
+            font-size: 18px; color: #555;
+            margin-bottom: 10px;
+        }
+        #structureImageContainer { /* For 2D image */
+            text-align: center; /* Center image */
+            flex-grow: 1; /* Allow image container to grow if space */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #structureImage {
+            max-width: 100%;
+            max-height: 250px; /* Adjusted max height */
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            object-fit: contain;
+        }
+        #noImageMessage { color: #777; font-style: italic; margin-top:10px;}
+
+        #topRightColumn { /* Contains 3D Visual Controls */
+            flex: 1; /* Adjust flex basis, e.g., 40% */
+            min-width: 280px; /* Min width for controls */
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        #visualControlsContainer { /* Controls for 3D view */
+            display: grid;
+            grid-template-columns: 1fr; /* Single column for controls in this new spot */
+            gap: 15px;
+            align-items: center;
+        }
+        #visualControlsContainer div { display: flex; flex-direction: column; }
+        #visualControlsContainer label, #visualControlsContainer .checkbox-label {
+            margin-bottom: 5px; font-size: 14px; color: #555;
+        }
+        #visualControlsContainer select,
+        #visualControlsContainer input[type="range"],
+        #visualControlsContainer input[type="checkbox"] {
+            padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;
+        }
+        #visualControlsContainer input[type="range"] { width: 100%; }
+        #visualControlsContainer .checkbox-container { flex-direction: row; align-items: center; }
+        #visualControlsContainer .checkbox-container input[type="checkbox"] { margin-right: 8px; }
+
+
+        /* Bottom Row: 3D View */
+        #bottomRowLayoutContainer { /* Panel for 3D view canvas */
+            /* This is a control-panel itself */
+        }
+        #viewerContainer { /* For 3D view canvas */
+            width: 100%;
+            height: 65vh; /* Increased height for dedicated row */
+            min-height: 450px;
+            background-color: #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .loader { /* Loader for 3D view */
+            border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%;
+            width: 40px; height: 40px; animation: spin 1s linear infinite;
+            position: absolute; top: 50%; left: 50%;
+            margin-left: -20px; margin-top: -20px; display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .slider-value { font-size: 12px; text-align: right; color: #777; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <div class="main-container">
+        <div id="searchPanel" class="control-panel">
+            <div id="fetchControlsContainer">
+                <select id="searchTypeSelect">
+                    <option value="cid" selected>Search by CID</option>
+                    <option value="name">Search by Name</option>
+                </select>
+                <input type="text" id="searchInput" placeholder="Enter PubChem CID (e.g., 22311)">
+                <button id="visualizeButton">Visualize</button>
+            </div>
+            <div id="searchResultsContainer" style="display: none;">
+                <ul id="searchResultsList"></ul>
+            </div>
+            <div id="statusMessage">Default: Limonene (22311).</div>
+        </div>
+
+        <div id="topRowLayoutContainer">
+            <div id="topLeftColumn">
+                <div id="compoundDetailsHeader">
+                    <div id="compoundName">Limonene</div>
+                    <div id="molecularFormula">C<sub>10</sub>H<sub>16</sub></div>
+                </div>
+                <div id="structureImageContainer">
+                    <img id="structureImage" src="" alt="2D Chemical Structure" style="display:none;">
+                    <p id="noImageMessage" style="display:none;">2D structure image not available or CID not loaded.</p>
+                </div>
+            </div>
+            <div id="topRightColumn">
+                <div id="visualControlsContainer">
+                    <div>
+                        <label for="representationSelect">Representation:</label>
+                        <select id="representationSelect">
+                            <option value="ballAndStick" selected>Ball and Stick</option>
+                            <option value="spaceFilling">Space Filling</option>
+                            <option value="wireframe">Wireframe</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="atomSizeSlider">Atom Size Factor:</label>
+                        <input type="range" id="atomSizeSlider" min="0.2" max="2.5" step="0.05" value="1.0">
+                        <span id="atomSizeValue" class="slider-value">1.0</span>
+                    </div>
+                    <div>
+                        <label for="bondThicknessSlider">Bond Thickness:</label>
+                        <input type="range" id="bondThicknessSlider" min="0.02" max="0.5" step="0.01" value="0.1">
+                        <span id="bondThicknessValue" class="slider-value">0.1</span>
+                    </div>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="showHydrogensCheckbox" checked>
+                        <label for="showHydrogensCheckbox" class="checkbox-label">Show Hydrogens</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="bottomRowLayoutContainer" class="control-panel">
+            <div id="viewerContainer">
+                <div class="loader" id="loader"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Global Variables ---
+        let scene, camera, renderer, controls;
+        let moleculeGroup;
+        let parsedMoleculeData = null;
+
+        // --- Visual Style State ---
+        let currentRepresentation = 'ballAndStick';
+        let atomScaleFactor = 1.0;
+        let currentBondRadius = 0.1;
+        let showHydrogens = true;
+
+        // --- Configuration ---
+        const baseAtomColors = {
+            'H':  0xFFFFFF, 'C':  0x202020, 'O':  0xFF0000, 'N':  0x0000FF,
+            'S':  0xFFFF00, 'P':  0xFFA500, 'F':  0x00FF00, 'CL': 0x00FF00,
+            'BR': 0xA52A2A, 'I':  0x800080, 'DEFAULT': 0x808080
+        };
+        const baseAtomRadii = {
+            'H':  0.30, 'C':  0.70, 'O':  0.65, 'N':  0.70,
+            'S':  1.00, 'P':  1.10, 'F':  0.60, 'CL': 1.00,
+            'BR': 1.15, 'I':  1.33, 'DEFAULT': 0.75
+        };
+        const vdwAtomRadii = {
+            'H': 1.20, 'C': 1.70, 'O': 1.52, 'N': 1.55,
+            'S': 1.80, 'P': 1.80, 'F': 1.47, 'CL': 1.75,
+            'BR': 1.85, 'I': 1.98, 'DEFAULT': 1.60
+        };
+        const sphereSegments = 16;
+        const cylinderSegments = 8;
+
+        // --- DOM Elements ---
+        let searchTypeSelectElement, searchInputElement, visualizeButtonElement, 
+            compoundNameElement, statusMessageElement, molecularFormulaElement,
+            searchResultsContainerElement, searchResultsListElement;
+        let representationSelectElement, atomSizeSliderElement, atomSizeValueElement;
+        let bondThicknessSliderElement, bondThicknessValueElement, showHydrogensCheckboxElement;
+        let viewerContainerElement, loaderElement, structureImageElement, noImageMessageElement;
+        let threeDViewInitialized = false; // Renamed for clarity
+
+        // --- Initialization ---
+        function init() {
+            // Cache general DOM elements
+            searchTypeSelectElement = document.getElementById('searchTypeSelect');
+            searchInputElement = document.getElementById('searchInput');
+            visualizeButtonElement = document.getElementById('visualizeButton');
+            compoundNameElement = document.getElementById('compoundName');
+            molecularFormulaElement = document.getElementById('molecularFormula');
+            statusMessageElement = document.getElementById('statusMessage');
+            structureImageElement = document.getElementById('structureImage');
+            noImageMessageElement = document.getElementById('noImageMessage');
+            loaderElement = document.getElementById('loader');
+            searchResultsContainerElement = document.getElementById('searchResultsContainer');
+            searchResultsListElement = document.getElementById('searchResultsList');
+
+            // Cache 3D visual controls (now in #topRightColumn > #visualControlsContainer)
+            representationSelectElement = document.getElementById('representationSelect');
+            atomSizeSliderElement = document.getElementById('atomSizeSlider');
+            atomSizeValueElement = document.getElementById('atomSizeValue');
+            bondThicknessSliderElement = document.getElementById('bondThicknessSlider');
+            bondThicknessValueElement = document.getElementById('bondThicknessValue');
+            showHydrogensCheckboxElement = document.getElementById('showHydrogensCheckbox');
+            
+            // Set initial values for visual controls
+            representationSelectElement.value = currentRepresentation;
+            atomSizeSliderElement.value = atomScaleFactor;
+            atomSizeValueElement.textContent = atomScaleFactor.toFixed(2);
+            bondThicknessSliderElement.value = currentBondRadius;
+            bondThicknessValueElement.textContent = currentBondRadius.toFixed(2);
+            showHydrogensCheckboxElement.checked = showHydrogens;
+
+            // Event Listeners for global controls
+            searchTypeSelectElement.addEventListener('change', updateSearchPlaceholder);
+            visualizeButtonElement.addEventListener('click', handleVisualizeClick);
+            searchInputElement.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter') handleVisualizeClick();
+            });
+
+            // Event Listeners for 3D visual controls
+            representationSelectElement.addEventListener('change', (e) => { currentRepresentation = e.target.value; refreshMoleculeDisplay(); });
+            atomSizeSliderElement.addEventListener('input', (e) => { atomScaleFactor = parseFloat(e.target.value); atomSizeValueElement.textContent = atomScaleFactor.toFixed(2); refreshMoleculeDisplay(); });
+            bondThicknessSliderElement.addEventListener('input', (e) => { currentBondRadius = parseFloat(e.target.value); bondThicknessValueElement.textContent = currentBondRadius.toFixed(2); refreshMoleculeDisplay(); });
+            showHydrogensCheckboxElement.addEventListener('change', (e) => { showHydrogens = e.target.checked; refreshMoleculeDisplay(); });
+            
+            window.addEventListener('resize', onWindowResize);
+            
+            updateSearchPlaceholder(); 
+            init3DView(); 
+            loadCompoundByCID('22311'); 
+        }
+
+        function updateSearchPlaceholder() {
+            searchResultsContainerElement.style.display = 'none'; 
+            searchResultsListElement.innerHTML = '';
+            if (searchTypeSelectElement.value === 'cid') {
+                searchInputElement.placeholder = "Enter PubChem CID (e.g., 22311)";
+            } else { 
+                searchInputElement.placeholder = "Enter Compound Name (e.g., Aspirin)";
+            }
+        }
+
+        function init3DView() { 
+            if (threeDViewInitialized) return;
+            viewerContainerElement = document.getElementById('viewerContainer');
+            if (!viewerContainerElement) { console.error("3D Viewer container not found!"); return; }
+            
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xe0e0e0);
+            camera = new THREE.PerspectiveCamera(75, viewerContainerElement.clientWidth / viewerContainerElement.clientHeight, 0.1, 1000);
+            camera.position.z = 15;
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(viewerContainerElement.clientWidth, viewerContainerElement.clientHeight);
+            viewerContainerElement.appendChild(renderer.domElement);
+            
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+            const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.6);
+            directionalLight1.position.set(5, 10, 7.5);
+            scene.add(directionalLight1);
+            const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
+            directionalLight2.position.set(-5, -5, -7.5);
+            scene.add(directionalLight2);
+            
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            
+            moleculeGroup = new THREE.Group();
+            scene.add(moleculeGroup);
+            
+            threeDViewInitialized = true; 
+            animate(); 
+            onWindowResize(); 
+            
+            if (parsedMoleculeData) { 
+                displayMolecule(parsedMoleculeData);
+            }
+        }
+
+        function onWindowResize() { 
+            if (!threeDViewInitialized || !renderer || !camera || !viewerContainerElement) return;
+            camera.aspect = viewerContainerElement.clientWidth / viewerContainerElement.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(viewerContainerElement.clientWidth, viewerContainerElement.clientHeight);
+        }
+
+        async function handleVisualizeClick() {
+            const searchTerm = searchInputElement.value.trim();
+            searchResultsContainerElement.style.display = 'none'; 
+            searchResultsListElement.innerHTML = '';
+
+            if (!searchTerm) {
+                updateStatus('Please enter a search term.', 'error');
+                return;
+            }
+            const searchType = searchTypeSelectElement.value;
+            if (searchType === 'cid') {
+                if (!/^\d+$/.test(searchTerm)) {
+                    updateStatus('Invalid CID. Please enter numbers only.', 'error');
+                    return;
+                }
+                await loadCompoundByCID(searchTerm);
+            } else { 
+                await loadCompoundByName(searchTerm);
+            }
+        }
+
+        async function loadCompoundByName(compoundNameTerm) {
+            showLoader(true); 
+            updateStatus(`Searching for compound: "${compoundNameTerm}"...`, 'loading');
+            compoundNameElement.textContent = '';
+            molecularFormulaElement.textContent = 'Searching...';
+            structureImageElement.style.display = 'none';
+            noImageMessageElement.style.display = 'block';
+            noImageMessageElement.textContent = `Searching for "${compoundNameTerm}"...`;
+            if (threeDViewInitialized) clearMolecule(); 
+            parsedMoleculeData = null;
+
+            try {
+                const nameSearchUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(compoundNameTerm)}/cids/JSON`;
+                const cidsResponse = await fetch(nameSearchUrl);
+
+                if (!cidsResponse.ok) {
+                    if (cidsResponse.status === 404) throw new Error(`Compound name "${compoundNameTerm}" not found.`);
+                    throw new Error(`Error fetching CIDs for name. Status: ${cidsResponse.status}`);
+                }
+                const cidsData = await cidsResponse.json();
+                const cids = cidsData.IdentifierList?.CID;
+
+                if (!cids || cids.length === 0) throw new Error(`No CIDs found for "${compoundNameTerm}".`);
+
+                if (cids.length === 1) {
+                    updateStatus(`One match found (CID: ${cids[0]}). Loading details...`, 'info');
+                    await loadCompoundByCID(cids[0].toString());
+                } else {
+                    updateStatus(`Multiple matches for "${compoundNameTerm}". Fetching details...`, 'loading');
+                    const titlesUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cids.join(',')}/property/Title/JSON`;
+                    const titlesResponse = await fetch(titlesUrl);
+                    let titlesMap = {};
+                    if (titlesResponse.ok) {
+                        const titlesData = await titlesResponse.json();
+                        titlesData.PropertyTable?.Properties?.forEach(prop => {
+                            titlesMap[prop.CID] = prop.Title;
+                        });
+                    } else console.warn("Could not fetch titles for multiple CIDs.");
+
+                    const searchResults = cids.map(cid => ({
+                        cid: cid.toString(),
+                        title: titlesMap[cid] || `Compound CID: ${cid}`
+                    }));
+                    
+                    displaySearchResults(searchResults);
+                    updateStatus(`Please select from list. (${searchResults.length} matches)`, 'info');
+                }
+            } catch (error) {
+                console.error('Error searching by name:', error);
+                updateStatus(`Name Search Error: ${error.message}`, 'error');
+                compoundNameElement.textContent = 'Error';
+                molecularFormulaElement.textContent = 'N/A';
+                noImageMessageElement.textContent = 'Failed to find compound by name.';
+            } finally {
+                 showLoader(false); 
+            }
+        }
+
+        function displaySearchResults(results) {
+            searchResultsListElement.innerHTML = ''; 
+            if (!results || results.length === 0) {
+                searchResultsContainerElement.style.display = 'none';
+                return;
+            }
+            results.forEach(result => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span class="cid">CID: ${result.cid}</span> - <span class="title">${result.title}</span>`;
+                li.dataset.cid = result.cid; 
+                li.addEventListener('click', async (event) => {
+                    const selectedCid = event.currentTarget.dataset.cid;
+                    searchResultsContainerElement.style.display = 'none'; 
+                    searchResultsListElement.innerHTML = '';
+                    updateStatus(`Loading selected compound CID: ${selectedCid}...`, 'info');
+                    await loadCompoundByCID(selectedCid);
+                });
+                searchResultsListElement.appendChild(li);
+            });
+            searchResultsContainerElement.style.display = 'block';
+        }
+
+        function refreshMoleculeDisplay() { 
+            if (parsedMoleculeData && threeDViewInitialized) {
+                displayMolecule(parsedMoleculeData);
+                let statusParts = [`${compoundNameElement.textContent || 'Molecule'} 3D view updated.`];
+                statusParts.push(`Style: ${representationSelectElement.options[representationSelectElement.selectedIndex].text}.`);
+                if(currentRepresentation !== 'wireframe') statusParts.push(`Atom size: ${atomScaleFactor.toFixed(2)}x.`);
+                if(currentRepresentation !== 'spaceFilling') statusParts.push(`Bond thickness: ${currentBondRadius.toFixed(2)}.`);
+                statusParts.push(showHydrogens ? "Hydrogens visible." : "Hydrogens hidden.");
+                updateStatus(statusParts.join(' '), 'info');
+            }
+        }
+
+        async function loadCompoundByCID(cid) {
+            showLoader(true);
+            if (!statusMessageElement.textContent.includes(`CID: ${cid}`)) {
+                 updateStatus(`Fetching data for CID: ${cid}...`, 'loading');
+            }
+            if (!compoundNameElement.textContent || compoundNameElement.textContent === 'Error' || !statusMessageElement.textContent.includes('Loading selected compound')) {
+                compoundNameElement.textContent = '';
+                molecularFormulaElement.textContent = 'Loading...';
+                structureImageElement.style.display = 'none';
+                noImageMessageElement.style.display = 'block';
+                noImageMessageElement.textContent = 'Loading 2D structure...';
+            }
+            if (threeDViewInitialized) clearMolecule();
+            parsedMoleculeData = null;
+
+            try {
+                const namePromise = fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/property/Title/JSON`);
+                const formulaPromise = fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/property/MolecularFormula/JSON`);
+                const imageSrc = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/PNG`;
+
+                const [nameResponse, formulaResponse] = await Promise.all([namePromise, formulaPromise]);
+
+                let fetchedCompoundName = `Compound (CID: ${cid})`;
+                if (nameResponse.ok) {
+                    const nameData = await nameResponse.json();
+                    if (nameData.PropertyTable?.Properties?.[0]?.Title) {
+                        fetchedCompoundName = nameData.PropertyTable.Properties[0].Title;
+                    }
+                } else { console.warn(`Could not fetch compound name for CID ${cid}`); }
+                compoundNameElement.textContent = fetchedCompoundName;
+
+                if (formulaResponse.ok) {
+                    const formulaData = await formulaResponse.json();
+                    if (formulaData.PropertyTable?.Properties?.[0]?.MolecularFormula) {
+                        molecularFormulaElement.innerHTML = formatMolecularFormula(formulaData.PropertyTable.Properties[0].MolecularFormula);
+                    } else { molecularFormulaElement.textContent = 'N/A'; }
+                } else {
+                    console.warn(`Could not fetch molecular formula for CID ${cid}`);
+                    molecularFormulaElement.textContent = 'Error loading formula.';
+                }
+
+                structureImageElement.src = imageSrc;
+                structureImageElement.onload = () => {
+                    structureImageElement.style.display = 'block';
+                    noImageMessageElement.style.display = 'none';
+                };
+                structureImageElement.onerror = () => {
+                    structureImageElement.style.display = 'none';
+                    noImageMessageElement.style.display = 'block';
+                    noImageMessageElement.textContent = '2D structure image not available or failed to load.';
+                };
+                
+                const sdfUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/SDF?record_type=3d`;
+                const sdfResponse = await fetch(sdfUrl);
+
+                if (!sdfResponse.ok) {
+                    const errorText = await sdfResponse.text();
+                    if (sdfResponse.status === 404 || errorText.includes("PUGREST.NotFound")) {
+                         throw new Error(`CID ${cid}: 3D structure not found. 2D info may still be available.`);
+                    } else if (sdfResponse.status === 503 && errorText.includes("PUGREST.Timeout")) {
+                         throw new Error(`PubChem 3D request timed out for CID ${cid}. 2D info may still be available.`);
+                    } else {
+                        throw new Error(`Failed to fetch 3D SDF (CID ${cid}). Status: ${sdfResponse.status}.`);
+                    }
+                }
+                
+                const sdfData = await sdfResponse.text();
+                if (!sdfData || sdfData.trim() === "" || sdfData.includes("PUGREST.NotFound")) {
+                    throw new Error(`No 3D SDF data returned for CID ${cid}. 2D info may still be available.`);
+                }
+
+                parsedMoleculeData = parseSDF(sdfData);
+                if (!parsedMoleculeData || parsedMoleculeData.atoms.length === 0) {
+                    throw new Error('Failed to parse 3D SDF or no atoms found.');
+                }
+
+                updateStatus(`Successfully loaded: ${fetchedCompoundName} (CID: ${cid}).`, 'success');
+                if (threeDViewInitialized) { 
+                    displayMolecule(parsedMoleculeData);
+                }
+
+            } catch (error) {
+                console.error('Error loading compound by CID:', error);
+                updateStatus(`Load Error (CID: ${cid}): ${error.message}`, 'error');
+                if (threeDViewInitialized) clearMolecule();
+                parsedMoleculeData = null;
+            } finally {
+                showLoader(false);
+            }
+        }
+        
+        function formatMolecularFormula(formula) { 
+            return formula.replace(/([A-Za-z])([0-9]+)/g, '$1<sub>$2</sub>');
+        }
+
+        function parseSDF(sdfData) { 
+            const lines = sdfData.split('\n'); const atoms = []; const bonds = [];
+            if (lines.length < 4) { console.error("SDF data too short."); return { atoms, bonds }; }
+            const countsLine = lines[3].trim(); const parts = countsLine.split(/\s+/);
+            let numAtoms, numBonds;
+            if (parts.length >= 2) { numAtoms = parseInt(parts[0]); numBonds = parseInt(parts[1]); }
+            else { console.error("Could not parse numAtoms/numBonds from SDF:", countsLine); return { atoms, bonds }; }
+            if (isNaN(numAtoms) || isNaN(numBonds)) { console.error("Invalid atom/bond count:", countsLine); return { atoms, bonds }; }
+            for (let i = 0; i < numAtoms; i++) {
+                const lineIndex = 4 + i; if (lineIndex >= lines.length) break;
+                const line = lines[lineIndex];
+                const x = parseFloat(line.substring(0, 10)); const y = parseFloat(line.substring(10, 20)); const z = parseFloat(line.substring(20, 30));
+                let element = line.substring(31, 34).trim().toUpperCase();
+                if (element === "CL") element = "Cl"; if (element === "BR") element = "Br";
+                if (!isNaN(x) && !isNaN(y) && !isNaN(z) && element) { atoms.push({ element, x, y, z, id: i }); }
+                else { console.warn(`Skipping malformed atom line ${lineIndex + 1}: ${line}`); }
+            }
+            const bondStartIndex = 4 + numAtoms;
+            for (let i = 0; i < numBonds; i++) {
+                const lineIndex = bondStartIndex + i; if (lineIndex >= lines.length) break;
+                const line = lines[lineIndex];
+                const atom1Idx = parseInt(line.substring(0, 3)) - 1; const atom2Idx = parseInt(line.substring(3, 6)) - 1;
+                const bondType = parseInt(line.substring(6, 9));
+                if (!isNaN(atom1Idx) && !isNaN(atom2Idx) && atom1Idx < atoms.length && atom2Idx < atoms.length) {
+                    bonds.push({ atom1_idx: atom1Idx, atom2_idx: atom2Idx, type: bondType });
+                } else { console.warn(`Skipping malformed/invalid bond line ${lineIndex + 1}: ${line}`); }
+            }
+            return { atoms, bonds };
+        }
+
+        function clearMolecule() { 
+            if (!moleculeGroup) return;
+            while (moleculeGroup.children.length > 0) {
+                const object = moleculeGroup.children[0];
+                if(object.geometry) object.geometry.dispose();
+                if(object.material) {
+                    if (Array.isArray(object.material)) { object.material.forEach(material => material.dispose()); } 
+                    else { object.material.dispose(); }
+                }
+                moleculeGroup.remove(object);
+            }
+        }
+
+        function displayMolecule(molecule) { 
+            if (!threeDViewInitialized) { console.warn("Attempted to display molecule before 3D view is ready."); return; }
+            clearMolecule(); const { atoms, bonds } = molecule; if (atoms.length === 0) return;
+            const offset = new THREE.Vector3(); atoms.forEach(atom => { offset.add(new THREE.Vector3(atom.x, atom.y, atom.z)); });
+            offset.divideScalar(atoms.length); const hiddenAtomIndices = new Set();
+            if (!showHydrogens) { atoms.forEach((atom, index) => { if (atom.element === 'H') hiddenAtomIndices.add(index); }); }
+            atoms.forEach((atom, index) => {
+                if (hiddenAtomIndices.has(index)) return;
+                const effectiveAtomRadii = currentRepresentation === 'spaceFilling' ? vdwAtomRadii : baseAtomRadii;
+                const radius = (effectiveAtomRadii[atom.element.toUpperCase()] || effectiveAtomRadii['DEFAULT']) * atomScaleFactor;
+                const color = baseAtomColors[atom.element.toUpperCase()] || baseAtomColors['DEFAULT'];
+                let sphere;
+                if (currentRepresentation === 'wireframe') {
+                    const sphereGeometry = new THREE.SphereGeometry(Math.min(0.1, radius * 0.3), 8, 8);
+                    const sphereMaterial = new THREE.MeshPhongMaterial({ color: color, emissive: color, emissiveIntensity: 0.2 });
+                    sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+                } else {
+                    const sphereGeometry = new THREE.SphereGeometry(radius, sphereSegments, sphereSegments);
+                    const sphereMaterial = new THREE.MeshPhongMaterial({ color: color, shininess: 60 });
+                    sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+                }
+                sphere.position.set(atom.x - offset.x, atom.y - offset.y, atom.z - offset.z);
+                moleculeGroup.add(sphere);
+            });
+            if (currentRepresentation !== 'spaceFilling') {
+                bonds.forEach(bond => {
+                    if (hiddenAtomIndices.has(bond.atom1_idx) || hiddenAtomIndices.has(bond.atom2_idx)) return;
+                    const atom1 = atoms[bond.atom1_idx]; const atom2 = atoms[bond.atom2_idx]; if (!atom1 || !atom2) return;
+                    const pos1 = new THREE.Vector3(atom1.x - offset.x, atom1.y - offset.y, atom1.z - offset.z);
+                    const pos2 = new THREE.Vector3(atom2.x - offset.x, atom2.y - offset.y, atom2.z - offset.z);
+                    const bondVector = new THREE.Vector3().subVectors(pos2, pos1);
+                    const bondLength = bondVector.length(); if (bondLength < 0.01) return;
+                    const bondGeoRadius = (currentRepresentation === 'wireframe') ? Math.min(0.05, currentBondRadius * 0.5) : currentBondRadius;
+                    const bondGeometry = new THREE.CylinderGeometry(bondGeoRadius, bondGeoRadius, bondLength, cylinderSegments);
+                    const bondMaterial = new THREE.MeshPhongMaterial({ color: 0x505050, shininess: 30 });
+                    const cylinder = new THREE.Mesh(bondGeometry, bondMaterial);
+                    cylinder.position.copy(pos1).add(bondVector.clone().multiplyScalar(0.5));
+                    cylinder.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), bondVector.normalize());
+                    moleculeGroup.add(cylinder);
+                });
+            }
+            let maxDist = 0; atoms.forEach(atom => {
+                if (hiddenAtomIndices.has(atom.id)) return;
+                const dist = new THREE.Vector3(atom.x - offset.x, atom.y - offset.y, atom.z - offset.z).length();
+                if (dist > maxDist) maxDist = dist;
+            });
+            let zoomFactor = 3.0;
+            if (currentRepresentation === 'spaceFilling') zoomFactor = 2.0;
+            else if (currentRepresentation === 'wireframe') zoomFactor = 3.5;
+            camera.position.z = Math.max(5, maxDist * zoomFactor + Math.max(...Object.values(baseAtomRadii)) * atomScaleFactor * 2);
+            controls.target.copy(new THREE.Vector3(0,0,0)); controls.update();
+        }
+
+        function updateStatus(message, type = 'info') { 
+            statusMessageElement.textContent = message;
+            if (type === 'error') statusMessageElement.style.color = 'red';
+            else if (type === 'success') statusMessageElement.style.color = 'green';
+            else statusMessageElement.style.color = '#555';
+        }
+
+        function showLoader(show) { 
+            if(loaderElement) loaderElement.style.display = show ? 'block' : 'none';
+        }
+
+        function animate() { 
+            if (!threeDViewInitialized) return;
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // --- Start the application ---
+        init();
+    </script>
+</body>
+</html>
