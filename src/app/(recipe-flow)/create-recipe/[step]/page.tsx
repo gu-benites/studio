@@ -23,10 +23,13 @@ const stepTitles: Record<string, string> = {
   properties: "Propriedades Terapêuticas e Óleos",
 };
 
-const stepInstructionsText: Record<string, string> = {
-  causes: "Selecione as causas que você acredita estarem relacionadas ao seu problema de saúde. Clique no título para ver mais detalhes.",
-  symptoms: "Selecione os sintomas que você está experienciando. Clique no título para ver mais detalhes.",
+// Define instructions for each step
+const stepInstructions: Record<string, string> = {
+  causes: "Selecione as causas que você acredita estarem relacionadas ao seu problema de saúde. A descrição aparecerá ao selecionar cada item.",
+  symptoms: "Selecione os sintomas que você está experienciando. A descrição aparecerá ao selecionar cada item.",
+  // Add other instructions as needed
 };
+
 
 const CreateRecipeStepPage = () => {
   const params = useParams();
@@ -48,8 +51,8 @@ const CreateRecipeStepPage = () => {
   }, [formData.healthConcern, router, step]);
 
   const StepComponent = step ? stepComponents[step] : null;
-  const stepTitle = step ? stepTitles[step] || "Etapa Desconhecida" : "Carregando Etapa...";
-  const instructions = step ? stepInstructionsText[step] : undefined;
+  const pageTitle = step ? stepTitles[step] || "Etapa Desconhecida" : "Carregando Etapa...";
+  const currentInstructions = step ? stepInstructions[step] : undefined;
 
 
   const onNextProperties = useCallback(async () => {
@@ -113,14 +116,14 @@ const CreateRecipeStepPage = () => {
 
   return (
     <RecipeStepLayout 
-        stepTitle={stepTitle}
+        stepTitle={pageTitle}
         previousRoute={navProps.previousRoute}
         onNext={navProps.onNext} 
         nextButtonText={navProps.nextButtonText}
         isNextDisabled={navProps.isNextDisabled} 
         hideNextButton={navProps.hideNextButton}
         formId={'current-step-form'} 
-        stepInstructions={instructions} // Pass instructions here
+        stepInstructions={currentInstructions} // Pass instructions here
     >
       <StepComponent />
     </RecipeStepLayout>
