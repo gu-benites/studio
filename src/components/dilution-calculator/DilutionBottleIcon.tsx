@@ -11,61 +11,60 @@ interface DilutionBottleIconProps {
 export const DilutionBottleIcon: React.FC<DilutionBottleIconProps> = ({ percentage, className }) => {
   const validPercentage = Math.max(0, Math.min(100, percentage));
 
-  // SVG viewBox dimensions
+  // SVG viewBox dimensions from user's SVG
   const viewBoxWidth = 100;
-  const viewBoxHeight = 150;
+  const viewBoxHeight = 200;
 
-  // Bottle dimensions within viewBox
-  const bottleBodyX = 15;
-  const bottleBodyY = 50;
-  const bottleBodyWidth = 70;
-  const bottleBodyHeight = 90; // This is the fillable height
+  // Dimensions for the fillable part of the bottle body
+  // Based on the path: M 25 162 L 25 90 ... L 75 90 L 75 162 ...
+  const fillRectX = 25;
+  const fillRectYStart = 90; // Top of the straight part of the bottle body
+  const fillRectYEnd = 162;   // Bottom of the straight part of the bottle body
+  const fillRectWidth = 50;   // 75 - 25
+  const fillableHeight = fillRectYEnd - fillRectYStart; // 162 - 90 = 72
 
-  const bottleNeckWidth = 30;
-  const bottleNeckHeight = 20;
-  const bottleNeckX = bottleBodyX + (bottleBodyWidth - bottleNeckWidth) / 2;
-  const bottleNeckY = bottleBodyY - bottleNeckHeight;
-
-  const capWidth = 40;
-  const capHeight = 15;
-  const capX = bottleBodyX + (bottleBodyWidth - capWidth) / 2;
-  const capY = bottleNeckY - capHeight;
-
-  // Calculate fill height based on percentage
-  const fillHeight = (bottleBodyHeight * validPercentage) / 100;
-  const fillY = bottleBodyY + bottleBodyHeight - fillHeight;
+  // Calculate fill height and Y position based on percentage
+  const currentFillHeight = (fillableHeight * validPercentage) / 100;
+  const currentFillY = fillRectYStart + (fillableHeight - currentFillHeight);
 
   return (
     <svg
       viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
-      className={cn("fill-current", className)}
+      className={cn("fill-current", className)} // fill-current will be used by rect for liquid
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
       {/* Liquid Fill - primary color - Rendered first to be behind the outline */}
       {validPercentage > 0 && (
         <rect
-          x={bottleBodyX}
-          y={fillY}
-          width={bottleBodyWidth}
-          height={fillHeight}
+          x={fillRectX}
+          y={currentFillY}
+          width={fillRectWidth}
+          height={currentFillHeight}
           className="text-primary" // Uses primary theme color for fill
         />
       )}
 
-      {/* Bottle Outline - Rendered after the fill */}
+      {/* Bottle Outline Path - from user */}
       <path
-        d={`M${capX},${capY} h${capWidth} v${capHeight} H${bottleNeckX + bottleNeckWidth} v${bottleNeckHeight} H${bottleBodyX + bottleBodyWidth} v${bottleBodyHeight} a5,5 0 0 1 -5,5 H${bottleBodyX + 5} a5,5 0 0 1 -5,-5 V${bottleNeckY + bottleNeckHeight} H${bottleNeckX} V${capY + capHeight} H${capX} Z`}
-        className="text-border fill-transparent stroke-current" // text-border for outline, fill-transparent
+        d="M 25 162 L 25 90 A 13 20 0 0 1 38 70 L 62 70 A 13 20 0 0 1 75 90 L 75 162 A 8 8 0 0 1 67 170 L 33 170 A 8 8 0 0 1 25 162 Z"
+        stroke="currentColor" // Use currentColor for theme-aware stroke
         strokeWidth="2"
+        fill="transparent" // Ensure path itself is transparent
+        className="text-border" // Use border color from theme for the outline
       />
-      
-      {/* Optional: Subtle gloss/highlight on the bottle - can be enhanced */}
-      <path 
-        d={`M${bottleBodyX + 10},${bottleBodyY + 10} Q${bottleBodyX + 15},${bottleBodyY + bottleBodyHeight / 2} ${bottleBodyX + 10},${bottleBodyY + bottleBodyHeight -10}`}
-        className="text-white/30 fill-transparent stroke-current" // text-white/30 for subtle highlight
-        strokeWidth="3"
-        strokeLinecap="round"
+
+      {/* Bottle Cap - from user, adapted for theming */}
+      <rect
+        x="32"
+        y="46"
+        width="36"
+        height="24"
+        rx="4"
+        fill="hsl(var(--muted-foreground))" // Themed cap color
+        stroke="currentColor" // Use currentColor for theme-aware stroke
+        strokeWidth="2"
+        className="text-border" // Use border color from theme for the cap outline
       />
     </svg>
   );
