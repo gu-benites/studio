@@ -1,3 +1,4 @@
+// src/components/recipe-flow/RecipeStepLayout.tsx
 "use client";
 
 import type { ReactNode } from 'react';
@@ -58,7 +59,7 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   }, []);
 
   const desktopSidebarIsEffectivelyExpanded = isDesktopClientView && (isSidebarPinned || isUserAccountMenuExpanded);
-  const isAccordionStep = currentStep === 'causes' || currentStep === 'symptoms';
+  const isAccordionStep = currentStep === 'causes' || currentStep === 'symptoms' || currentStep === 'properties';
 
   const handleNextClick = async () => {
     if (onNext) {
@@ -96,13 +97,13 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   return (
     <div className={cn(
       "flex flex-col flex-1 min-h-0", 
-       "md:justify-center" 
+      "md:justify-center" 
       )}> 
       <div className={cn(
         "flex-grow", 
         CONTENT_PADDING_BOTTOM_CLASS, 
         "md:flex md:items-center md:justify-center md:flex-grow-0",
-        isAccordionStep ? "overflow-y-auto md:overflow-visible" : "overflow-y-auto" // Ensure scroll for accordion steps, others as needed
+        isAccordionStep ? "overflow-y-auto md:overflow-visible" : "overflow-y-auto" 
         )}> 
         <div className={cn(
             "w-full", 
@@ -112,8 +113,8 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
                 <Progress
                     value={progressPercentage}
                     className={cn(
-                        "h-1.5 w-full",
-                        "md:rounded-t-lg" 
+                        "h-2.5 w-full bg-muted", // Use h-2.5 from design system example, and bg-muted for track
+                        "rounded-none md:rounded-t-lg" // Sharp on mobile, rounded top on desktop
                     )}
                     indicatorClassName="bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end"
                 />
@@ -121,20 +122,19 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
             <div className={cn(
                 "w-full",
                 "md:bg-card md:rounded-b-lg md:shadow-lg md:border md:border-t-0",
-                 // Padding:
-                "pt-6 pb-4", // Consistent vertical padding
-                isAccordionStep ? "px-0 md:px-6" : "px-4 sm:px-6", // Conditional horizontal padding for mobile
-                "sm:pb-6" // Desktop bottom padding (sm:p-6 includes this but this ensures it if px-0 is active)
+                "pt-6 pb-4", 
+                isAccordionStep ? "px-0 md:px-6" : "px-4 sm:px-6", 
+                "sm:pb-6" 
             )}>
                 <h1 className={cn(
                   "text-2xl font-bold mb-2 text-center text-primary",
                   "sm:text-3xl", 
-                  isAccordionStep ? "px-4 sm:px-0" : "" // Add horizontal padding back for title if step is accordion
+                  isAccordionStep || currentStep === 'demographics' ? "px-4 sm:px-6 md:px-0" : "" 
                 )}>{stepTitle}</h1>
                 
                 <p className={cn(
                     "text-muted-foreground text-center mb-4",
-                    isAccordionStep ? "px-4 sm:px-0" : "" // Add horizontal padding back for subtitle if step is accordion
+                    isAccordionStep || currentStep === 'demographics' ? "px-4 sm:px-6 md:px-0" : "" 
                     )}>
                     Preencha as informações abaixo para continuar.
                 </p>
@@ -142,7 +142,7 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
                 {stepInstructions && (
                     <p className={cn(
                     "text-muted-foreground text-center mb-6 text-sm",
-                    isAccordionStep ? "px-4 sm:px-0" : "" // Add horizontal padding back for instructions if step is accordion
+                    isAccordionStep || currentStep === 'demographics' ? "px-4 sm:px-6 md:px-0" : "" 
                     )}>
                     {stepInstructions}
                     </p>
@@ -151,7 +151,7 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
                 {error && (
                     <div className={cn(
                     "mb-4 p-3 bg-destructive/10 text-destructive border border-destructive/20 rounded-md text-sm",
-                    isAccordionStep ? "mx-4 sm:mx-0" : "" // Add horizontal margin if step is accordion (to mimic padding effect)
+                    isAccordionStep || currentStep === 'demographics' ? "mx-4 sm:mx-6 md:mx-0" : "" 
                     )}>
                     <p className="font-semibold">Erro:</p>
                     <p>{error}</p>
@@ -176,7 +176,6 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
             isDesktopClientView 
               ? (desktopSidebarIsEffectivelyExpanded ? "md:left-[287px]" : "md:left-[48px]") 
               : "left-0"
-             // Removed shadow-none sm:shadow-sm to let card handle shadow on desktop
           )}
         >
           <div className="flex gap-2 items-center">
