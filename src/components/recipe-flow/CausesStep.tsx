@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { getPotentialSymptoms } from '@/services/aromarx-api-client';
-import type { RecipeFormData } from '@/contexts/RecipeFormContext';
+import type { RecipeFormData } from '@/contexts/RecipeFormContext'; // Assuming PotentialCause is defined here or imported
 import { cn } from '@/lib/utils';
 
 interface PotentialCause {
@@ -18,40 +18,48 @@ interface PotentialCause {
   id?: string;
 }
 
+
 const CausesStep: React.FC = () => {
   const router = useRouter();
   const { formData, updateFormData, setCurrentStep, setIsLoading, setError, updateFormValidity } = useRecipeForm();
+  
   const [selectedCausesState, setSelectedCausesState] = useState<PotentialCause[]>(formData.selectedCauses || []);
   const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([]);
 
   useEffect(() => {
     if (formData.selectedCauses) {
       setSelectedCausesState(formData.selectedCauses);
-      const initiallyOpen = formData.selectedCauses.map(c => c.cause_name).filter(name => name != null) as string[];
-      setOpenAccordionItems(Array.from(new Set(initiallyOpen)));
     }
   }, [formData.selectedCauses]);
+
+  // Synchronize accordion open state with selected causes
+  useEffect(() => {
+    const newOpenItems = selectedCausesState.map(cause => cause.cause_name).filter(Boolean) as string[];
+    // Basic check to prevent re-setting identical array (though sort makes it more robust for content check)
+    if (JSON.stringify(openAccordionItems.sort()) !== JSON.stringify(newOpenItems.sort())) {
+      setOpenAccordionItems(newOpenItems);
+    }
+  }, [selectedCausesState, openAccordionItems]); // openAccordionItems added to prevent stale closures if setOpenAccordionItems was directly called elsewhere based on old openAccordionItems
+
 
   useEffect(() => {
     updateFormValidity(selectedCausesState.length > 0);
   }, [selectedCausesState, updateFormValidity]);
 
-  const handleToggleCause = useCallback((toggledCause: PotentialCause) => {
-    const causeId = toggledCause.cause_name;
-    const isCurrentlySelected = selectedCausesState.some(c => c.cause_name === causeId);
+  const handleSelectionToggle = useCallback((toggledCause: PotentialCause, newCheckedState: boolean) => {
+    setSelectedCausesState(prevSelected => {
+      const causeId = toggledCause.cause_name;
+      if (newCheckedState) { // If switch is now checked (or should be)
+        // Add if not already present
+        if (prevSelected.some(c => c.cause_name === causeId)) return prevSelected;
+        return [...prevSelected, toggledCause];
+      } else { // If switch is now unchecked (or should be)
+        // Remove if present
+        return prevSelected.filter(c => c.cause_name !== causeId);
+      }
+    });
+  }, []);
 
-    setSelectedCausesState(prevSelected =>
-      isCurrentlySelected
-        ? prevSelected.filter(c => c.cause_name !== causeId)
-        : [...prevSelected, toggledCause]
-    );
-
-    setOpenAccordionItems(prevOpen =>
-      isCurrentlySelected // If it was selected, it's now being deselected
-        ? prevOpen.filter(item => item !== causeId) // Close accordion
-        : [...new Set([...prevOpen, causeId])] // Open accordion
-    );
-  }, [selectedCausesState]);
 
   const handleSubmitCauses = async (event?: React.FormEvent<HTMLFormElement>) => {
     if (event) event.preventDefault();
@@ -98,7 +106,7 @@ const CausesStep: React.FC = () => {
         type="multiple"
         value={openAccordionItems}
         onValueChange={setOpenAccordionItems}
-        className="w-full" // Accordion itself is full-width, no card styles here
+        className="w-full"
       >
         {formData.potentialCausesResult.map((cause) => {
           const causeId = cause.cause_name;
@@ -109,11 +117,9 @@ const CausesStep: React.FC = () => {
               key={causeId}
               className={cn(
                 "transition-colors",
-                // Mobile: border-b for separation, full width items. No shadow.
-                // Desktop: items are inside a card provided by RecipeStepLayout.
                 "border-b border-border last:border-b-0",
                 isChecked ? "bg-primary/10" : "bg-background md:bg-card", 
-                "md:first:rounded-t-lg md:last:rounded-b-lg" // For desktop card look continuity
+                "md:first:rounded-t-lg md:last:rounded-b-lg"
               )}
             >
               <AccordionTrigger
@@ -122,24 +128,25 @@ const CausesStep: React.FC = () => {
                   isChecked ? "hover:bg-primary/15" : "hover:bg-muted/50",
                   "focus-visible:ring-offset-background md:focus-visible:ring-offset-card"
                 )}
-                onClick={() => handleToggleCause(cause)} // Toggle on entire trigger click
               >
                 <div className="flex items-center space-x-3 flex-1 min-w-0">
                   <Switch
                     id={`cause-switch-${causeId}`}
                     checked={isChecked}
-                    onCheckedChange={() => handleToggleCause(cause)} // Already handled by trigger click
+                    onCheckedChange={(checked) => {
+                      handleSelectionToggle(cause, checked);
+                    }}
                     className="shrink-0 h-6 w-11 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input [&>span]:h-5 [&>span]:w-5 [&>span[data-state=checked]]:translate-x-5 [&>span[data-state=unchecked]]:translate-x-0"
                     aria-labelledby={`cause-label-${causeId}`}
-                    onClick={(e) => e.stopPropagation()} // Prevent double toggle
+                    onClick={(e) => e.stopPropagation()} // Prevent accordion trigger from toggling switch again
                   />
                   <Label
                     htmlFor={`cause-switch-${causeId}`}
                     id={`cause-label-${causeId}`}
                     className="font-medium text-base cursor-pointer flex-1 truncate"
                     onClick={(e) => {
-                        e.stopPropagation(); // Prevent double toggle
-                        handleToggleCause(cause);
+                        e.stopPropagation(); // Prevent accordion trigger
+                        handleSelectionToggle(cause, !isChecked); // Manually toggle state
                     }}
                   >
                     {cause.cause_name}

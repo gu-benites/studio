@@ -30,31 +30,37 @@ const SymptomsStep: React.FC = () => {
   useEffect(() => {
     if (formData.selectedSymptoms) {
       setSelectedSymptomsState(formData.selectedSymptoms);
-      const initiallyOpen = formData.selectedSymptoms.map(s => s.symptom_name).filter(name => name != null) as string[];
-      setOpenAccordionItems(Array.from(new Set(initiallyOpen)));
     }
   }, [formData.selectedSymptoms]);
+
+  // Synchronize accordion open state with selected symptoms
+  useEffect(() => {
+    const newOpenItems = selectedSymptomsState.map(symptom => symptom.symptom_name).filter(Boolean) as string[];
+     // Basic check to prevent re-setting identical array
+    if (JSON.stringify(openAccordionItems.sort()) !== JSON.stringify(newOpenItems.sort())) {
+        setOpenAccordionItems(newOpenItems);
+    }
+  }, [selectedSymptomsState, openAccordionItems]);
+
 
   useEffect(() => {
     updateFormValidity(selectedSymptomsState.length > 0);
   }, [selectedSymptomsState, updateFormValidity]);
 
-  const handleToggleSymptom = useCallback((toggledSymptom: PotentialSymptom) => {
-    const symptomId = toggledSymptom.symptom_name;
-    const isCurrentlySelected = selectedSymptomsState.some(s => s.symptom_name === symptomId);
 
-    setSelectedSymptomsState(prevSelected =>
-      isCurrentlySelected
-        ? prevSelected.filter(s => s.symptom_name !== symptomId)
-        : [...prevSelected, { symptom_name: symptomId }]
-    );
-    
-    setOpenAccordionItems(prevOpen =>
-      isCurrentlySelected // If it was selected, it's now being deselected
-        ? prevOpen.filter(item => item !== symptomId) // Close accordion
-        : [...new Set([...prevOpen, symptomId])] // Open accordion
-    );
-  }, [selectedSymptomsState]);
+  const handleSelectionToggle = useCallback((toggledSymptom: PotentialSymptom, newCheckedState: boolean) => {
+    setSelectedSymptomsState(prevSelected => {
+      const symptomId = toggledSymptom.symptom_name;
+      if (newCheckedState) { // If switch is now checked
+        // Add if not already present
+        if (prevSelected.some(s => s.symptom_name === symptomId)) return prevSelected;
+        return [...prevSelected, { symptom_name: symptomId }];
+      } else { // If switch is now unchecked
+        // Remove if present
+        return prevSelected.filter(s => s.symptom_name !== symptomId);
+      }
+    });
+  }, []);
 
 
   const handleSubmitSymptoms = async (event?: React.FormEvent<HTMLFormElement>) => {
@@ -102,7 +108,7 @@ const SymptomsStep: React.FC = () => {
         type="multiple"
         value={openAccordionItems}
         onValueChange={setOpenAccordionItems}
-        className="w-full" // Accordion itself is full-width
+        className="w-full" 
       >
         {formData.potentialSymptomsResult.map((symptom) => {
           const symptomId = symptom.symptom_name;
@@ -124,13 +130,14 @@ const SymptomsStep: React.FC = () => {
                   isChecked ? "hover:bg-primary/15" : "hover:bg-muted/50",
                   "focus-visible:ring-offset-background md:focus-visible:ring-offset-card"
                 )}
-                onClick={() => handleToggleSymptom(symptom)}
               >
                 <div className="flex items-center space-x-3 flex-1 min-w-0">
                   <Switch
                     id={`symptom-switch-${symptomId}`}
                     checked={isChecked}
-                    onCheckedChange={() => handleToggleSymptom(symptom)}
+                    onCheckedChange={(checked) => {
+                      handleSelectionToggle(symptom, checked);
+                    }}
                     className="shrink-0 h-4 w-8 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input [&>span]:h-3 [&>span]:w-3 [&>span[data-state=checked]]:translate-x-4 [&>span[data-state=unchecked]]:translate-x-0"
                     aria-labelledby={`symptom-label-${symptomId}`}
                     onClick={(e) => e.stopPropagation()}
@@ -139,9 +146,9 @@ const SymptomsStep: React.FC = () => {
                     htmlFor={`symptom-switch-${symptomId}`}
                     id={`symptom-label-${symptomId}`}
                     className="font-medium text-base cursor-pointer flex-1 truncate"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleSymptom(symptom);
+                     onClick={(e) => {
+                        e.stopPropagation(); 
+                        handleSelectionToggle(symptom, !isChecked); 
                     }}
                   >
                     {symptom.symptom_name}
