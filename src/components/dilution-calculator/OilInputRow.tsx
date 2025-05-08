@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -52,7 +51,7 @@ export const OilInputRow: React.FC<OilInputRowProps> = ({ oil, onUpdate, onRemov
           id={`oilPercentage-${oil.id}`}
           min={0}
           max={100} 
-          step={0.1}
+          step={1}
           value={[oil.percentage]}
           onValueChange={(value) => onPercentageChange(value[0])}
         />
@@ -64,3 +63,4 @@ export const OilInputRow: React.FC<OilInputRowProps> = ({ oil, onUpdate, onRemov
     </div>
   );
 };
+

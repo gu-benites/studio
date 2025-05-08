@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -86,10 +85,8 @@ export const UnifiedDilutionCalculator: React.FC = () => {
         if (oil.id === id) {
             if (field === 'percentage') {
                 const numericValue = Number(value);
-                // For multiple oils, individual percentage can go up to 100, but sum is checked
-                // For single oil mode, it's constrained by maxSingleOilDilutionPercentage
                 const maxPercentage = oils.length === 1 ? maxSingleOilDilutionPercentage : 100;
-                return { ...oil, [field]: Math.max(0.1, Math.min(maxPercentage, numericValue)) };
+                return { ...oil, [field]: Math.max(0, Math.min(maxPercentage, numericValue)) };
             }
             return { ...oil, [field]: value };
         }
@@ -105,6 +102,7 @@ export const UnifiedDilutionCalculator: React.FC = () => {
 
   const dilutionCategory = useMemo(() => {
     const percentage = oils.length === 1 ? oils[0].percentage : totalPercentage;
+    if (percentage === 0) return "Sem diluição (0%)";
     if (percentage <= 1) return "Muito Suave (Ideal para crianças, idosos, peles sensíveis)";
     if (percentage <= 3) return "Suave (Uso facial, uso diário prolongado)";
     if (percentage <= 5) return "Moderada (Uso corporal geral, massagens)";
@@ -147,9 +145,9 @@ export const UnifiedDilutionCalculator: React.FC = () => {
               </div>
               <Slider
                 id="dilutionPercentageSingleUnified"
-                min={0.1}
+                min={0}
                 max={maxSingleOilDilutionPercentage}
-                step={0.1}
+                step={1}
                 value={[oils[0].percentage]}
                 onValueChange={handleSingleOilPercentageChange}
               />
@@ -226,3 +224,4 @@ export const UnifiedDilutionCalculator: React.FC = () => {
     </Card>
   );
 };
+
