@@ -1,23 +1,25 @@
+
 "use client";
 
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, Loader2, ImageOff, Check, RefreshCw } from 'lucide-react';
+import { Search, Loader2, ImageOff, RefreshCw } from 'lucide-react';
+import Image from 'next/image'; // Import next/image
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Removed CardDescription as it's not used
+import { Alert, AlertDescription } from '@/components/ui/alert'; // Removed AlertTitle as it's not used
 import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
-import type * as THREE from 'three';
-import type { OrbitControls as OrbitControlsType } from 'three/examples/jsm/controls/OrbitControls.js';
-
+import { useToast } from "@/hooks/use-toast";
+// Removed cn as it's not used in this file directly
 
 const ChemicalVisualizerPage: NextPage = () => {
   const { toast } = useToast();
@@ -25,7 +27,7 @@ const ChemicalVisualizerPage: NextPage = () => {
   const rendererRef = useRef<THREE.WebGLRenderer>();
   const sceneRef = useRef<THREE.Scene>();
   const cameraRef = useRef<THREE.PerspectiveCamera>();
-  const controlsRef = useRef<OrbitControlsType>();
+  const controlsRef = useRef<OrbitControls>();
   const moleculeGroupRef = useRef<THREE.Group>();
   const animationFrameIdRef = useRef<number>();
 
@@ -39,29 +41,20 @@ const ChemicalVisualizerPage: NextPage = () => {
   const [compoundName, setCompoundName] = useState<string>('');
   const [molecularFormula, setMolecularFormula] = useState<string>('');
   const [structureImageUrl, setStructureImageUrl] = useState<string>('');
-  const [parsedMoleculeData, setParsedMoleculeData] = useState<any>(null); // Adjust type as per SDF parser output
+  const [parsedMoleculeData, setParsedMoleculeData] = useState<any>(null);
 
-  // Visual Controls State
   const [representation, setRepresentation] = useState<'ballAndStick' | 'spaceFilling' | 'wireframe'>('ballAndStick');
   const [atomScaleFactor, setAtomScaleFactor] = useState<number>(1.0);
   const [bondRadius, setBondRadius] = useState<number>(0.1);
   const [showHydrogens, setShowHydrogens] = useState<boolean>(true);
 
-  // Three.js setup and animation loop
   useEffect(() => {
-    let THREE_LIB: typeof THREE;
-    let OrbitControls_LIB: typeof OrbitControlsType;
-
-    const initThree = async () => {
+    const initThree = () => {
       if (typeof window !== 'undefined' && threeContainerRef.current && !rendererRef.current) {
-        THREE_LIB = await import('three');
-        const { OrbitControls } = await import('three/examples/jsm/controls/OrbitControls.js');
-        OrbitControls_LIB = OrbitControls;
+        sceneRef.current = new THREE.Scene();
+        sceneRef.current.background = new THREE.Color(0xe0e0e0);
 
-        sceneRef.current = new THREE_LIB.Scene();
-        sceneRef.current.background = new THREE_LIB.Color(0xe0e0e0); // bg-muted like
-
-        cameraRef.current = new THREE_LIB.PerspectiveCamera(
+        cameraRef.current = new THREE.PerspectiveCamera(
           75,
           threeContainerRef.current.clientWidth / threeContainerRef.current.clientHeight,
           0.1,
@@ -69,26 +62,25 @@ const ChemicalVisualizerPage: NextPage = () => {
         );
         cameraRef.current.position.z = 15;
 
-        rendererRef.current = new THREE_LIB.WebGLRenderer({ antialias: true, alpha: true });
+        rendererRef.current = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         rendererRef.current.setSize(threeContainerRef.current.clientWidth, threeContainerRef.current.clientHeight);
         rendererRef.current.setPixelRatio(window.devicePixelRatio);
         threeContainerRef.current.appendChild(rendererRef.current.domElement);
 
-        const ambientLight = new THREE_LIB.AmbientLight(0xffffff, 0.8);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
         sceneRef.current.add(ambientLight);
-        const directionalLight1 = new THREE_LIB.DirectionalLight(0xffffff, 0.7);
+        const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.7);
         directionalLight1.position.set(5, 10, 7.5);
         sceneRef.current.add(directionalLight1);
-        const directionalLight2 = new THREE_LIB.DirectionalLight(0xffffff, 0.5);
+        const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
         directionalLight2.position.set(-5, -5, -7.5);
         sceneRef.current.add(directionalLight2);
         
-
-        controlsRef.current = new OrbitControls_LIB(cameraRef.current, rendererRef.current.domElement);
+        controlsRef.current = new OrbitControls(cameraRef.current, rendererRef.current.domElement);
         controlsRef.current.enableDamping = true;
         controlsRef.current.dampingFactor = 0.05;
 
-        moleculeGroupRef.current = new THREE_LIB.Group();
+        moleculeGroupRef.current = new THREE.Group();
         sceneRef.current.add(moleculeGroupRef.current);
 
         const animate = () => {
@@ -118,15 +110,13 @@ const ChemicalVisualizerPage: NextPage = () => {
       if (animationFrameIdRef.current) {
         cancelAnimationFrame(animationFrameIdRef.current);
       }
-      // Basic cleanup: dispose of renderer and remove its domElement
       if (rendererRef.current) {
         rendererRef.current.dispose();
         if (threeContainerRef.current && rendererRef.current.domElement) {
           threeContainerRef.current.removeChild(rendererRef.current.domElement);
         }
-        rendererRef.current = undefined; // Reset ref
+        rendererRef.current = undefined; 
       }
-       // Further cleanup can be added for geometries, materials, scene children if needed
     };
   }, []);
 
@@ -143,7 +133,7 @@ const ChemicalVisualizerPage: NextPage = () => {
       return { atoms, bonds };
     }
     const countsLine = lines[3].trim();
-    const parts = countsLine.match(/(\d+)\s+(\d+)/); // More robust parsing for counts
+    const parts = countsLine.match(/(\d+)\s+(\d+)/); 
     if (!parts || parts.length < 3) {
         console.error("Could not parse numAtoms/numBonds from SDF:", countsLine);
         return { atoms, bonds };
@@ -164,7 +154,6 @@ const ChemicalVisualizerPage: NextPage = () => {
       const y = parseFloat(line.substring(10, 20));
       const z = parseFloat(line.substring(20, 30));
       let element = line.substring(31, 34).trim().toUpperCase();
-      // Normalize common elements like Cl, Br
       if (element === "CL") element = "Cl";
       if (element === "BR") element = "Br";
       if (!isNaN(x) && !isNaN(y) && !isNaN(z) && element) {
@@ -181,7 +170,7 @@ const ChemicalVisualizerPage: NextPage = () => {
       const line = lines[lineIndex];
       const atom1Idx = parseInt(line.substring(0, 3)) - 1;
       const atom2Idx = parseInt(line.substring(3, 6)) - 1;
-      const bondType = parseInt(line.substring(6, 9)); // Can be used later for multiple bonds
+      const bondType = parseInt(line.substring(6, 9));
       if (!isNaN(atom1Idx) && !isNaN(atom2Idx) && atom1Idx < atoms.length && atom2Idx < atoms.length) {
         bonds.push({ atom1_idx: atom1Idx, atom2_idx: atom2_idx, type: bondType });
       } else {
@@ -191,12 +180,9 @@ const ChemicalVisualizerPage: NextPage = () => {
     return { atoms, bonds };
   };
   
-  const displayMolecule = useCallback(async (molecule: any) => {
+  const displayMolecule = useCallback((molecule: any) => {
     if (!moleculeGroupRef.current || !sceneRef.current || !cameraRef.current || !controlsRef.current) return;
     
-    const THREE_LIB = await import('three');
-
-    // Clear previous molecule
     while (moleculeGroupRef.current.children.length > 0) {
       const object = moleculeGroupRef.current.children[0];
       moleculeGroupRef.current.remove(object);
@@ -214,10 +200,9 @@ const ChemicalVisualizerPage: NextPage = () => {
     const { atoms, bonds } = molecule;
     if (atoms.length === 0) return;
 
-    // Calculate offset to center the molecule
-    const offset = new THREE_LIB.Vector3();
+    const offset = new THREE.Vector3();
     atoms.forEach((atom: any) => {
-      offset.add(new THREE_LIB.Vector3(atom.x, atom.y, atom.z));
+      offset.add(new THREE.Vector3(atom.x, atom.y, atom.z));
     });
     offset.divideScalar(atoms.length);
 
@@ -230,17 +215,17 @@ const ChemicalVisualizerPage: NextPage = () => {
     
     const baseAtomColors: Record<string, number> = {
         'H':  0xFFFFFF, 'C':  0x202020, 'O':  0xFF0000, 'N':  0x0000FF,
-        'S':  0xFFFF00, 'P':  0xFFA500, 'F':  0x00FF00, 'CL': 0x00FF00, // Cl, not CL
-        'BR': 0xA52A2A, 'I':  0x800080, 'DEFAULT': 0xCCCCCC // Changed default color
+        'S':  0xFFFF00, 'P':  0xFFA500, 'F':  0x00FF00, 'CL': 0x00FF00,
+        'BR': 0xA52A2A, 'I':  0x800080, 'DEFAULT': 0xCCCCCC
     };
     const baseAtomRadii: Record<string, number> = {
         'H':  0.30, 'C':  0.70, 'O':  0.65, 'N':  0.70,
-        'S':  1.00, 'P':  1.10, 'F':  0.60, 'CL': 1.00, // Cl
+        'S':  1.00, 'P':  1.10, 'F':  0.60, 'CL': 1.00,
         'BR': 1.15, 'I':  1.33, 'DEFAULT': 0.75
     };
      const vdwAtomRadii: Record<string, number> = {
         'H': 1.20, 'C': 1.70, 'O': 1.52, 'N': 1.55,
-        'S': 1.80, 'P': 1.80, 'F': 1.47, 'CL': 1.75, // Cl
+        'S': 1.80, 'P': 1.80, 'F': 1.47, 'CL': 1.75,
         'BR': 1.85, 'I': 1.98, 'DEFAULT': 1.60
     };
 
@@ -256,13 +241,13 @@ const ChemicalVisualizerPage: NextPage = () => {
         
         let sphereMesh;
         if (representation === 'wireframe') {
-            const sphereGeometry = new THREE_LIB.SphereGeometry(Math.max(0.05, radius * 0.2), 8, 8); // Smaller nodes for wireframe
-            const sphereMaterial = new THREE_LIB.MeshBasicMaterial({ color: color, wireframe: false });
-            sphereMesh = new THREE_LIB.Mesh(sphereGeometry, sphereMaterial);
+            const sphereGeometry = new THREE.SphereGeometry(Math.max(0.05, radius * 0.2), 8, 8);
+            const sphereMaterial = new THREE.MeshBasicMaterial({ color: color, wireframe: false });
+            sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
         } else {
-            const sphereGeometry = new THREE_LIB.SphereGeometry(radius, sphereSegments, sphereSegments);
-            const sphereMaterial = new THREE_LIB.MeshPhongMaterial({ color: color, shininess: 60 });
-            sphereMesh = new THREE_LIB.Mesh(sphereGeometry, sphereMaterial);
+            const sphereGeometry = new THREE.SphereGeometry(radius, sphereSegments, sphereSegments);
+            const sphereMaterial = new THREE.MeshPhongMaterial({ color: color, shininess: 60 });
+            sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
         }
         sphereMesh.position.set(atom.x - offset.x, atom.y - offset.y, atom.z - offset.z);
         moleculeGroupRef.current?.add(sphereMesh);
@@ -276,31 +261,30 @@ const ChemicalVisualizerPage: NextPage = () => {
             const atom2 = atoms[bond.atom2_idx];
             if (!atom1 || !atom2) return;
 
-            const pos1 = new THREE_LIB.Vector3(atom1.x - offset.x, atom1.y - offset.y, atom1.z - offset.z);
-            const pos2 = new THREE_LIB.Vector3(atom2.x - offset.x, atom2.y - offset.y, atom2.z - offset.z);
+            const pos1 = new THREE.Vector3(atom1.x - offset.x, atom1.y - offset.y, atom1.z - offset.z);
+            const pos2 = new THREE.Vector3(atom2.x - offset.x, atom2.y - offset.y, atom2.z - offset.z);
             
-            const bondVector = new THREE_LIB.Vector3().subVectors(pos2, pos1);
+            const bondVector = new THREE.Vector3().subVectors(pos2, pos1);
             const bondLength = bondVector.length();
-            if (bondLength < 0.01) return; // Avoid zero-length cylinders
+            if (bondLength < 0.01) return;
 
             const effectiveBondRadius = (representation === 'wireframe') ? Math.max(0.02, bondRadius * 0.3) : bondRadius;
-            const bondGeometry = new THREE_LIB.CylinderGeometry(effectiveBondRadius, effectiveBondRadius, bondLength, cylinderSegments);
+            const bondGeometry = new THREE.CylinderGeometry(effectiveBondRadius, effectiveBondRadius, bondLength, cylinderSegments);
             const bondMaterial = representation === 'wireframe' 
-                ? new THREE_LIB.MeshBasicMaterial({ color: 0x555555, wireframe: true }) // Wireframe for wireframe bonds
-                : new THREE_LIB.MeshPhongMaterial({ color: 0x555555, shininess: 30 }); // Solid for ball & stick
+                ? new THREE.MeshBasicMaterial({ color: 0x555555, wireframe: true })
+                : new THREE.MeshPhongMaterial({ color: 0x555555, shininess: 30 });
 
-            const cylinderMesh = new THREE_LIB.Mesh(bondGeometry, bondMaterial);
+            const cylinderMesh = new THREE.Mesh(bondGeometry, bondMaterial);
             cylinderMesh.position.copy(pos1).add(bondVector.clone().multiplyScalar(0.5));
-            cylinderMesh.quaternion.setFromUnitVectors(new THREE_LIB.Vector3(0, 1, 0), bondVector.clone().normalize());
+            cylinderMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), bondVector.clone().normalize());
             moleculeGroupRef.current?.add(cylinderMesh);
         });
     }
 
-    // Auto-zoom
     let maxDist = 0;
     atoms.forEach((atom: any) => {
-        if (hiddenAtomIndices.has(atom.id)) return;
-        const dist = new THREE_LIB.Vector3(atom.x - offset.x, atom.y - offset.y, atom.z - offset.z).length();
+        if (hiddenAtomIndices.has(atom.id)) return; // Ensure correct property 'id' is used if atoms have 'id'
+        const dist = new THREE.Vector3(atom.x - offset.x, atom.y - offset.y, atom.z - offset.z).length();
         if (dist > maxDist) maxDist = dist;
     });
     
@@ -309,7 +293,7 @@ const ChemicalVisualizerPage: NextPage = () => {
     else if (representation === 'wireframe') zoomFactor = 3.8;
 
     cameraRef.current.position.z = Math.max(5, maxDist * zoomFactor + (baseAtomRadii['DEFAULT'] * atomScaleFactor * 2));
-    controlsRef.current.target.copy(new THREE_LIB.Vector3(0,0,0)); // Target origin
+    controlsRef.current.target.copy(new THREE.Vector3(0,0,0));
     controlsRef.current.update();
 
   }, [representation, atomScaleFactor, bondRadius, showHydrogens]);
@@ -322,7 +306,7 @@ const ChemicalVisualizerPage: NextPage = () => {
     setMolecularFormula('');
     setStructureImageUrl('');
     setParsedMoleculeData(null);
-    if (moleculeGroupRef.current) { // Clear previous molecule
+    if (moleculeGroupRef.current) {
       while (moleculeGroupRef.current.children.length > 0) {
         moleculeGroupRef.current.remove(moleculeGroupRef.current.children[0]);
       }
@@ -332,7 +316,7 @@ const ChemicalVisualizerPage: NextPage = () => {
       const namePromise = fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/property/Title/JSON`);
       const formulaPromise = fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/property/MolecularFormula/JSON`);
       const imageSrc = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/PNG`;
-      setStructureImageUrl(imageSrc); // Set image URL immediately for optimistic loading
+      setStructureImageUrl(imageSrc);
 
       const [nameResponse, formulaResponse] = await Promise.all([namePromise, formulaPromise]);
 
@@ -381,13 +365,13 @@ const ChemicalVisualizerPage: NextPage = () => {
     } catch (error: any) {
       console.error('Error loading compound by CID:', error);
       setStatusMessage(`Load Error (CID: ${cid}): ${error.message}`);
-      setParsedMoleculeData(null); // Ensure no old data is displayed
+      setParsedMoleculeData(null);
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setIsLoading(false);
       setIsViewerLoading(false);
     }
-  }, [toast, parseSDF]); // Added parseSDF
+  }, [toast, parseSDF]);
 
   const loadCompoundByName = useCallback(async (name: string) => {
     setIsLoading(true);
@@ -416,7 +400,7 @@ const ChemicalVisualizerPage: NextPage = () => {
             await loadCompoundByCID(cids[0].toString());
         } else {
             setStatusMessage(`Multiple matches for "${name}". Fetching titles...`);
-            const titlesUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cids.slice(0, 20).join(',')}/property/Title/JSON`; // Limit to 20 for sanity
+            const titlesUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cids.slice(0, 20).join(',')}/property/Title/JSON`;
             const titlesResponse = await fetch(titlesUrl);
             let titlesMap: Record<string, string> = {};
             if (titlesResponse.ok) {
@@ -431,7 +415,7 @@ const ChemicalVisualizerPage: NextPage = () => {
                 title: titlesMap[cid] || `Compound CID: ${cid}`
             }));
             
-            setSearchResults(results.slice(0, 10)); // Display up to 10 results
+            setSearchResults(results.slice(0, 10));
             setStatusMessage(`Please select from ${results.length > 10 ? 'the first 10 of ' : ''}${results.length} matches.`);
             toast({ title: "Multiple Matches", description: `Found ${results.length} matches. Select one from the list.` });
         }
@@ -450,7 +434,7 @@ const ChemicalVisualizerPage: NextPage = () => {
       toast({ title: "Input Required", description: "Please enter a search term.", variant: "destructive" });
       return;
     }
-    setSearchResults([]); // Clear previous name search results
+    setSearchResults([]); 
     if (searchType === 'cid') {
       if (!/^\d+$/.test(searchTerm)) {
         setStatusMessage('Invalid CID. Please enter numbers only.');
@@ -463,10 +447,12 @@ const ChemicalVisualizerPage: NextPage = () => {
     }
   };
   
-  useEffect(() => { // Effect to render molecule when data and controls change
+  useEffect(() => { 
     if (parsedMoleculeData) {
       setIsViewerLoading(true);
-      displayMolecule(parsedMoleculeData).finally(() => setIsViewerLoading(false));
+      displayMolecule(parsedMoleculeData)
+      // No .finally here since displayMolecule is not async anymore for the import
+      setIsViewerLoading(false);
     }
   }, [parsedMoleculeData, representation, atomScaleFactor, bondRadius, showHydrogens, displayMolecule]);
 
@@ -516,7 +502,7 @@ const ChemicalVisualizerPage: NextPage = () => {
                 <Label htmlFor="searchTypeSelect">Search By</Label>
                 <Select value={searchType} onValueChange={(value: 'cid' | 'name') => {
                   setSearchType(value);
-                  setSearchTerm(value === 'cid' ? '22311' : 'aspirin'); // Example default
+                  setSearchTerm(value === 'cid' ? '22311' : 'aspirin');
                   setSearchResults([]);
                 }}>
                   <SelectTrigger id="searchTypeSelect">
@@ -540,7 +526,7 @@ const ChemicalVisualizerPage: NextPage = () => {
                 />
               </div>
               <Button onClick={handleVisualizeClick} disabled={isLoading} className="w-full sm:w-auto">
-                {isLoading && searchType === 'cid' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
                 Visualize
               </Button>
                <Button onClick={resetAll} variant="outline" className="w-full sm:w-auto">
@@ -557,9 +543,9 @@ const ChemicalVisualizerPage: NextPage = () => {
                                     variant="ghost"
                                     className="w-full justify-start text-left h-auto py-2 px-3"
                                     onClick={() => {
-                                        setSearchTerm(result.cid); // Set CID as search term
-                                        setSearchType('cid');      // Switch to CID search for loading
-                                        setSearchResults([]);      // Clear results
+                                        setSearchTerm(result.cid); 
+                                        setSearchType('cid');      
+                                        setSearchResults([]);      
                                         loadCompoundByCID(result.cid);
                                     }}
                                 >
@@ -597,11 +583,12 @@ const ChemicalVisualizerPage: NextPage = () => {
                       width={300}
                       height={300}
                       className="mt-2 border rounded-md object-contain w-full max-w-xs mx-auto"
+                      data-ai-hint="molecule structure"
                       onError={() => {
-                        setStructureImageUrl(''); // Clear on error to show fallback
+                        setStructureImageUrl('');
                         toast({ title: "Image Error", description: "Could not load 2D structure image.", variant: "destructive"});
                       }}
-                      unoptimized // If PubChem images are not optimizable by Next/Image
+                      unoptimized 
                     />
                   ) : (
                     <div className="mt-2 border rounded-md aspect-square w-full max-w-xs mx-auto flex flex-col items-center justify-center bg-muted">
@@ -682,3 +669,6 @@ const ChemicalVisualizerPage: NextPage = () => {
 };
 
 export default ChemicalVisualizerPage;
+
+
+    
