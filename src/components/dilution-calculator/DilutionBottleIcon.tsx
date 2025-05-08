@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -43,14 +42,7 @@ export const DilutionBottleIcon: React.FC<DilutionBottleIconProps> = ({ percenta
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      {/* Bottle Outline */}
-      <path
-        d={`M${capX},${capY} h${capWidth} v${capHeight} H${bottleNeckX + bottleNeckWidth} v${bottleNeckHeight} H${bottleBodyX + bottleBodyWidth} v${bottleBodyHeight} a5,5 0 0 1 -5,5 H${bottleBodyX + 5} a5,5 0 0 1 -5,-5 V${bottleNeckY + bottleNeckHeight} H${bottleNeckX} V${capY + capHeight} H${capX} Z`}
-        className="text-border fill-transparent stroke-current"
-        strokeWidth="2"
-      />
-
-      {/* Liquid Fill - primary color */}
+      {/* Liquid Fill - primary color - Rendered first to be behind the outline */}
       {validPercentage > 0 && (
         <rect
           x={bottleBodyX}
@@ -60,11 +52,18 @@ export const DilutionBottleIcon: React.FC<DilutionBottleIconProps> = ({ percenta
           className="text-primary" // Uses primary theme color for fill
         />
       )}
+
+      {/* Bottle Outline - Rendered after the fill */}
+      <path
+        d={`M${capX},${capY} h${capWidth} v${capHeight} H${bottleNeckX + bottleNeckWidth} v${bottleNeckHeight} H${bottleBodyX + bottleBodyWidth} v${bottleBodyHeight} a5,5 0 0 1 -5,5 H${bottleBodyX + 5} a5,5 0 0 1 -5,-5 V${bottleNeckY + bottleNeckHeight} H${bottleNeckX} V${capY + capHeight} H${capX} Z`}
+        className="text-border fill-transparent stroke-current" // text-border for outline, fill-transparent
+        strokeWidth="2"
+      />
       
       {/* Optional: Subtle gloss/highlight on the bottle - can be enhanced */}
       <path 
         d={`M${bottleBodyX + 10},${bottleBodyY + 10} Q${bottleBodyX + 15},${bottleBodyY + bottleBodyHeight / 2} ${bottleBodyX + 10},${bottleBodyY + bottleBodyHeight -10}`}
-        className="text-white/30 fill-transparent stroke-current"
+        className="text-white/30 fill-transparent stroke-current" // text-white/30 for subtle highlight
         strokeWidth="3"
         strokeLinecap="round"
       />
