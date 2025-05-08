@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { LucideIcon } from 'lucide-react';
@@ -8,6 +9,7 @@ import {
   ChefHat,
   Palette,
   LoaderCircle,
+  FlaskConical, // Added icon for Dilution Calculator
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -33,6 +35,7 @@ interface NavItem {
 
 const mainNavItems: NavItem[] = [
   { href: '/', icon: Home, label: 'Recipe Generator' },
+  { href: '/dilution-calculator', icon: FlaskConical, label: 'Dilution Calculator' }, // Added new item
   { href: '/design-system', icon: Palette, label: 'Design System' },
   { href: '/loading-state', icon: LoaderCircle, label: 'Loading State' },
 ];
@@ -74,7 +77,7 @@ const AppSidebar: React.FC = () => {
   const currentIsUserAccountMenuExpanded = hasMounted ? isUserAccountMenuExpanded : false;
 
   const handleMouseEnter = () => {
-    if (hasMounted && !isClientMobile) { 
+    if (hasMounted && !isClientMobile && !currentIsSidebarOpen) { 
       if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
       setIsHovering(true);
     }
@@ -104,7 +107,7 @@ const AppSidebar: React.FC = () => {
   const sidebarOuterClasses = cn(
     'fixed inset-y-0 left-0 z-40 h-full', 
     'transition-all duration-300 ease-in-out',
-    isHovering && isDesktopClient && !isEffectivelyExpanded ? 'shadow-xl' : 'shadow-lg',
+    isHovering && isDesktopClient && !isEffectivelyExpanded && !currentIsSidebarPinned ? 'shadow-xl' : 'shadow-lg',
     isDesktopClient ? desktopSidebarWidth : `w-full max-w-[287px] ${mobileSidebarTranslate}`
   );
   
@@ -112,7 +115,7 @@ const AppSidebar: React.FC = () => {
     "flex flex-col h-full", 
     "text-[hsl(var(--app-sidebar-foreground))] border-r border-[hsl(var(--app-sidebar-border))]",
     "transition-colors duration-300 ease-in-out", 
-    isHovering && isDesktopClient && !isEffectivelyExpanded ? 'bg-[hsl(var(--app-sidebar-hover-background))]' : 'bg-[hsl(var(--app-sidebar-background))]',
+    isHovering && isDesktopClient && !isEffectivelyExpanded && !currentIsSidebarPinned ? 'bg-[hsl(var(--app-sidebar-hover-background))]' : 'bg-[hsl(var(--app-sidebar-background))]',
     !isClientMobile && !isEffectivelyExpanded && "overflow-x-hidden" 
   );
 
