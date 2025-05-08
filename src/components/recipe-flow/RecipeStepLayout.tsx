@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { ReactNode } from 'react';
@@ -26,8 +25,9 @@ interface RecipeStepLayoutProps {
 }
 
 const FLOW_STEPS = ['demographics', 'causes', 'symptoms', 'properties'];
-const FOOTER_HEIGHT_CLASS = "h-[60px]"; 
-const CONTENT_PADDING_BOTTOM_CLASS = "pb-[76px]"; // Footer height (60px) + some buffer (16px)
+const FOOTER_HEIGHT_CLASS = "h-[var(--footer-nav-height)]"; 
+const CONTENT_PADDING_BOTTOM_CLASS = "pb-[var(--footer-nav-height)] sm:pb-[calc(var(--footer-nav-height)+1rem)]";
+
 
 const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   stepTitle,
@@ -95,20 +95,30 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   const showStartOverButton = currentStep && FLOW_STEPS.includes(currentStep);
 
   return (
-    <div className="flex flex-col flex-1 min-h-0"> 
-      <div className={cn("flex-grow overflow-y-auto", CONTENT_PADDING_BOTTOM_CLASS)}> 
+    <div className={cn(
+      "flex flex-col flex-1 min-h-0", // Ensures this container takes up available space and allows scrolling child
+      "md:justify-center" // Center content vertically on medium screens and up
+      )}> 
+      <div className={cn(
+        "flex-grow overflow-y-auto", 
+        CONTENT_PADDING_BOTTOM_CLASS,
+        "md:flex md:items-center md:justify-center md:overflow-visible md:flex-grow-0" // Reset overflow for centering effect on desktop
+        )}> 
         <div className={cn(
             "container mx-auto py-8 max-w-3xl",
-            "px-4 sm:px-0" 
+            "px-0 sm:px-0", 
+            "md:w-full md:py-0" // Full width and no vertical padding on desktop within its centered box
         )}>
           <div className="mb-6 px-4 sm:px-0">
             <Progress 
               value={progressPercentage} 
-              className="h-1.5 w-full bg-muted [&>div]:bg-gradient-to-r [&>div]:from-aroma-grad-start [&>div]:to-aroma-grad-end"
+              className="h-1.5 w-full bg-muted"
+              indicatorClassName="bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end"
             />
           </div>
           
-          <h1 className="text-3xl font-bold mb-2 text-center text-primary px-4 sm:px-0">{stepTitle}</h1>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 text-center text-primary px-4 sm:px-0">{stepTitle}</h1>
+          
           <p className="text-muted-foreground text-center mb-4 px-4 sm:px-0">
             Preencha as informações abaixo para continuar.
           </p>
@@ -126,7 +136,6 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
             </div>
           )}
 
-          {/* This div (div[2] from XPath) is now a simple full-width wrapper */}
           <div className="w-full">
             {children}
           </div>
@@ -142,7 +151,8 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
             "right-0", 
             isDesktopClientView 
               ? (desktopSidebarIsEffectivelyExpanded ? "md:left-[287px]" : "md:left-[48px]") 
-              : "left-0"
+              : "left-0",
+            "shadow-none sm:shadow-sm" // No shadow on mobile, subtle shadow on sm+
           )}
         >
           <div className="flex gap-2 items-center">
