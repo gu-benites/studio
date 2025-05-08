@@ -26,7 +26,7 @@ interface RecipeStepLayoutProps {
 
 const FLOW_STEPS = ['demographics', 'causes', 'symptoms', 'properties'];
 const FOOTER_HEIGHT_CLASS = "h-[var(--footer-nav-height)]"; 
-const CONTENT_PADDING_BOTTOM_CLASS = "pb-[calc(var(--footer-nav-height)+1rem)]"; // Add a bit more padding than just footer height for spacing
+const CONTENT_PADDING_BOTTOM_CLASS = "pb-[calc(var(--footer-nav-height)+1rem)]"; 
 
 const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   stepTitle,
@@ -99,67 +99,71 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
       )}> 
       <div className={cn(
         "flex-grow overflow-y-auto", 
-        CONTENT_PADDING_BOTTOM_CLASS, // This ensures content above footer is scrollable and padded
+        CONTENT_PADDING_BOTTOM_CLASS, 
         "md:flex md:items-center md:justify-center md:overflow-visible md:flex-grow-0" 
         )}> 
+        {/* Wrapper for desktop card structure (progress bar + content box) */}
         <div className={cn(
-            "w-full", // Full width for mobile, container handles max-width on desktop
-            // Desktop: card-like box with shadow, centered, and margin
-            "md:container md:mx-auto md:max-w-3xl md:bg-card md:rounded-lg md:shadow-lg md:border md:my-8 md:p-6",
-            // Mobile: full bleed, no top padding for the box itself
-            "px-0 pt-0" 
+            "w-full", // Full width on mobile
+            "md:container md:mx-auto md:max-w-3xl md:my-8" // Desktop container for card
         )}>
-          {/* Progress bar container: full width on mobile, respects card padding on desktop */}
-          <div className={cn(
-            "mb-6", // Margin below progress bar
-            "px-0 md:px-0" // No extra horizontal padding here if card has md:p-6
-                           // Or "px-4 sm:px-6 md:px-0" if mobile needs padding for progress bar container
-          )}>
-            <Progress 
-              value={progressPercentage} 
-              className="h-1.5 w-full rounded-none md:rounded-t-md" // Full width, no rounding on mobile, rounded top on desktop
-              indicatorClassName="bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end"
-            />
-          </div>
-          
-          <h1 className={cn(
-            "text-2xl sm:text-3xl font-bold mb-2 text-center text-primary",
-            "px-4 sm:px-6 md:px-0" // Horizontal padding for title on mobile/sm, none on md (card handles it)
-          )}>{stepTitle}</h1>
-          
-          <p className={cn(
-            "text-muted-foreground text-center mb-4",
-            "px-4 sm:px-6 md:px-0"
-            )}>
-            Preencha as informações abaixo para continuar.
-          </p>
-          
-          {stepInstructions && (
-            <p className={cn(
-              "text-muted-foreground text-center mb-6 text-sm",
-              "px-4 sm:px-6 md:px-0"
-              )}>
-              {stepInstructions}
-            </p>
-          )}
-          
-          {error && (
-            <div className={cn(
-              "mb-4 p-3 bg-destructive/10 text-destructive border border-destructive/20 rounded-md text-sm",
-              "mx-4 sm:mx-6 md:mx-0" // Margin for error message
-              )}>
-              <p className="font-semibold">Erro:</p>
-              <p>{error}</p>
+            {/* Progress Bar: Full width on mobile, part of card structure on desktop */}
+            <div>
+                <Progress
+                    value={progressPercentage}
+                    className={cn(
+                        "h-1.5 w-full",
+                        "rounded-none md:rounded-t-lg" // No rounding for mobile, top rounding for desktop card
+                    )}
+                    indicatorClassName="bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end"
+                />
             </div>
-          )}
 
-          {/* Children (step content) will be rendered here */}
-          <div className={cn(
-            "w-full",
-            "px-0 md:px-0" // Children manage their own internal padding if needed (e.g. accordion items)
-          )}>
-            {children}
-          </div>
+            {/* Content Area: Full bleed on mobile, card-like on desktop */}
+            <div className={cn(
+                "w-full",
+                // Desktop card styles: bg, bottom rounding, shadow, border (no top border as progress is top)
+                "md:bg-card md:rounded-b-lg md:shadow-lg md:border md:border-t-0",
+                // Padding: Mobile and Desktop gets padding here. pt-6 because progress bar is flush on top.
+                "p-4 pt-6 sm:p-6" 
+            )}>
+                <h1 className={cn(
+                  "text-2xl font-bold mb-2 text-center text-primary",
+                  "sm:text-3xl" // Responsive text size
+                  // No specific px needed if parent has p-4/sm:p-6
+                )}>{stepTitle}</h1>
+                
+                <p className={cn(
+                    "text-muted-foreground text-center mb-4"
+                    )}>
+                    Preencha as informações abaixo para continuar.
+                </p>
+                
+                {stepInstructions && (
+                    <p className={cn(
+                    "text-muted-foreground text-center mb-6 text-sm"
+                    )}>
+                    {stepInstructions}
+                    </p>
+                )}
+                
+                {error && (
+                    <div className={cn(
+                    "mb-4 p-3 bg-destructive/10 text-destructive border border-destructive/20 rounded-md text-sm"
+                    // No specific mx needed if parent has p-4/sm:p-6
+                    )}>
+                    <p className="font-semibold">Erro:</p>
+                    <p>{error}</p>
+                    </div>
+                )}
+
+                {/* Children (step content) will be rendered here */}
+                <div className={cn(
+                    "w-full" // Children will manage their own internal layout/padding if necessary
+                )}>
+                    {children}
+                </div>
+            </div>
         </div>
       </div>
 
