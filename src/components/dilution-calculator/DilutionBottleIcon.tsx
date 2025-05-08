@@ -11,60 +11,66 @@ interface DilutionBottleIconProps {
 export const DilutionBottleIcon: React.FC<DilutionBottleIconProps> = ({ percentage, className }) => {
   const validPercentage = Math.max(0, Math.min(100, percentage));
 
-  // SVG viewBox dimensions from user's SVG
   const viewBoxWidth = 100;
   const viewBoxHeight = 200;
 
-  // Dimensions for the fillable part of the bottle body
-  // Based on the path: M 25 162 L 25 90 ... L 75 90 L 75 162 ...
   const fillRectX = 25;
-  const fillRectYStart = 90; // Top of the straight part of the bottle body
-  const fillRectYEnd = 162;   // Bottom of the straight part of the bottle body
-  const fillRectWidth = 50;   // 75 - 25
-  const fillableHeight = fillRectYEnd - fillRectYStart; // 162 - 90 = 72
+  const fillRectYStart = 90; 
+  const fillRectYEnd = 162;   
+  const fillRectWidth = 50;   
+  const fillableHeight = fillRectYEnd - fillRectYStart; // 72
 
-  // Calculate fill height and Y position based on percentage
   const currentFillHeight = (fillableHeight * validPercentage) / 100;
   const currentFillY = fillRectYStart + (fillableHeight - currentFillHeight);
+  
+  const clipPathId = "bottleClipPath";
 
   return (
     <svg
       viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
-      className={cn("fill-current", className)} // fill-current will be used by rect for liquid
+      className={cn("fill-current", className)} 
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
+      <defs>
+        <clipPath id={clipPathId}>
+          {/* This path defines the inner shape of the bottle body for clipping the liquid */}
+          <path d="M 25 90 L 25 154 A 8 8 0 0 0 33 162 L 67 162 A 8 8 0 0 0 75 154 L 75 90 Z" />
+        </clipPath>
+      </defs>
+
       {/* Liquid Fill - primary color - Rendered first to be behind the outline */}
       {validPercentage > 0 && (
         <rect
           x={fillRectX}
-          y={currentFillY}
+          y={currentFillY} 
           width={fillRectWidth}
           height={currentFillHeight}
-          className="text-primary" // Uses primary theme color for fill
+          className="text-primary" 
+          clipPath={`url(#${clipPathId})`} // Apply the clipPath
         />
       )}
 
-      {/* Bottle Outline Path - from user */}
+      {/* Bottle Outline Path */}
       <path
         d="M 25 162 L 25 90 A 13 20 0 0 1 38 70 L 62 70 A 13 20 0 0 1 75 90 L 75 162 A 8 8 0 0 1 67 170 L 33 170 A 8 8 0 0 1 25 162 Z"
-        stroke="currentColor" // Use currentColor for theme-aware stroke
+        stroke="currentColor" 
         strokeWidth="2"
-        fill="transparent" // Ensure path itself is transparent
-        className="text-border" // Use border color from theme for the outline
+        fill="transparent" 
+        className="text-border" 
       />
 
-      {/* Bottle Cap - from user, adapted for theming */}
+      {/* Bottle Cap */}
       <rect
         x="32"
         y="46"
         width="36"
         height="24"
         rx="4"
-        fill="hsl(var(--muted-foreground))" // Themed cap color
-        stroke="currentColor" // Use currentColor for theme-aware stroke
+        fill="hsl(var(--muted-foreground))" 
+        stroke="currentColor" 
         strokeWidth="2"
-        className="text-border" // Use border color from theme for the cap outline
+        className="text-border" 
       />
     </svg>
   );
