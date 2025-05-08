@@ -58,6 +58,7 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   }, []);
 
   const desktopSidebarIsEffectivelyExpanded = isDesktopClientView && (isSidebarPinned || isUserAccountMenuExpanded);
+  const isAccordionStep = currentStep === 'causes' || currentStep === 'symptoms';
 
   const handleNextClick = async () => {
     if (onNext) {
@@ -95,53 +96,53 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
   return (
     <div className={cn(
       "flex flex-col flex-1 min-h-0", 
-      "md:justify-center" 
+       "md:justify-center" 
       )}> 
       <div className={cn(
-        "flex-grow overflow-y-auto", 
+        "flex-grow", 
         CONTENT_PADDING_BOTTOM_CLASS, 
-        "md:flex md:items-center md:justify-center md:overflow-visible md:flex-grow-0" 
+        "md:flex md:items-center md:justify-center md:flex-grow-0",
+        isAccordionStep ? "overflow-y-auto md:overflow-visible" : "overflow-y-auto" // Ensure scroll for accordion steps, others as needed
         )}> 
-        {/* Wrapper for desktop card structure (progress bar + content box) */}
         <div className={cn(
-            "w-full", // Full width on mobile
-            "md:container md:mx-auto md:max-w-3xl md:my-8" // Desktop container for card
+            "w-full", 
+            "md:container md:mx-auto md:max-w-3xl md:my-8" 
         )}>
-            {/* Progress Bar: Full width on mobile, part of card structure on desktop */}
             <div>
                 <Progress
                     value={progressPercentage}
                     className={cn(
                         "h-1.5 w-full",
-                        "rounded-none md:rounded-t-lg" // No rounding for mobile, top rounding for desktop card
+                        "md:rounded-t-lg" 
                     )}
                     indicatorClassName="bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end"
                 />
             </div>
-
-            {/* Content Area: Full bleed on mobile, card-like on desktop */}
             <div className={cn(
                 "w-full",
-                // Desktop card styles: bg, bottom rounding, shadow, border (no top border as progress is top)
                 "md:bg-card md:rounded-b-lg md:shadow-lg md:border md:border-t-0",
-                // Padding: Mobile and Desktop gets padding here. pt-6 because progress bar is flush on top.
-                "p-4 pt-6 sm:p-6" 
+                 // Padding:
+                "pt-6 pb-4", // Consistent vertical padding
+                isAccordionStep ? "px-0 md:px-6" : "px-4 sm:px-6", // Conditional horizontal padding for mobile
+                "sm:pb-6" // Desktop bottom padding (sm:p-6 includes this but this ensures it if px-0 is active)
             )}>
                 <h1 className={cn(
                   "text-2xl font-bold mb-2 text-center text-primary",
-                  "sm:text-3xl" // Responsive text size
-                  // No specific px needed if parent has p-4/sm:p-6
+                  "sm:text-3xl", 
+                  isAccordionStep ? "px-4 sm:px-0" : "" // Add horizontal padding back for title if step is accordion
                 )}>{stepTitle}</h1>
                 
                 <p className={cn(
-                    "text-muted-foreground text-center mb-4"
+                    "text-muted-foreground text-center mb-4",
+                    isAccordionStep ? "px-4 sm:px-0" : "" // Add horizontal padding back for subtitle if step is accordion
                     )}>
                     Preencha as informações abaixo para continuar.
                 </p>
                 
                 {stepInstructions && (
                     <p className={cn(
-                    "text-muted-foreground text-center mb-6 text-sm"
+                    "text-muted-foreground text-center mb-6 text-sm",
+                    isAccordionStep ? "px-4 sm:px-0" : "" // Add horizontal padding back for instructions if step is accordion
                     )}>
                     {stepInstructions}
                     </p>
@@ -149,17 +150,15 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
                 
                 {error && (
                     <div className={cn(
-                    "mb-4 p-3 bg-destructive/10 text-destructive border border-destructive/20 rounded-md text-sm"
-                    // No specific mx needed if parent has p-4/sm:p-6
+                    "mb-4 p-3 bg-destructive/10 text-destructive border border-destructive/20 rounded-md text-sm",
+                    isAccordionStep ? "mx-4 sm:mx-0" : "" // Add horizontal margin if step is accordion (to mimic padding effect)
                     )}>
                     <p className="font-semibold">Erro:</p>
                     <p>{error}</p>
                     </div>
                 )}
-
-                {/* Children (step content) will be rendered here */}
                 <div className={cn(
-                    "w-full" // Children will manage their own internal layout/padding if necessary
+                    "w-full" 
                 )}>
                     {children}
                 </div>
@@ -176,8 +175,8 @@ const RecipeStepLayout: React.FC<RecipeStepLayoutProps> = ({
             "right-0", 
             isDesktopClientView 
               ? (desktopSidebarIsEffectivelyExpanded ? "md:left-[287px]" : "md:left-[48px]") 
-              : "left-0",
-            "shadow-none sm:shadow-sm" 
+              : "left-0"
+             // Removed shadow-none sm:shadow-sm to let card handle shadow on desktop
           )}
         >
           <div className="flex gap-2 items-center">
