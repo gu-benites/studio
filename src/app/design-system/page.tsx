@@ -13,6 +13,7 @@ import { RelevancyBadge } from '@/components/ui/relevancy-badge';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
+import { Badge } from "@/components/ui/badge"; // Added import for Badge
 
 // Define colors from the AromaChat design system for this page specifically
 const aromaColors = {
@@ -306,7 +307,16 @@ const DesignSystemPage: NextPage = () => {
                         
                         <div>
                             <Label htmlFor="chat-input" className="block text-sm font-medium text-aroma-text mb-2">Chat Input (New Style)</Label>
-                            <form onSubmit={handleFormSubmit} className="group relative rounded-md border border-input p-px hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start/20 to-aroma-grad-end/20 transition-all duration-200 ease-in-out focus-within:from-aroma-grad-start/50 focus-within:to-aroma-grad-end/50 hover:shadow-[0_0_0_1px_hsl(var(--aroma-grad-start)_/_0.1),_0_0_0_1px_hsl(var(--aroma-grad-end)_/_0.1)] focus-within:shadow-[0_0_0_1px_hsl(var(--aroma-grad-start)_/_0.3),_0_0_0_1px_hsl(var(--aroma-grad-end)_/_0.3)]">
+                            <form onSubmit={handleFormSubmit} 
+                                className="group relative rounded-md border border-input p-px 
+                                           hover:border-transparent focus-within:border-transparent 
+                                           hover:bg-gradient-to-r focus-within:bg-gradient-to-r 
+                                           from-aroma-grad-start/20 to-aroma-grad-end/20 
+                                           transition-all duration-200 ease-in-out 
+                                           focus-within:from-aroma-grad-start/50 focus-within:to-aroma-grad-end/50 
+                                           hover:shadow-[0_0_0_1px_hsl(var(--aroma-grad-start)_/_0.1)] 
+                                           focus-within:shadow-[0_0_0_1px_hsl(var(--aroma-grad-start)_/_0.3)]"
+                            >
                                 <div className="flex items-center w-full bg-card rounded-[calc(theme(borderRadius.md)-1px)] p-1 pr-1.5 shadow-sm">
                                     <Search className="h-5 w-5 text-muted-foreground mx-3 pointer-events-none" />
                                     <Separator orientation="vertical" className="h-6 mr-2 bg-border" />
@@ -353,7 +363,7 @@ const DesignSystemPage: NextPage = () => {
                     key={item.id}
                     className={cn(
                       "transition-colors",
-                      index !== 0 && "border-t", // Add top border for all but the first
+                      index !== 0 && "border-t", 
                       isChecked ? "bg-primary/10" : "bg-card"
                     )}
                   >
@@ -371,7 +381,7 @@ const DesignSystemPage: NextPage = () => {
                           id={`style1-switch-${item.id}`}
                           checked={isChecked}
                           onCheckedChange={(checked) => handleAccordionToggle(item.id, checked, selectedStyle1, setSelectedStyle1, setOpenStyle1)}
-                          className="shrink-0 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input" // Standard ShadCN switch
+                          className="shrink-0 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input"
                           aria-labelledby={`style1-label-${item.id}`}
                           onClick={(e) => e.stopPropagation()}
                         />
@@ -433,7 +443,7 @@ const DesignSystemPage: NextPage = () => {
                           id={`style2-switch-${item.id}`}
                           checked={isChecked}
                           onCheckedChange={(checked) => handleAccordionToggle(item.id, checked, selectedStyle2, setSelectedStyle2, setOpenStyle2)}
-                          className="shrink-0 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input" // Standard ShadCN switch
+                          className="shrink-0 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input"
                           aria-labelledby={`style2-label-${item.id}`}
                           onClick={(e) => e.stopPropagation()}
                         />
@@ -560,3 +570,4 @@ const DesignSystemPage: NextPage = () => {
 };
 
 export default DesignSystemPage;
+
