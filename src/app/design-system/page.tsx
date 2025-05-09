@@ -5,6 +5,9 @@ import type { NextPage } from 'next';
 import Head from 'next/head';
 import React from 'react';
 import { ArrowRight, AlertTriangle, Search, ArrowUp, Sparkles, ChevronDown } from 'lucide-react';
+import * as AccordionPrimitive from "@radix-ui/react-accordion"
+
+
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
@@ -13,7 +16,7 @@ import { RelevancyBadge } from '@/components/ui/relevancy-badge';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
-import { Badge } from "@/components/ui/badge"; // Added import for Badge
+import { Badge } from "@/components/ui/badge";
 
 // Define colors from the AromaChat design system for this page specifically
 const aromaColors = {
@@ -88,6 +91,7 @@ const DesignSystemPage: NextPage = () => {
     if (isChecked) {
       setOpenItems(prevOpen => [...new Set([...prevOpen, itemId])]);
     } else {
+       // Only close if it was open due to this item
        setOpenItems(prevOpen => prevOpen.filter(id => id !== itemId)); 
     }
   };
@@ -308,7 +312,7 @@ const DesignSystemPage: NextPage = () => {
                         <div>
                             <Label htmlFor="chat-input" className="block text-sm font-medium text-aroma-text mb-2">Chat Input (New Style)</Label>
                             <form onSubmit={handleFormSubmit} 
-                                className="group relative rounded-md border border-input p-px 
+                                className="group relative rounded-md border border-input p-[1px] 
                                            hover:border-transparent focus-within:border-transparent 
                                            hover:bg-gradient-to-r focus-within:bg-gradient-to-r 
                                            from-aroma-grad-start/20 to-aroma-grad-end/20 
@@ -317,7 +321,7 @@ const DesignSystemPage: NextPage = () => {
                                            hover:shadow-[0_0_0_1px_hsl(var(--aroma-grad-start)_/_0.1)] 
                                            focus-within:shadow-[0_0_0_1px_hsl(var(--aroma-grad-start)_/_0.3)]"
                             >
-                                <div className="flex items-center w-full bg-card rounded-[calc(theme(borderRadius.md)-1px)] p-1 pr-1.5 shadow-sm">
+                                <div className="flex items-center w-full bg-card rounded-[calc(theme(borderRadius.md)-1.5px)] p-1 pr-1.5 shadow-sm">
                                     <Search className="h-5 w-5 text-muted-foreground mx-3 pointer-events-none" />
                                     <Separator orientation="vertical" className="h-6 mr-2 bg-border" />
                                     <Input
@@ -367,37 +371,44 @@ const DesignSystemPage: NextPage = () => {
                       isChecked ? "bg-primary/10" : "bg-card"
                     )}
                   >
-                    <AccordionTrigger
-                      onClick={() => handleTriggerClick(item.id, setOpenStyle1)}
-                      className={cn(
-                        "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 transition-colors",
-                        isChecked ? "hover:bg-primary/15" : "hover:bg-muted/50",
-                        "focus-visible:ring-offset-card"
-                      )}
-                      showChevron={false}
-                    >
-                      <div className="flex items-center space-x-3 flex-1 min-w-0">
-                        <Switch
-                          id={`style1-switch-${item.id}`}
-                          checked={isChecked}
-                          onCheckedChange={(checked) => handleAccordionToggle(item.id, checked, selectedStyle1, setSelectedStyle1, setOpenStyle1)}
-                          className="shrink-0 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input"
-                          aria-labelledby={`style1-label-${item.id}`}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                        <Label
-                          htmlFor={`style1-switch-${item.id}`}
-                          id={`style1-label-${item.id}`}
-                          className="font-medium text-base cursor-pointer flex-1 truncate"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAccordionToggle(item.id, !isChecked, selectedStyle1, setSelectedStyle1, setOpenStyle1);
-                          }}
-                        >
-                          {item.name}
-                        </Label>
+                    {/* Custom header layout */}
+                    <AccordionPrimitive.Header className="flex">
+                      <div className={cn(
+                        "flex w-full items-center justify-between px-4 py-3 text-left transition-colors",
+                        isChecked ? "hover:bg-primary/15" : "hover:bg-muted/50"
+                      )}>
+                        <div className="flex items-center space-x-3 flex-1 min-w-0">
+                          <Switch
+                            id={`style1-switch-${item.id}`}
+                            checked={isChecked}
+                            onCheckedChange={(checked) => handleAccordionToggle(item.id, checked, selectedStyle1, setSelectedStyle1, setOpenStyle1)}
+                            className="shrink-0 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input"
+                            aria-labelledby={`style1-label-${item.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <AccordionTrigger
+                            onClick={() => handleTriggerClick(item.id, setOpenStyle1)}
+                            className={cn(
+                              "p-0 flex-1 text-left hover:no-underline",
+                              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card"
+                            )}
+                            showChevron={false}
+                          >
+                            <Label
+                              htmlFor={`style1-switch-${item.id}`}
+                              id={`style1-label-${item.id}`}
+                              className="font-medium text-base cursor-pointer flex-1 truncate"
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent AccordionTrigger's onClick
+                                handleAccordionToggle(item.id, !isChecked, selectedStyle1, setSelectedStyle1, setOpenStyle1);
+                              }}
+                            >
+                              {item.name}
+                            </Label>
+                          </AccordionTrigger>
+                        </div>
                       </div>
-                    </AccordionTrigger>
+                    </AccordionPrimitive.Header>
                     <AccordionContent className="px-4 pb-4 pt-1 space-y-1 bg-card/50">
                       <p className="text-sm text-muted-foreground">{item.suggestion}</p>
                       <p className="text-xs text-muted-foreground/80">{item.explanation}</p>
@@ -425,41 +436,47 @@ const DesignSystemPage: NextPage = () => {
                     value={item.id}
                     key={item.id}
                     className={cn(
-                      "transition-colors border rounded-lg overflow-hidden bg-card text-card-foreground shadow-sm",
+                      "transition-colors border rounded-lg overflow-hidden shadow-sm",
                       isChecked ? "bg-primary/10" : "bg-card"
                     )}
                   >
-                    <AccordionTrigger
-                      onClick={() => handleTriggerClick(item.id, setOpenStyle2)}
-                      className={cn(
-                        "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 transition-colors",
-                        isChecked ? "hover:bg-primary/15" : "hover:bg-muted/50",
-                        "focus-visible:ring-offset-card"
-                      )}
-                      showChevron={false}
-                    >
-                      <div className="flex items-center space-x-3 flex-1 min-w-0">
-                        <Switch
-                          id={`style2-switch-${item.id}`}
-                          checked={isChecked}
-                          onCheckedChange={(checked) => handleAccordionToggle(item.id, checked, selectedStyle2, setSelectedStyle2, setOpenStyle2)}
-                          className="shrink-0 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input"
-                          aria-labelledby={`style2-label-${item.id}`}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                        <Label
-                          htmlFor={`style2-switch-${item.id}`}
-                          id={`style2-label-${item.id}`}
-                          className="font-medium text-base cursor-pointer flex-1 truncate"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAccordionToggle(item.id, !isChecked, selectedStyle2, setSelectedStyle2, setOpenStyle2);
-                          }}
-                        >
-                          {item.name}
-                        </Label>
+                     <AccordionPrimitive.Header className="flex">
+                       <div className={cn(
+                        "flex w-full items-center justify-between px-4 py-3 text-left transition-colors",
+                        isChecked ? "hover:bg-primary/15" : "hover:bg-muted/50"
+                      )}>
+                        <div className="flex items-center space-x-3 flex-1 min-w-0">
+                          <Switch
+                            id={`style2-switch-${item.id}`}
+                            checked={isChecked}
+                            onCheckedChange={(checked) => handleAccordionToggle(item.id, checked, selectedStyle2, setSelectedStyle2, setOpenStyle2)}
+                            className="shrink-0 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input"
+                            aria-labelledby={`style2-label-${item.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                           <AccordionTrigger
+                            onClick={() => handleTriggerClick(item.id, setOpenStyle2)}
+                            className={cn(
+                              "p-0 flex-1 text-left hover:no-underline",
+                              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card"
+                            )}
+                            showChevron={false}
+                          >
+                            <Label
+                              htmlFor={`style2-switch-${item.id}`}
+                              id={`style2-label-${item.id}`}
+                              className="font-medium text-base cursor-pointer flex-1 truncate"
+                               onClick={(e) => {
+                                e.stopPropagation();
+                                handleAccordionToggle(item.id, !isChecked, selectedStyle2, setSelectedStyle2, setOpenStyle2);
+                              }}
+                            >
+                              {item.name}
+                            </Label>
+                          </AccordionTrigger>
+                        </div>
                       </div>
-                    </AccordionTrigger>
+                    </AccordionPrimitive.Header>
                     <AccordionContent className="px-4 pb-4 pt-1 space-y-1 bg-card/50">
                       <p className="text-sm text-muted-foreground">{item.suggestion}</p>
                       <p className="text-xs text-muted-foreground/80">{item.explanation}</p>
@@ -498,6 +515,7 @@ const DesignSystemPage: NextPage = () => {
                     )}
                     showChevron={true} 
                   >
+                    {/* Label now acts as the direct child content for AccordionTrigger */}
                     <Label className="font-medium text-base cursor-pointer flex-1 truncate">
                       {item.name}
                     </Label>
@@ -570,4 +588,3 @@ const DesignSystemPage: NextPage = () => {
 };
 
 export default DesignSystemPage;
-
