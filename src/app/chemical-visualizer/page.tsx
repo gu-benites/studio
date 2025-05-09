@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { NextPage } from 'next';
@@ -5,7 +6,7 @@ import Head from 'next/head';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, Loader2, ImageOff, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
-import dynamic from 'next/dynamic'; // Import dynamic
+import dynamic from 'next/dynamic'; 
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,14 +18,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from "@/hooks/use-toast";
-// import { ThreeDViewer } from '@/components/chemical-visualizer/ThreeDViewer'; 
 import type { MoleculeData } from '@/components/chemical-visualizer/ThreeDViewer';
 
-// Dynamically import ThreeDViewer
 const ThreeDViewer = dynamic(() => 
   import('@/components/chemical-visualizer/ThreeDViewer').then(mod => mod.ThreeDViewer),
   { 
-    ssr: false, // Often good for client-side heavy components
+    ssr: false, 
     loading: () => (
       <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -55,8 +54,8 @@ const ChemicalVisualizerPage: NextPage = () => {
   const [searchTerm, setSearchTerm] = useState<string>('22311'); 
   const [searchResults, setSearchResults] = useState<{ cid: string; title: string }[]>([]);
   const [statusMessage, setStatusMessage] = useState<string>('Default: Limonene (22311). Visualize to load.');
-  const [isLoading, setIsLoading] = useState<boolean>(false); // For API calls
-  const [isViewerBusy, setIsViewerBusy] = useState<boolean>(false); // For 3D rendering operations feedback
+  const [isLoading, setIsLoading] = useState<boolean>(false); 
+  const [isViewerBusy, setIsViewerBusy] = useState<boolean>(false); 
 
   const [compoundName, setCompoundName] = useState<string>('');
   const [molecularFormula, setMolecularFormula] = useState<string>('');
@@ -71,7 +70,6 @@ const ChemicalVisualizerPage: NextPage = () => {
 
   useEffect(() => {
     setHasMounted(true);
-    // Load default compound on mount after client-side hydration
     loadCompoundByCID('22311');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -82,10 +80,9 @@ const ChemicalVisualizerPage: NextPage = () => {
   };
 
   const parseSDF = useCallback((sdfData: string): MoleculeData => {
-    const lines = sdfData.split('
-'); 
-    const atoms: Atom[] = []; // Explicitly type 'atoms'
-    const bonds: Bond[] = []; // Explicitly type 'bonds'
+    const lines = sdfData.split('\n'); 
+    const atoms: Atom[] = []; 
+    const bonds: Bond[] = []; 
     if (lines.length < 4) {
       console.error("SDF data too short.");
       return { atoms, bonds };
@@ -133,7 +130,7 @@ const ChemicalVisualizerPage: NextPage = () => {
       const line = lines[lineIndex];
       const atom1Idx = parseInt(line.substring(0, 3), 10) - 1; 
       const atom2Idx = parseInt(line.substring(3, 6), 10) - 1; 
-      const type = parseInt(line.substring(6, 9), 10); // bondType
+      const type = parseInt(line.substring(6, 9), 10); 
       if (!isNaN(atom1Idx) && !isNaN(atom2Idx) && !isNaN(type) && atom1Idx < atoms.length && atom2Idx < atoms.length) {
         bonds.push({ atom1Idx, atom2Idx, type }); 
       } else {
@@ -150,7 +147,6 @@ const ChemicalVisualizerPage: NextPage = () => {
     setCompoundName('');
     setMolecularFormula('');
     setStructureImageUrl(null);
-    // setParsedMoleculeData(null); // This line was removed in the previous fix
 
     try {
       const namePromise = fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/property/Title/JSON`);
@@ -217,7 +213,6 @@ const ChemicalVisualizerPage: NextPage = () => {
     setCompoundName('');
     setMolecularFormula('Searching...');
     setStructureImageUrl(null);
-    // setParsedMoleculeData(null); // Also consider if this is needed here or handled by loadCompoundByCID
     setSearchResults([]); 
 
     try {
@@ -295,7 +290,7 @@ const ChemicalVisualizerPage: NextPage = () => {
     setCompoundName('');
     setMolecularFormula('');
     setStructureImageUrl(null);
-    setParsedMoleculeData(null); // Resetting here is fine as it's a full manual reset
+    setParsedMoleculeData(null); 
     setRepresentation('ballAndStick');
     setAtomScaleFactor(1.0);
     setBondRadius(0.1);
@@ -491,7 +486,7 @@ const ChemicalVisualizerPage: NextPage = () => {
                     atomScaleFactor={atomScaleFactor}
                     bondRadius={bondRadius}
                     showHydrogens={showHydrogens}
-                    isLoading={isViewerBusy || isLoading} // Pass combined loading state
+                    isLoading={isViewerBusy || isLoading} 
                  />}
               </CardContent>
             </Card>
