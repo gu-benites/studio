@@ -101,7 +101,7 @@ This section details the implementation for the "Causes" to "Symptoms" step tran
 
 ### Phase 5: Testing (Causes -> Symptoms)
 
--   **[ ] 7. Verify the Flow (Causes -> Symptoms):**
+-   **[X] 7. Verify the Flow (Causes -> Symptoms):**
     -   Navigate to the Causes step.
     -   Select one or more causes.
     -   Click "Próximo".
@@ -110,3 +110,65 @@ This section details the implementation for the "Causes" to "Symptoms" step tran
     -   Verify the progress bar and time elapsed update smoothly.
     -   Confirm the `LoadingSymptomsScreen` disappears and the actual content of the `SymptomsStep` appears once the API call for symptoms completes and the `isFetchingSymptoms` state is set to false.
     -   Test error scenarios during the `getPotentialSymptoms` API call.
+
+---
+
+## Loading Screen: Symptoms to Properties
+
+This section details the implementation for the "Symptoms" to "Properties" step transition.
+
+### Phase 1: Preparation & Component Creation (Symptoms -> Properties)
+
+-   **[X] 1. Design the Loading Screen UI (Properties):**
+    -   Reuse the design from `app_docs/01_loading_feature.html` but with step messages tailored for fetching therapeutic properties.
+-   **[X] 2. Create the Loading Screen Component (Properties):**
+    -   Create `src/components/recipe-flow/LoadingPropertiesScreen.tsx`.
+    -   Implement pulsing circles, dynamic step messages (based on selected symptoms and potentially causes), progress bar, and time elapsed.
+    -   Component manages its own animation based on configured steps/durations.
+    -   Example messages for `LoadingPropertiesScreen.tsx`:
+        - "Conectando ao Servidor..."
+        - "Analisando Sintomas Selecionados: {symptom1, symptom2...}"
+        - "Buscando Propriedades Terapêuticas..."
+        - "Combinando Propriedades com Sintomas e Causas..."
+        - "Finalizando Lista de Propriedades..."
+
+### Phase 2: Context (State Management) Updates (Symptoms -> Properties)
+
+-   **[X] 3. Add State to Manage Loading Screen Visibility (Properties):**
+    -   Open `src/contexts/RecipeFormContext.tsx`.
+    -   Add `isFetchingProperties: boolean` and `setIsFetchingProperties: (fetching: boolean) => void`.
+    -   Include these in the context provider's value.
+
+### Phase 3: Triggering the Loading Screen (SymptomsStep.tsx)
+
+-   **[X] 4. Modify `SymptomsStep.tsx`:**
+    -   Import `setIsFetchingProperties` from `useRecipeForm`.
+    -   In `handleSubmitSymptoms` (the function handling "Next"):
+        -   **[X] a. Set `setIsFetchingProperties(true)`:** Call before the API call.
+        -   **[X] b. Navigate Immediately:** Router push to `/create-recipe/properties`.
+        -   **[X] c. Update `currentStep` in Context:** `setCurrentStep('properties')`.
+    -   **[X] d. Initiate API Call:** Call `getMedicalProperties`.
+    -   **[X] e. In `finally` block:** Call `setIsFetchingProperties(false)`.
+
+### Phase 4: Displaying the Loading Screen (CreateRecipeStepPage.tsx - Properties)
+
+-   **[X] 5. Modify `src/app/(recipe-flow)/create-recipe/[step]/page.tsx` (again):**
+    -   Import `LoadingPropertiesScreen`.
+    -   Import `isFetchingProperties` from `useRecipeForm`.
+    -   **[X] Add Conditional Rendering for Properties Loading:**
+        -   `if (step === 'properties' && isFetchingProperties)` then render `LoadingPropertiesScreen`.
+        -   Else, render `PropertiesOilsStep` (when `step === 'properties'` and not fetching properties, though it has its own internal loading for oils).
+    -   **[X] 6. Adjust Navigation Controls (If applicable for Properties):**
+        -   Ensure `RecipeStepLayout`'s "Next" button is appropriately disabled if `isFetchingProperties` is active for the properties step.
+
+### Phase 5: Testing (Symptoms -> Properties)
+
+-   **[ ] 7. Verify the Flow (Symptoms -> Properties):**
+    -   Navigate to the Symptoms step.
+    -   Select one or more symptoms.
+    -   Click "Próximo".
+    -   Confirm immediate navigation to `/create-recipe/properties` (URL change) and that the `LoadingPropertiesScreen` appears instantly.
+    -   Confirm the dynamic loading messages in `LoadingPropertiesScreen` (e.g., mentioning selected symptoms) update correctly.
+    -   Verify the progress bar and time elapsed update smoothly.
+    -   Confirm the `LoadingPropertiesScreen` disappears and the actual content of the `PropertiesOilsStep` appears once the API call for medical properties completes and the `isFetchingProperties` state is set to false.
+    -   Test error scenarios during the `getMedicalProperties` API call.

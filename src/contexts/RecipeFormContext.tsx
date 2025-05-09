@@ -1,3 +1,4 @@
+// src/contexts/RecipeFormContext.tsx
 "use client";
 
 import type { ReactNode } from 'react';
@@ -79,8 +80,10 @@ interface RecipeFormContextType {
   setIsLoading: (loading: boolean) => void;
   isFetchingCauses: boolean; 
   setIsFetchingCauses: (fetching: boolean) => void; 
-  isFetchingSymptoms: boolean; // New state for symptoms loading screen
-  setIsFetchingSymptoms: (fetching: boolean) => void; // Setter for the new state
+  isFetchingSymptoms: boolean; 
+  setIsFetchingSymptoms: (fetching: boolean) => void; 
+  isFetchingProperties: boolean; // New state for properties loading screen
+  setIsFetchingProperties: (fetching: boolean) => void; // Setter for the new state
   error: string | null;
   setError: (error: string | null) => void;
   isFormValid: boolean; // Represents validity of the current step's form
@@ -112,7 +115,8 @@ export const RecipeFormProvider = ({ children }: { children: ReactNode }) => {
   const [currentStep, setCurrentStepState] = useState<string | null>(null);
   const [isLoading, setIsLoadingState] = useState<boolean>(false); // Global API loading
   const [isFetchingCauses, setIsFetchingCausesState] = useState<boolean>(false); 
-  const [isFetchingSymptoms, setIsFetchingSymptomsState] = useState<boolean>(false); // Initialize new state
+  const [isFetchingSymptoms, setIsFetchingSymptomsState] = useState<boolean>(false); 
+  const [isFetchingProperties, setIsFetchingPropertiesState] = useState<boolean>(false); // Initialize new state
   const [error, setErrorState] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isFormValid, setIsFormValid] = useState<boolean>(false); // Current step form validity
@@ -145,7 +149,8 @@ export const RecipeFormProvider = ({ children }: { children: ReactNode }) => {
     setCurrentStepState(null);
     setIsLoadingState(false);
     setIsFetchingCausesState(false); 
-    setIsFetchingSymptomsState(false); // Reset new state
+    setIsFetchingSymptomsState(false); 
+    setIsFetchingPropertiesState(false); // Reset new state
     setErrorState(null);
     setIsFormValid(false);
     removeItem(SESSION_STORAGE_KEY);
@@ -166,8 +171,12 @@ export const RecipeFormProvider = ({ children }: { children: ReactNode }) => {
     setIsFetchingCausesState(fetching);
   }, []);
 
-  const setIsFetchingSymptoms = useCallback((fetching: boolean) => { // Define setter for new state
+  const setIsFetchingSymptoms = useCallback((fetching: boolean) => { 
     setIsFetchingSymptomsState(fetching);
+  }, []);
+
+  const setIsFetchingProperties = useCallback((fetching: boolean) => { // Define setter for new state
+    setIsFetchingPropertiesState(fetching);
   }, []);
   
   const setError = useCallback((errorMsg: string | null) => {
@@ -193,8 +202,10 @@ export const RecipeFormProvider = ({ children }: { children: ReactNode }) => {
         setIsLoading,
         isFetchingCauses, 
         setIsFetchingCauses, 
-        isFetchingSymptoms, // Provide new state
-        setIsFetchingSymptoms, // Provide setter for new state
+        isFetchingSymptoms, 
+        setIsFetchingSymptoms, 
+        isFetchingProperties, // Provide new state
+        setIsFetchingProperties, // Provide setter for new state
         error,
         setError,
         isFormValid,

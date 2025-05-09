@@ -20,27 +20,34 @@ interface PotentialSymptom {
 
 const SymptomsStep: React.FC = () => {
   const router = useRouter();
-  const { formData, updateFormData, setCurrentStep, setIsLoading, setError, updateFormValidity } = useRecipeForm();
+  const { 
+    formData, 
+    updateFormData, 
+    setCurrentStep, 
+    setIsLoading, 
+    setError, 
+    updateFormValidity,
+    setIsFetchingProperties // Destructure new setter
+  } = useRecipeForm();
 
   const [selectedSymptomsState, setSelectedSymptomsState] = useState<Pick<PotentialSymptom, 'symptom_name'>[]>(
     formData.selectedSymptoms || []
   );
-  const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([]);
+  const [openAccordionItems, setOpenAccordionItems] = useState<string[]>(
+    formData.selectedSymptoms?.map(s => s.symptom_name).filter(Boolean) as string[] || []
+  );
 
   useEffect(() => {
     if (formData.selectedSymptoms) {
       setSelectedSymptomsState(formData.selectedSymptoms);
-    }
-  }, [formData.selectedSymptoms]);
-
-  // Synchronize accordion open state with selected symptoms
-  useEffect(() => {
-    const newOpenItems = selectedSymptomsState.map(symptom => symptom.symptom_name).filter(Boolean) as string[];
-     // Basic check to prevent re-setting identical array
-    if (JSON.stringify(openAccordionItems.sort()) !== JSON.stringify(newOpenItems.sort())) {
+      // Sync accordion open state with selected symptoms when form data initially loads
+      const newOpenItems = formData.selectedSymptoms.map(s => s.symptom_name).filter(Boolean) as string[];
+      if (JSON.stringify(openAccordionItems.sort()) !== JSON.stringify(newOpenItems.sort())) {
         setOpenAccordionItems(newOpenItems);
+      }
     }
-  }, [selectedSymptomsState, openAccordionItems]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.selectedSymptoms]);
 
 
   useEffect(() => {
@@ -49,16 +56,21 @@ const SymptomsStep: React.FC = () => {
 
 
   const handleSelectionToggle = useCallback((toggledSymptom: PotentialSymptom, newCheckedState: boolean) => {
+    const symptomId = toggledSymptom.symptom_name;
     setSelectedSymptomsState(prevSelected => {
-      const symptomId = toggledSymptom.symptom_name;
-      if (newCheckedState) { // If switch is now checked
-        // Add if not already present
+      if (newCheckedState) {
         if (prevSelected.some(s => s.symptom_name === symptomId)) return prevSelected;
         return [...prevSelected, { symptom_name: symptomId }];
-      } else { // If switch is now unchecked
-        // Remove if present
+      } else {
         return prevSelected.filter(s => s.symptom_name !== symptomId);
       }
+    });
+    setOpenAccordionItems(prevOpen => {
+        if (newCheckedState) {
+            return [...new Set([...prevOpen, symptomId])];
+        } else {
+            return prevOpen.filter(id => id !== symptomId);
+        }
     });
   }, []);
 
@@ -73,7 +85,13 @@ const SymptomsStep: React.FC = () => {
     updateFormData({ selectedSymptoms: selectedSymptomsState });
 
     setIsLoading(true);
+    setIsFetchingProperties(true); // Set fetching properties to true
     setError(null);
+
+    // Navigate immediately
+    router.push('/create-recipe/properties');
+    setCurrentStep('properties'); // Set current step before API call for loading screen context
+
     try {
       if (!formData.healthConcern || !formData.gender || !formData.ageCategory || !formData.ageSpecific || !formData.selectedCauses) {
         throw new Error("Dados demográficos, problema de saúde ou causas selecionadas faltando.");
@@ -88,13 +106,14 @@ const SymptomsStep: React.FC = () => {
       };
       const medicalProperties = await getMedicalProperties(apiPayload);
       updateFormData({ medicalPropertiesResult: medicalProperties });
-      setCurrentStep('properties');
-      router.push('/create-recipe/properties');
+      // Navigation and setCurrentStep already handled above
     } catch (apiError: any) {
       setError(apiError.message || "Falha ao buscar propriedades médicas.");
       console.error("API Error in SymptomsStep:", apiError);
+      // router.push('/create-recipe/symptoms'); // Or handle error on properties page
     } finally {
       setIsLoading(false);
+      setIsFetchingProperties(false); // Set fetching properties to false after API call
     }
   };
 
@@ -108,7 +127,7 @@ const SymptomsStep: React.FC = () => {
         type="multiple"
         value={openAccordionItems}
         onValueChange={setOpenAccordionItems}
-        className="w-full" 
+        className="w-full md:space-y-2" 
       >
         {formData.potentialSymptomsResult.map((symptom) => {
           const symptomId = symptom.symptom_name;
@@ -119,16 +138,17 @@ const SymptomsStep: React.FC = () => {
               key={symptomId}
               className={cn(
                 "transition-colors",
-                "border-b border-border last:border-b-0",
-                isChecked ? "bg-primary/10" : "bg-background md:bg-card",
-                "md:first:rounded-t-lg md:last:rounded-b-lg"
+                "border-b border-border last:border-b-0", // Mobile: only bottom border for items
+                "md:border md:rounded-lg md:first:rounded-t-lg md:last:rounded-b-lg md:overflow-hidden", // Desktop: full border, rounded corners
+                isChecked ? "bg-primary/10" : "bg-background md:bg-card"
               )}
             >
               <AccordionTrigger
+                onClick={() => handleSelectionToggle(symptom, !isChecked)}
                 className={cn(
                   "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 transition-colors",
                   isChecked ? "hover:bg-primary/15" : "hover:bg-muted/50",
-                  "focus-visible:ring-offset-background md:focus-visible:ring-offset-card"
+                   "focus-visible:ring-offset-background md:focus-visible:ring-offset-card"
                 )}
               >
                 <div className="flex items-center space-x-3 flex-1 min-w-0">

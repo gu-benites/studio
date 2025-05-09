@@ -1,3 +1,4 @@
+// src/app/(recipe-flow)/create-recipe/[step]/page.tsx
 "use client";
 
 import { useParams, useRouter } from 'next/navigation';
@@ -9,7 +10,8 @@ import SymptomsStep from '@/components/recipe-flow/SymptomsStep';
 import PropertiesOilsStep from '@/components/recipe-flow/PropertiesOilsStep';
 import { useRecipeForm } from '@/contexts/RecipeFormContext';
 import LoadingCausesScreen from '@/components/recipe-flow/LoadingCausesScreen'; 
-import LoadingSymptomsScreen from '@/components/recipe-flow/LoadingSymptomsScreen'; // Import the new loading screen
+import LoadingSymptomsScreen from '@/components/recipe-flow/LoadingSymptomsScreen';
+import LoadingPropertiesScreen from '@/components/recipe-flow/LoadingPropertiesScreen'; // Import the new loading screen
 
 const stepComponents: Record<string, React.ComponentType<any>> = {
   demographics: DemographicsStep,
@@ -41,7 +43,8 @@ const CreateRecipeStepPage = () => {
     isFormValid, 
     isLoading, 
     isFetchingCauses, 
-    isFetchingSymptoms, // Destructure isFetchingSymptoms
+    isFetchingSymptoms, 
+    isFetchingProperties, // Destructure isFetchingProperties
     setError 
   } = useRecipeForm();
   const step = Array.isArray(params.step) ? params.step[0] : params.step;
@@ -71,7 +74,7 @@ const CreateRecipeStepPage = () => {
     }
   }, []);
 
-  const isFetchingOils = step === 'properties' && 
+  const isFetchingOilsForPropertiesStep = step === 'properties' && 
                         isLoading && 
                         (!formData.suggestedOilsByProperty || 
                          (formData.medicalPropertiesResult?.therapeutic_properties && Object.keys(formData.suggestedOilsByProperty || {}).length < formData.medicalPropertiesResult.therapeutic_properties.length));
@@ -102,7 +105,7 @@ const CreateRecipeStepPage = () => {
             previousRoute: `${basePath}/symptoms`,
             onNext: onNextProperties, 
             nextButtonText: "Gerar Receita (Em Breve)",
-            isNextDisabled: isLoading || isFetchingOils, 
+            isNextDisabled: isLoading || isFetchingProperties || isFetchingOilsForPropertiesStep, // Added isFetchingProperties
             hideNextButton: true, 
         }
       default:
@@ -112,7 +115,7 @@ const CreateRecipeStepPage = () => {
             hideNextButton: true, 
         };
     }
-  }, [step, isFormValid, isLoading, isFetchingCauses, isFetchingSymptoms, onNextProperties, isFetchingOils]); 
+  }, [step, isFormValid, isLoading, isFetchingCauses, isFetchingSymptoms, isFetchingProperties, onNextProperties, isFetchingOilsForPropertiesStep]); 
 
   if (!step || !StepComponent) {
     return <p className="text-center mt-10">Passo inválido ou não encontrado.</p>;
@@ -124,8 +127,12 @@ const CreateRecipeStepPage = () => {
     return <LoadingCausesScreen />;
   }
   
-  if (step === 'symptoms' && isFetchingSymptoms) { // Conditional render for symptoms loading
+  if (step === 'symptoms' && isFetchingSymptoms) { 
     return <LoadingSymptomsScreen />;
+  }
+
+  if (step === 'properties' && isFetchingProperties) { // Conditional render for properties loading
+    return <LoadingPropertiesScreen />;
   }
 
   return (
