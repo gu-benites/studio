@@ -19,6 +19,20 @@ import { useToast } from "@/hooks/use-toast";
 import { ThreeDViewer } from '@/components/chemical-visualizer/ThreeDViewer'; 
 import type { MoleculeData } from '@/components/chemical-visualizer/ThreeDViewer';
 
+interface Atom {
+  element: string;
+  x: number;
+  y: number;
+  z: number;
+  id: number;
+}
+
+interface Bond {
+  atom1Idx: number;
+  atom2Idx: number;
+  type: number;
+}
+
 const ChemicalVisualizerPage: NextPage = () => {
   const { toast } = useToast();
   
@@ -53,10 +67,9 @@ const ChemicalVisualizerPage: NextPage = () => {
   };
 
   const parseSDF = useCallback((sdfData: string): MoleculeData => {
-    const lines = sdfData.split('
-'); // Corrected this line *again* to be certain
-    const atoms = [];
-    const bonds = [];
+    const lines = sdfData.split('\n'); 
+    const atoms: Atom[] = []; // Explicitly type 'atoms'
+    const bonds: Bond[] = []; // Explicitly type 'bonds'
     if (lines.length < 4) {
       console.error("SDF data too short.");
       return { atoms, bonds };

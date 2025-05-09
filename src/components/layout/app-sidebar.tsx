@@ -113,7 +113,8 @@ const AppSidebar: React.FC = () => {
   
   const isDesktopExpanded = isDesktopClient && (currentIsSidebarPinned || currentIsUserAccountMenuExpanded);
   const isMobileExpanded = hasMounted && isClientMobile && currentIsSidebarOpen;
-  const isEffectivelyExpanded = isDesktopExpanded || isMobileExpanded || (isDesktopClient && !currentIsSidebarPinned && isHovering && !currentIsUserAccountMenuExpanded);
+  
+  const isEffectivelyExpanded = isDesktopExpanded || isMobileExpanded;
   
   const desktopSidebarWidth = isEffectivelyExpanded ? 'md:w-[287px]' : 'md:w-[48px]';
   const mobileSidebarTranslate = currentIsSidebarOpen ? 'translate-x-0' : '-translate-x-full';

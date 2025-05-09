@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRecipeForm } from '@/contexts/RecipeFormContext';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -37,75 +36,180 @@ interface SuggestedOilsForProperty {
   suggested_oils: SuggestedOil[];
 }
 
-
 const PropertiesOilsStep: React.FC = () => {
   const router = useRouter();
   const { formData, updateFormData, setCurrentStep, setIsLoading, setError, resetFormData, isLoading: globalIsLoading } = useRecipeForm();
   
-  // Local state to track which properties have had their oils fetched to avoid re-fetching
-  const [oilsFetchedFor, setOilsFetchedFor] = useState<Record<string, boolean>>({});
-  
   const therapeuticProperties = formData.medicalPropertiesResult?.therapeutic_properties || [];
 
+  const [fetchingStatus, setFetchingStatus] = useState<Record<string, boolean>>({});
+  const fetchAllOilsInProgress = useRef(false); // Ref to track if fetching is in progress
+
   const fetchAllSuggestedOils = useCallback(async () => {
-    if (therapeuticProperties.length === 0 || globalIsLoading) return;
+    console.log("[PropertiesOilsStep] fetchAllSuggestedOils attempt.", { 
+      globalIsLoading, 
+      refIsBusy: fetchAllOilsInProgress.current,
+      therapeuticPropertiesCount: therapeuticProperties.length
+    });
 
-    setIsLoading(true); // Use context's setIsLoading
+    const propertiesToFetch = therapeuticProperties.filter(prop => {
+      const isAlreadyFetchedWithData = formData.suggestedOilsByProperty &&
+                                   formData.suggestedOilsByProperty[prop.property_id] &&
+                                   formData.suggestedOilsByProperty[prop.property_id].suggested_oils.length > 0;
+      const isMarkedAsFetchingInState = fetchingStatus[prop.property_id];
+      return !isAlreadyFetchedWithData && !isMarkedAsFetchingInState;
+    });
+
+    if (propertiesToFetch.length === 0) {
+      console.log("[PropertiesOilsStep] fetchAllSuggestedOils: No properties to fetch based on current data and fetchingStatus state.");
+      return;
+    }
+
+    if (fetchAllOilsInProgress.current) {
+      console.log("[PropertiesOilsStep] fetchAllSuggestedOils: Aborting, fetchAllOilsInProgress ref is TRUE.");
+      return;
+    }
+
+    fetchAllOilsInProgress.current = true;
+    setIsLoading(true);
     setError(null);
-    const newSuggestedOilsByProperty: Record<string, SuggestedOilsForProperty> = { ...(formData.suggestedOilsByProperty || {}) };
-    let anyError = false;
-    let fetchOccurred = false;
+    console.log(`[PropertiesOilsStep] fetchAllSuggestedOils: Starting CONCURRENT batch for ${propertiesToFetch.length} properties. Ref set to true. Global loading true.`);
+    console.log("[PropertiesOilsStep] Properties to fetch (IDs):", propertiesToFetch.map(p => p.property_id));
 
-    for (const prop of therapeuticProperties) {
-      // Check if oils for this property are already fetched or if the property_id is already in newSuggestedOilsByProperty
-      if (oilsFetchedFor[prop.property_id] || (newSuggestedOilsByProperty[prop.property_id] && newSuggestedOilsByProperty[prop.property_id].suggested_oils.length > 0)) {
-        continue; 
-      }
-      fetchOccurred = true;
+    const newFetchingStatusUpdates: Record<string, boolean> = {};
+    propertiesToFetch.forEach(prop => newFetchingStatusUpdates[prop.property_id] = true);
+    setFetchingStatus(prevStatus => ({ ...prevStatus, ...newFetchingStatusUpdates }));
+    console.log("[PropertiesOilsStep] Updated fetchingStatus state (marked as true for batch):", newFetchingStatusUpdates);
 
-      try {
-        const oilsData = await getSuggestedOils(
-            { healthConcern: formData.healthConcern, gender: formData.gender, ageCategory: formData.ageCategory, ageSpecific: formData.ageSpecific, selectedCauses: formData.selectedCauses, selectedSymptoms: formData.selectedSymptoms },
-            prop
-        );
-        newSuggestedOilsByProperty[prop.property_id] = oilsData;
-        setOilsFetchedFor(prev => ({ ...prev, [prop.property_id]: true }));
-      } catch (apiError: any) {
-        console.error(`Error fetching oils for property ${prop.property_name}:`, apiError);
-        // Set a more general error if multiple fetches fail, or handle per-property errors if needed
-        setError(`Falha ao buscar óleos para ${prop.property_name}.`);
-        anyError = true;
-      }
-    }
+    const newlyFetchedOilsByProperty: Record<string, SuggestedOilsForProperty> = {};
     
-    if(fetchOccurred){
-        updateFormData({ suggestedOilsByProperty: newSuggestedOilsByProperty });
+    try {
+      console.log("[PropertiesOilsStep] Creating promises for concurrent API calls.");
+      const oilPromises = propertiesToFetch.map(prop => {
+        console.log(`[PropertiesOilsStep] ==> Creating promise for API call for property: ${prop.property_name} (ID: ${prop.property_id})`);
+        return getSuggestedOils(
+          { healthConcern: formData.healthConcern, gender: formData.gender, ageCategory: formData.ageCategory, ageSpecific: formData.ageSpecific, selectedCauses: formData.selectedCauses, selectedSymptoms: formData.selectedSymptoms },
+          prop
+        ).then(oilsData => ({
+          status: 'fulfilled' as const,
+          value: oilsData,
+          property_id: prop.property_id, // Keep track of which property this result is for
+          property_name: prop.property_name
+        })).catch(error => ({
+          status: 'rejected' as const,
+          reason: error,
+          property_id: prop.property_id,
+          property_name: prop.property_name
+        }));
+      });
+
+      console.log(`[PropertiesOilsStep] Awaiting ${oilPromises.length} promises with Promise.allSettled.`);
+      const results = await Promise.allSettled(oilPromises);
+      console.log("[PropertiesOilsStep] Promise.allSettled finished. Processing results.");
+
+      results.forEach(result => {
+        // The result from Promise.allSettled itself has a status and value/reason.
+        // The value (if fulfilled) is our custom object with its own status, value, and property_id.
+        if (result.status === 'fulfilled') {
+          const promiseOutcome = result.value;
+          if (promiseOutcome.status === 'fulfilled') {
+            console.log(`[PropertiesOilsStep] <== Successfully fetched oils for property: ${promiseOutcome.property_name} (ID: ${promiseOutcome.property_id}). Data:`, promiseOutcome.value);
+            newlyFetchedOilsByProperty[promiseOutcome.property_id] = promiseOutcome.value;
+          } else { // Our custom catch block was hit
+            console.error(`[PropertiesOilsStep] <== Error fetching oils for property ${promiseOutcome.property_name} (ID: ${promiseOutcome.property_id}) within promise:`, promiseOutcome.reason);
+            // setError(`Falha ao buscar óleos para ${promiseOutcome.property_name}.`); // Optionally set error per property
+          }
+        } else {
+          // This case should ideally not be hit if our inner .then/.catch handles everything,
+          // but it's a fallback for unexpected errors in the promise creation/settling itself.
+          console.error(`[PropertiesOilsStep] <== A promise in Promise.allSettled was rejected unexpectedly for an unknown property:`, result.reason);
+        }
+      });
+      
+      if(Object.keys(newlyFetchedOilsByProperty).length > 0){
+          console.log("[PropertiesOilsStep] Updating formData with newly fetched oils (concurrently fetched):", newlyFetchedOilsByProperty);
+          updateFormData({ 
+              suggestedOilsByProperty: {
+                  ...(formData.suggestedOilsByProperty || {}),
+                  ...newlyFetchedOilsByProperty
+              } 
+          });
+      }
+    } catch (batchError: any) {
+      console.error(`[PropertiesOilsStep] Critical error during concurrent batch fetching setup or Promise.allSettled:`, batchError);
+      setError("Ocorreu um erro crítico ao buscar os óleos sugeridos.");
+    } finally {
+      const finalFetchingStatusUpdatesForBatch: Record<string, boolean> = {};
+      propertiesToFetch.forEach(prop => {
+          finalFetchingStatusUpdatesForBatch[prop.property_id] = false;
+      });
+      // Only update if there are actually properties in this batch
+      if (propertiesToFetch.length > 0) {
+        setFetchingStatus(prevStatus => ({ ...prevStatus, ...finalFetchingStatusUpdatesForBatch }));
+        console.log("[PropertiesOilsStep] Updated fetchingStatus state (marked as false post-batch attempt):", finalFetchingStatusUpdatesForBatch);
+      }
+      
+      setIsLoading(false);
+      fetchAllOilsInProgress.current = false;
+      console.log("[PropertiesOilsStep] fetchAllSuggestedOils finished execution. Ref set to false. Global loading false.");
     }
-    setIsLoading(false); // Use context's setIsLoading
   }, [
       therapeuticProperties, 
-      globalIsLoading, 
-      setIsLoading, 
-      setError, 
       formData.healthConcern, 
       formData.gender, 
       formData.ageCategory, 
       formData.ageSpecific, 
       formData.selectedCauses, 
       formData.selectedSymptoms, 
-      formData.suggestedOilsByProperty, 
-      updateFormData, 
-      oilsFetchedFor
+      formData.suggestedOilsByProperty,
+      fetchingStatus, 
+      setFetchingStatus, 
+      setIsLoading, 
+      setError, 
+      updateFormData
     ]);
 
   useEffect(() => {
-    // Fetch oils only if properties exist, not globally loading, and not all oils fetched
-    const allOilsFetched = therapeuticProperties.every(prop => oilsFetchedFor[prop.property_id] || (formData.suggestedOilsByProperty && formData.suggestedOilsByProperty[prop.property_id]));
-    if (therapeuticProperties.length > 0 && !globalIsLoading && !allOilsFetched) {
-        fetchAllSuggestedOils();
-    }
-  }, [therapeuticProperties, fetchAllSuggestedOils, globalIsLoading, oilsFetchedFor, formData.suggestedOilsByProperty]);
+    console.log("[PropertiesOilsStep] useEffect triggered.", {
+        globalIsLoading,
+        therapeuticPropertiesCount: therapeuticProperties.length,
+        hasMedicalPropertiesResult: !!formData.medicalPropertiesResult,
+        currentFormDataSuggestedOils: formData.suggestedOilsByProperty,
+        currentFetchingStatusState: fetchingStatus,
+        refIsBusy: fetchAllOilsInProgress.current
+    });
+    
+    const needsAnyFetching = therapeuticProperties.some(prop => 
+        !(formData.suggestedOilsByProperty && 
+          formData.suggestedOilsByProperty[prop.property_id] &&
+          formData.suggestedOilsByProperty[prop.property_id].suggested_oils.length > 0
+         ) && !fetchingStatus[prop.property_id]
+    );
+    
+    console.log("[PropertiesOilsStep] useEffect - calculated needsAnyFetching:", needsAnyFetching);
 
+    if (therapeuticProperties.length > 0 && !globalIsLoading && needsAnyFetching) {
+        if (fetchAllOilsInProgress.current) {
+            console.log("[PropertiesOilsStep] useEffect: Conditions met, but fetchAllOilsInProgress ref is TRUE. Not calling fetchAllSuggestedOils again.");
+        } else {
+            console.log("[PropertiesOilsStep] useEffect: Conditions met. Calling fetchAllSuggestedOils.");
+            fetchAllSuggestedOils();
+        }
+    } else {
+        let reason = "";
+        if (therapeuticProperties.length === 0) reason += "No therapeutic properties. ";
+        if (globalIsLoading) reason += "Global loading is active. ";
+        if (!needsAnyFetching && therapeuticProperties.length > 0) reason += "No properties currently need fetching (checked against formData and fetchingStatus state). ";
+        console.log(`[PropertiesOilsStep] useEffect: Conditions NOT met for calling fetchAllSuggestedOils. Reason: ${reason.trim()}`);
+    }
+  }, [
+      therapeuticProperties, 
+      fetchAllSuggestedOils, 
+      globalIsLoading, 
+      formData.medicalPropertiesResult,
+      formData.suggestedOilsByProperty, 
+      fetchingStatus 
+    ]);
 
   const handleSubmitNext = async () => {
     // Placeholder for future navigation to a final recipe display page
@@ -126,7 +230,6 @@ const PropertiesOilsStep: React.FC = () => {
       </div>
     );
   }
-
 
   return (
     <div className="space-y-0">
@@ -175,7 +278,7 @@ const PropertiesOilsStep: React.FC = () => {
               
               <div className="mt-3 pt-3 border-t">
                 <h4 className="text-md font-semibold mb-2">Óleos Sugeridos:</h4>
-                {globalIsLoading && !oilsFetchedFor[prop.property_id] && (!formData.suggestedOilsByProperty || !formData.suggestedOilsByProperty[prop.property_id]) && (
+                {globalIsLoading && (!formData.suggestedOilsByProperty || !formData.suggestedOilsByProperty[prop.property_id]) && (
                      <div className="flex items-center text-sm text-muted-foreground">
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         Buscando...
@@ -193,7 +296,7 @@ const PropertiesOilsStep: React.FC = () => {
                     </ul>
                   ) : <p className="text-sm text-muted-foreground">Nenhum óleo específico sugerido para esta propriedade.</p>
                 ) : (
-                  !globalIsLoading && oilsFetchedFor[prop.property_id] && <p className="text-sm text-muted-foreground">Nenhum óleo específico sugerido para esta propriedade.</p>
+                  !globalIsLoading && <p className="text-sm text-muted-foreground">Nenhum óleo específico sugerido para esta propriedade.</p>
                 )}
               </div>
             </AccordionContent>

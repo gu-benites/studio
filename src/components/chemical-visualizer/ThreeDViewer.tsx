@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useRef, useCallback, useState } from 'react';
@@ -69,6 +68,7 @@ export const ThreeDViewer: React.FC<ThreeDViewerProps> = ({
   const moleculeGroupRef = useRef<THREE.Group | null>(null);
   const animationFrameIdRef = useRef<number | null>(null);
   const [isRendering, setIsRendering] = useState(false); // Internal rendering busy state
+  const [isInitialized, setIsInitialized] = useState(false); // Tracks Three.js setup completion
 
 
   const displayMolecule = useCallback(() => {
@@ -233,6 +233,7 @@ export const ThreeDViewer: React.FC<ThreeDViewerProps> = ({
         }
       };
       animate();
+      setIsInitialized(true); // Signal that initialization is complete
     }
 
     const handleResize = () => {
@@ -267,16 +268,17 @@ export const ThreeDViewer: React.FC<ThreeDViewerProps> = ({
       controlsRef.current?.dispose();
       controlsRef.current = null;
       moleculeGroupRef.current = null;
+      // setIsInitialized(false); // Not strictly necessary to reset on unmount, as component is destroyed
     };
   }, []);
 
   useEffect(() => {
     // Log moleculeData when it changes or when other dependencies of this effect change
-    console.log('ThreeDViewer - moleculeData:', moleculeData);
-    if (moleculeData) {
+    // console.log('ThreeDViewer - moleculeData:', moleculeData, 'isInitialized:', isInitialized);
+    if (isInitialized && moleculeData) {
       displayMolecule();
-    } else if (moleculeGroupRef.current) {
-      // Clear if moleculeData becomes null
+    } else if (isInitialized && moleculeGroupRef.current && !moleculeData) {
+      // Clear if moleculeData becomes null and scene was initialized
        while (moleculeGroupRef.current.children.length > 0) {
           const object = moleculeGroupRef.current.children[0];
           moleculeGroupRef.current.remove(object);
@@ -291,7 +293,7 @@ export const ThreeDViewer: React.FC<ThreeDViewerProps> = ({
           }
         }
     }
-  }, [moleculeData, representation, atomScaleFactor, bondRadius, showHydrogens, displayMolecule]);
+  }, [isInitialized, moleculeData, representation, atomScaleFactor, bondRadius, showHydrogens, displayMolecule]);
 
 
   return (
@@ -301,7 +303,7 @@ export const ThreeDViewer: React.FC<ThreeDViewerProps> = ({
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
         </div>
       )}
-       {!moleculeData && !isLoading && !isRendering && (
+       {(!moleculeData || (moleculeData && moleculeData.atoms.length === 0)) && !isLoading && !isRendering && (
          <div className="absolute inset-0 flex items-center justify-center bg-muted/30 z-0">
             <p className="text-muted-foreground">No 3D data to display or CID not found.</p>
         </div>
