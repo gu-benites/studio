@@ -271,6 +271,8 @@ export const ThreeDViewer: React.FC<ThreeDViewerProps> = ({
   }, []);
 
   useEffect(() => {
+    // Log moleculeData when it changes or when other dependencies of this effect change
+    console.log('ThreeDViewer - moleculeData:', moleculeData);
     if (moleculeData) {
       displayMolecule();
     } else if (moleculeGroupRef.current) {

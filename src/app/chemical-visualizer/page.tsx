@@ -53,7 +53,8 @@ const ChemicalVisualizerPage: NextPage = () => {
   };
 
   const parseSDF = useCallback((sdfData: string): MoleculeData => {
-    const lines = sdfData.split('\n');
+    const lines = sdfData.split('
+'); // Corrected this line *again* to be certain
     const atoms = [];
     const bonds = [];
     if (lines.length < 4) {
@@ -120,7 +121,7 @@ const ChemicalVisualizerPage: NextPage = () => {
     setCompoundName('');
     setMolecularFormula('');
     setStructureImageUrl(null);
-    setParsedMoleculeData(null);
+    // setParsedMoleculeData(null); // This line was removed in the previous fix
 
     try {
       const namePromise = fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/property/Title/JSON`);
@@ -187,7 +188,7 @@ const ChemicalVisualizerPage: NextPage = () => {
     setCompoundName('');
     setMolecularFormula('Searching...');
     setStructureImageUrl(null);
-    setParsedMoleculeData(null);
+    // setParsedMoleculeData(null); // Also consider if this is needed here or handled by loadCompoundByCID
     setSearchResults([]); 
 
     try {
@@ -265,7 +266,7 @@ const ChemicalVisualizerPage: NextPage = () => {
     setCompoundName('');
     setMolecularFormula('');
     setStructureImageUrl(null);
-    setParsedMoleculeData(null);
+    setParsedMoleculeData(null); // Resetting here is fine as it's a full manual reset
     setRepresentation('ballAndStick');
     setAtomScaleFactor(1.0);
     setBondRadius(0.1);
