@@ -1,4 +1,3 @@
-
 // src/app/design-system/page.tsx
 "use client";
 
@@ -10,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from '@/components/ui/badge';
+import { RelevancyBadge } from '@/components/ui/relevancy-badge';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
@@ -44,6 +43,16 @@ const mockAccordionItemsData: MockCauseSymptom[] = [
   { id: 'mock_symptom_2', name: 'Insomnia', suggestion: 'Difficulty falling asleep or staying asleep.', explanation: 'Insomnia can significantly affect daily functioning and mood. Establishing good sleep hygiene is often recommended.' },
 ];
 
+const mockAccordionItemsDataStyle2: MockCauseSymptom[] = [
+  { id: 'style2_item_1', name: 'Nutritional Deficiencies', suggestion: 'May lead to fatigue and weakness.', explanation: 'Ensure a diet rich in vitamins and minerals. Consult a doctor for blood tests if needed.' },
+  { id: 'style2_item_2', name: 'Dehydration', suggestion: 'Can cause headaches and dizziness.', explanation: 'Drink an adequate amount of water throughout the day, especially in warm weather or during exercise.' },
+];
+
+const mockAccordionItemsDataStyle3: MockCauseSymptom[] = [
+  { id: 'style3_item_1', name: 'Environmental Factors', suggestion: 'Allergens or pollutants.', explanation: 'Identify potential environmental triggers and minimize exposure. Air purifiers may be helpful.' },
+  { id: 'style3_item_2', name: 'Lack of Exercise', suggestion: 'Contributes to poor circulation and low energy.', explanation: 'Incorporate regular physical activity into your routine, even moderate exercise can make a difference.' },
+];
+
 
 const DesignSystemPage: NextPage = () => {
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -54,22 +63,39 @@ const DesignSystemPage: NextPage = () => {
     event.currentTarget.reset();
   };
 
-  const [selectedMockAccordionItems, setSelectedMockAccordionItems] = React.useState<string[]>([]);
-  const [openMockAccordionItems, setOpenMockAccordionItems] = React.useState<string[]>([]);
+  // State for Accordion Style 1
+  const [selectedStyle1, setSelectedStyle1] = React.useState<string[]>([]);
+  const [openStyle1, setOpenStyle1] = React.useState<string[]>([mockAccordionItemsData[0].id]); // Open first by default
 
-  const handleMockAccordionToggle = (itemId: string, isChecked: boolean) => {
-    setSelectedMockAccordionItems(prevSelected =>
+  // State for Accordion Style 2
+  const [selectedStyle2, setSelectedStyle2] = React.useState<string[]>([]);
+  const [openStyle2, setOpenStyle2] = React.useState<string[]>([]);
+
+  // State for Accordion Style 3
+  const [openStyle3, setOpenStyle3] = React.useState<string[]>([]); 
+
+  const handleAccordionToggle = (
+    itemId: string, 
+    isChecked: boolean,
+    selectedItems: string[],
+    setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>,
+    setOpenItems: React.Dispatch<React.SetStateAction<string[]>>
+  ) => {
+    setSelectedItems(prevSelected =>
       isChecked ? [...prevSelected, itemId] : prevSelected.filter(id => id !== itemId)
     );
-    setOpenMockAccordionItems(prevOpen =>
-      isChecked
-        ? [...new Set([...prevOpen, itemId])]
-        : prevOpen.filter(id => id !== itemId)
-    );
+    if (isChecked) {
+      setOpenItems(prevOpen => [...new Set([...prevOpen, itemId])]);
+    } else {
+       setOpenItems(prevOpen => prevOpen.filter(id => id !== itemId)); 
+    }
   };
 
-  const handleAccordionTriggerClick = (itemId: string) => {
-    setOpenMockAccordionItems(prevOpen =>
+  const handleTriggerClick = (
+    itemId: string, 
+    setOpenItems: React.Dispatch<React.SetStateAction<string[]>>
+  ) => {
+    setOpenItems(prevOpen =>
       prevOpen.includes(itemId) ? prevOpen.filter(id => id !== itemId) : [...prevOpen, itemId]
     );
   };
@@ -86,292 +112,283 @@ const DesignSystemPage: NextPage = () => {
         <h1 className="text-3xl md:text-4xl font-bold mb-2 text-aroma-text">AromaChat Design System</h1>
         <p className="mb-10 text-aroma-text-muted">Showcasing styles for React components based on PRD guidelines (v2).</p>
 
+        {/* Color Palette Section */}
         <section className="mb-12">
-          <h2 className="text-2xl font-semibold mb-4 text-aroma-text">Color Palette (PRD 4.1.1)</h2>
-          <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
-            <div className="p-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-              <div className="flex flex-col gap-2 items-center">
-                <div className="h-20 w-full rounded-md bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end"></div>
-                <p className="text-sm font-medium text-aroma-text">Primary Gradient</p>
-                <p className="text-xs text-aroma-text-muted">#7b61ff to #ff5fa1</p>
-              </div>
-              <div className="flex flex-col gap-2 items-center">
-                <div className="h-20 w-full rounded-md bg-aroma-primary"></div>
-                <p className="text-sm font-medium text-aroma-text">Primary</p>
-                <p className="text-xs text-aroma-text-muted">#7a5cff (Purple)</p>
-              </div>
-              <div className="flex flex-col gap-2 items-center">
-                <div className="h-20 w-full rounded-md bg-aroma-secondary"></div>
-                <p className="text-sm font-medium text-aroma-text">Secondary</p>
-                <p className="text-xs text-aroma-text-muted">#FF7A5C (Orange)</p>
-              </div>
-              <div className="flex flex-col gap-2 items-center">
-                <div className="h-20 w-full rounded-md bg-aroma-accent"></div>
-                <p className="text-sm font-medium text-aroma-text">Accent</p>
-                <p className="text-xs text-aroma-text-muted">#5CFF7A (Green)</p>
-              </div>
-              <div className="flex flex-col gap-2 items-center">
-                <div className="h-20 w-full rounded-md flex items-center justify-center text-primary-foreground font-semibold bg-aroma-text">Text</div>
-                <p className="text-sm font-medium text-aroma-text">Text</p>
-                <p className="text-xs text-aroma-text-muted">#4B4763</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="mb-12">
-          <h2 className="text-2xl font-semibold mb-4 text-aroma-text">Typography (Poppins)</h2>
-          <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
-            <div className="p-6 space-y-4">
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold">Heading 1 (Poppins Bold)</h1>
-                <p className="text-sm text-aroma-text-muted">Represents: &lt;Typography variant="h1"&gt;</p>
-              </div>
-              <div>
-                <h2 className="text-2xl font-semibold">Heading 2 (Poppins SemiBold)</h2>
-                <p className="text-sm text-aroma-text-muted">Represents: &lt;Typography variant="h2"&gt;</p>
-              </div>
-              <div>
-                <h3 className="text-xl font-medium">Heading 3 (Poppins Medium)</h3>
-                <p className="text-sm text-aroma-text-muted">Represents: &lt;Typography variant="h3"&gt;</p>
-              </div>
-              <div>
-                <p className="text-base font-normal">Body text (Poppins Regular). Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                <p className="text-sm text-aroma-text-muted">Represents: &lt;Typography variant="body1"&gt;</p>
-              </div>
-              <div>
-                <p className="text-sm font-normal text-aroma-text-muted">Small text / captions (Poppins Regular).</p>
-                <p className="text-xs text-aroma-text-muted">Represents: &lt;Typography variant="caption"&gt; or `variant="body2"`</p>
-              </div>
-              <div>
-                <p className="text-base font-semibold">SemiBold Body text</p>
-                <p className="text-sm text-aroma-text-muted">For emphasis. Use `fontWeight` prop on &lt;Typography&gt;.</p>
-              </div>
-              <div className="mt-6">
-                <h3 className="text-xl font-medium mb-2">Gradient Heading Example</h3>
-                <h1
-                  className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end"
-                >
-                  Qual receita você quer criar hoje?
-                </h1>
-                <p className="text-sm mt-1 text-aroma-text-muted">Represents: &lt;Typography&gt; styled with gradient background clip.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="mb-12">
-          <h2 className="text-2xl font-semibold mb-4 text-aroma-text">Loading & Progress</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <h2 className="text-2xl font-semibold text-aroma-text mb-4">Color Palette (PRD 4.1.1)</h2>
             <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
-              <h3 className="text-xl font-medium p-6 pb-0">Loading Indicator</h3>
-              <div className="p-6 pt-6 flex justify-center items-center min-h-[150px]">
-                <div className="w-20 h-20 relative">
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-primary/80" style={{ animationDelay: '-0.1s', width: '40%', height: '40%' }}></div>
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-primary/70" style={{ animationDelay: '0s',   width: '47.5%', height: '47.5%' }}></div>
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-primary/60" style={{ animationDelay: '0.1s',  width: '55%', height: '55%' }}></div>
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-primary/50" style={{ animationDelay: '0.2s',  width: '62.5%', height: '62.5%' }}></div>
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-primary/40" style={{ animationDelay: '0.3s',  width: '70%', height: '70%' }}></div>
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-primary/30" style={{ animationDelay: '0.4s',  width: '77.5%', height: '77.5%' }}></div>
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-primary/20" style={{ animationDelay: '0.5s',  width: '85%', height: '85%' }}></div>
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-primary/10" style={{ animationDelay: '0.6s',  width: '92.5%', height: '92.5%' }}></div>
+                <div className="p-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                    <div className="flex flex-col gap-2 items-center">
+                        <div className="h-20 w-full rounded-md bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end"></div>
+                        <p className="text-sm font-medium text-aroma-text">Primary Gradient</p>
+                        <p className="text-xs text-aroma-text-muted">#7b61ff to #ff5fa1</p>
+                    </div>
+                    <div className="flex flex-col gap-2 items-center">
+                        <div className="h-20 w-full rounded-md bg-aroma-primary"></div>
+                        <p className="text-sm font-medium text-aroma-text">Primary</p>
+                        <p className="text-xs text-aroma-text-muted">#7a5cff (Purple)</p>
+                    </div>
+                    <div className="flex flex-col gap-2 items-center">
+                        <div className="h-20 w-full rounded-md bg-aroma-secondary"></div>
+                        <p className="text-sm font-medium text-aroma-text">Secondary</p>
+                        <p className="text-xs text-aroma-text-muted">#FF7A5C (Orange)</p>
+                    </div>
+                    <div className="flex flex-col gap-2 items-center">
+                        <div className="h-20 w-full rounded-md bg-aroma-accent"></div>
+                        <p className="text-sm font-medium text-aroma-text">Accent</p>
+                        <p className="text-xs text-aroma-text-muted">#5CFF7A (Green)</p>
+                    </div>
+                    <div className="flex flex-col gap-2 items-center">
+                        <div className="h-20 w-full rounded-md bg-aroma-text flex items-center justify-center text-primary-foreground font-semibold">Text</div>
+                        <p className="text-sm font-medium text-aroma-text">Text</p>
+                        <p className="text-xs text-aroma-text-muted">#4B4763</p>
+                    </div>
                 </div>
-              </div>
-              <p className="text-sm p-6 pt-0 text-center text-aroma-text-muted">Represents: Custom loading component or styled &lt;CircularProgress&gt;.</p>
             </div>
+        </section>
+
+        {/* Typography Section */}
+        <section className="mb-12">
+            <h2 className="text-2xl font-semibold text-aroma-text mb-4">Typography (Poppins)</h2>
             <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
-              <h3 className="text-xl font-medium p-6 pb-0">Progress Steps</h3>
-              <div className="p-6 space-y-6">
-                <div>
-                  <p className="text-base font-medium mb-3 text-center">Progress Bar</p>
-                  <div className="bg-muted rounded-full h-2.5 w-full overflow-hidden">
-                    <div className="h-full rounded-full bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end" style={{ width: '65%' }} role="progressbar" aria-valuenow={65} aria-valuemin={0} aria-valuemax={100}></div>
-                  </div>
-                  <div className="flex justify-between text-xs mt-2 px-1 text-aroma-text-muted">
-                    <span>65% Complete</span>
-                    <span>Time elapsed: 01:15</span>
-                  </div>
-                  <p className="text-sm mt-2 text-center text-aroma-text-muted">Represents: &lt;LinearProgress&gt; styled with gradient.</p>
+                <div className="p-6 space-y-4">
+                    <div>
+                        <h1 className="text-3xl md:text-4xl font-bold">Heading 1 (Poppins Bold)</h1>
+                        <p className="text-sm text-aroma-text-muted">Represents: &lt;Typography variant="h1"&gt;</p>
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-semibold">Heading 2 (Poppins SemiBold)</h2>
+                        <p className="text-sm text-aroma-text-muted">Represents: &lt;Typography variant="h2"&gt;</p>
+                    </div>
+                    <div>
+                        <h3 className="text-xl font-medium">Heading 3 (Poppins Medium)</h3>
+                        <p className="text-sm text-aroma-text-muted">Represents: &lt;Typography variant="h3"&gt;</p>
+                    </div>
+                    <div>
+                        <p className="text-base font-normal">Body text (Poppins Regular). Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                        <p className="text-sm text-aroma-text-muted">Represents: &lt;Typography variant="body1"&gt;</p>
+                    </div>
+                    <div>
+                        <p className="text-sm font-normal text-aroma-text-muted">Small text / captions (Poppins Regular).</p>
+                        <p className="text-xs text-aroma-text-muted">Represents: &lt;Typography variant="caption"&gt; or `variant="body2"`</p>
+                    </div>
+                    <div>
+                        <p className="text-base font-semibold">SemiBold Body text</p>
+                        <p className="text-sm text-aroma-text-muted">For emphasis. Use `fontWeight` prop on &lt;Typography&gt;.</p>
+                    </div>
+                    <div className="mt-6">
+                        <h3 className="text-xl font-medium mb-2">Gradient Heading Example</h3>
+                        <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end text-transparent bg-clip-text">
+                            Qual receita você quer criar hoje?
+                        </h1>
+                        <p className="text-sm text-aroma-text-muted mt-1">Represents: &lt;Typography&gt; styled with gradient background clip.</p>
+                    </div>
                 </div>
-                <div>
-                  <p className="text-base font-medium mb-3 text-center">Step List Example</p>
-                  <ul className="space-y-2 text-center">
-                    <li className="transition-all duration-400 ease-in-out text-sm font-normal opacity-70 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center line-through text-aroma-text-muted"><span className="font-bold mr-1">✓</span>Enter Health Concern</li>
-                    <li className="transition-all duration-400 ease-in-out text-sm font-normal opacity-70 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center line-through text-aroma-text-muted"><span className="font-bold mr-1">✓</span>Provide Demographics</li>
-                    <li
-                      className="transition-all duration-400 ease-in-out text-lg font-bold opacity-100 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center relative text-aroma-text after:inline-block after:ml-1 after:w-[1.5em] after:text-left after:align-bottom after:animate-ellipsis"
-                    >
-                      Select Causes
-                    </li>
-                    <li className="transition-all duration-400 ease-in-out text-muted-foreground text-sm font-normal opacity-90 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center">Select Symptoms</li>
-                    <li className="transition-all duration-400 ease-in-out text-muted-foreground text-sm font-normal opacity-90 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center">Review Properties</li>
-                  </ul>
-                  <p className="text-sm mt-2 text-center text-aroma-text-muted">Represents: &lt;Stepper&gt; or custom list component.</p>
-                </div>
-              </div>
             </div>
+        </section>
+        
+        {/* Loading & Progress Section */}
+        <section className="mb-12">
+            <h2 className="text-2xl font-semibold text-aroma-text mb-4">Loading & Progress</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+                    <h3 className="text-xl font-medium p-6 pb-0">Loading Indicator</h3>
+                    <div className="p-6 pt-6 flex justify-center items-center min-h-[150px]">
+                        <div className="w-20 h-20 relative">
+                            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-aroma-primary/80" style={{ animationDelay: '-0.1s', width: '40%', height: '40%' }}></div>
+                            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-aroma-primary/70" style={{ animationDelay: '0s',   width: '47.5%', height: '47.5%' }}></div>
+                            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-aroma-primary/60" style={{ animationDelay: '0.1s',  width: '55%', height: '55%' }}></div>
+                            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-aroma-primary/50" style={{ animationDelay: '0.2s',  width: '62.5%', height: '62.5%' }}></div>
+                            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-aroma-primary/40" style={{ animationDelay: '0.3s',  width: '70%', height: '70%' }}></div>
+                            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-aroma-primary/30" style={{ animationDelay: '0.4s',  width: '77.5%', height: '77.5%' }}></div>
+                            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-aroma-primary/20" style={{ animationDelay: '0.5s',  width: '85%', height: '85%' }}></div>
+                            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulseRing bg-aroma-primary/10" style={{ animationDelay: '0.6s',  width: '92.5%', height: '92.5%' }}></div>
+                        </div>
+                    </div>
+                    <p className="text-sm text-aroma-text-muted p-6 pt-0 text-center">Represents: Custom loading component or styled &lt;CircularProgress&gt;.</p>
+                </div>
+                <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+                    <h3 className="text-xl font-medium p-6 pb-0">Progress Steps</h3>
+                    <div className="p-6 space-y-6">
+                        <div>
+                            <p className="text-base font-medium mb-3 text-center">Progress Bar</p>
+                            <div className="bg-muted rounded-full h-2.5 w-full overflow-hidden">
+                                <div className="h-full rounded-full bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end" style={{ width: '65%' }} role="progressbar" aria-valuenow={65} aria-valuemin={0} aria-valuemax={100}></div>
+                            </div>
+                            <div className="flex justify-between text-xs text-aroma-text-muted mt-2 px-1">
+                                <span>65% Complete</span>
+                                <span>Time elapsed: 01:15</span>
+                            </div>
+                            <p className="text-sm text-aroma-text-muted mt-2 text-center">Represents: &lt;LinearProgress&gt; styled with gradient.</p>
+                        </div>
+                        <div>
+                            <p className="text-base font-medium mb-3 text-center">Step List Example</p>
+                             <ul className="space-y-2 text-center">
+                                <li className="transition-all duration-400 ease-in-out text-sm font-normal opacity-70 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center line-through text-aroma-text-muted"><span className="font-bold mr-1">✓ </span>Enter Health Concern</li>
+                                <li className="transition-all duration-400 ease-in-out text-sm font-normal opacity-70 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center line-through text-aroma-text-muted"><span className="font-bold mr-1">✓ </span>Provide Demographics</li>
+                                <li className="transition-all duration-400 ease-in-out text-lg font-bold opacity-100 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center relative text-aroma-text after:inline-block after:ml-1 after:w-[1.5em] after:text-left after:align-bottom after:content-[''] after:animate-ellipsis">Select Causes</li>
+                                <li className="transition-all duration-400 ease-in-out text-muted-foreground text-sm font-normal opacity-90 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center">Select Symptoms</li>
+                                <li className="transition-all duration-400 ease-in-out text-muted-foreground text-sm font-normal opacity-90 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center">Review Properties</li>
+                            </ul>
+                            <p className="text-sm text-aroma-text-muted mt-2 text-center">Represents: &lt;Stepper&gt; or custom list component.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {/* Buttons Section */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-semibold text-aroma-text mb-4">Buttons</h2>
+          <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+              <div className="p-6 space-y-8">
+                  <div>
+                      <h3 className="text-lg font-medium mb-3">Main Action Button</h3>
+                      <div className="flex flex-wrap gap-4">
+                           <Button className="font-semibold py-3.5 px-8 rounded-3xl shadow-button-normal hover:-translate-y-0.5 hover:shadow-button-focus focus:ring-offset-2 focus:ring-aroma-primary transition-all duration-200 bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end text-primary-foreground h-auto text-base">
+                                Criar Receita
+                                <ArrowRight strokeWidth={2.5} className="ml-2 h-4 w-4" />
+                            </Button>
+                      </div>
+                      <p className="text-sm text-aroma-text-muted mt-2">Represents: &lt;Button variant="default"&gt; heavily styled.</p>
+                  </div>
+
+                  <div>
+                      <h3 className="text-lg font-medium mb-3">Standard Variants</h3>
+                      <div className="flex flex-wrap gap-4 items-center">
+                          <Button variant="default">Primary Contained</Button>
+                          <Button variant="outline">Primary Outlined</Button>
+                          <Button variant="ghost">Primary Text</Button>
+                      </div>
+                      <p className="text-sm text-aroma-text-muted mt-2">Represents: Standard &lt;Button&gt; variants using `color="primary"`.</p>
+                      <div className="flex flex-wrap gap-4 items-center mt-4">
+                          <Button variant="secondary" className="bg-aroma-secondary text-secondary-foreground hover:bg-aroma-secondary/90 focus:ring-aroma-secondary">Secondary Contained</Button>
+                          <Button variant="outline" className="border-aroma-secondary text-aroma-secondary hover:bg-aroma-secondary/10 focus:ring-aroma-secondary">Secondary Outlined</Button>
+                      </div>
+                      <p className="text-sm text-aroma-text-muted mt-2">Represents: Standard &lt;Button&gt; variants using `color="secondary"`.</p>
+                  </div>
+
+                  <div>
+                      <h3 className="text-lg font-medium mb-3">Suggestion Chips / Small Actions</h3>
+                      <div className="flex flex-wrap gap-3">
+                          <Badge variant="outline" className="px-4 py-2 text-sm rounded-full cursor-pointer transition-colors shadow-sm bg-primary/10 text-primary border-primary/30 hover:bg-primary/20">Relaxar</Badge>
+                          <Badge variant="outline" className="px-4 py-2 text-sm rounded-full cursor-pointer transition-colors shadow-sm bg-primary/10 text-primary border-primary/30 hover:bg-primary/20">Dormir melhor</Badge>
+                          <Badge variant="outline" className="px-4 py-2 text-sm rounded-full cursor-pointer transition-colors shadow-sm bg-primary/10 text-primary border-primary/30 hover:bg-primary/20">Alívio da tensão</Badge>
+                      </div>
+                      <p className="text-sm text-aroma-text-muted mt-2">Represents: &lt;Badge variant="outline"&gt; components styled as chips.</p>
+                  </div>
+              </div>
           </div>
         </section>
 
+        {/* Input Fields Section */}
         <section className="mb-12">
-          <h2 className="text-2xl font-semibold mb-4 text-aroma-text">Buttons</h2>
-          <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
-            <div className="p-6 space-y-8">
-              <div>
-                <h3 className="text-lg font-medium mb-3">Main Action Button</h3>
-                <div className="flex flex-wrap gap-4">
-                  <Button
-                    className="font-semibold py-3.5 px-8 rounded-3xl shadow-button-normal hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end text-primary-foreground focus:ring-aroma-primary hover:shadow-button-focus"
-                  >
-                    Criar Receita
-                    <ArrowRight strokeWidth={2.5} className="w-4 h-4" />
-                  </Button>
-                </div>
-                <p className="text-sm mt-2 text-aroma-text-muted">Represents: &lt;Button variant="contained"&gt; heavily styled.</p>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-medium mb-3">Standard Variants</h3>
-                <div className="flex flex-wrap gap-4 items-center">
-                  <Button className="bg-aroma-primary text-primary-foreground hover:bg-aroma-primary/90 focus:ring-aroma-primary">Primary Contained</Button>
-                  <Button variant="outline" className="border-aroma-primary text-aroma-primary hover:bg-aroma-primary/10 focus:ring-aroma-primary hover:text-aroma-primary">Primary Outlined</Button>
-                  <Button variant="ghost" className="text-aroma-primary hover:bg-aroma-primary/10 focus:ring-aroma-primary hover:text-aroma-primary">Primary Text</Button>
-                </div>
-                <p className="text-sm mt-2 text-aroma-text-muted">Represents: Standard &lt;Button&gt; variants.</p>
-                <div className="flex flex-wrap gap-4 items-center mt-4">
-                  <Button className="bg-aroma-secondary text-primary-foreground hover:bg-aroma-secondary/90 focus:ring-aroma-secondary">Secondary Contained</Button>
-                  <Button variant="outline" className="border-aroma-secondary text-aroma-secondary hover:bg-aroma-secondary/10 focus:ring-aroma-secondary hover:text-aroma-secondary">Secondary Outlined</Button>
-                </div>
-                <p className="text-sm mt-2 text-aroma-text-muted">Represents: Standard &lt;Button&gt; variants with secondary color.</p>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-medium mb-3">Suggestion Chips / Small Actions</h3>
-                <div className="flex flex-wrap gap-3">
-                  <Button variant="outline" className="rounded-full border-primary/30 text-primary bg-primary/10 hover:bg-primary/20 hover:text-primary">Relaxar</Button>
-                  <Button variant="outline" className="rounded-full border-primary/30 text-primary bg-primary/10 hover:bg-primary/20 hover:text-primary">Dormir melhor</Button>
-                  <Button variant="outline" className="rounded-full border-primary/30 text-primary bg-primary/10 hover:bg-primary/20 hover:text-primary">Alívio da tensão</Button>
-                </div>
-                <p className="text-sm mt-2 text-aroma-text-muted">Represents: &lt;Chip&gt; components using theme colors.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="mb-12">
-          <h2 className="text-2xl font-semibold mb-4 text-aroma-text">Input Fields</h2>
-          <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
-            <div className="p-6">
-              <div className="max-w-2xl mx-auto space-y-8">
-                <div>
-                  <Label htmlFor="health-concern-example" className="block text-sm font-medium text-aroma-text mb-2">Health Concern Input (Old Style)</Label>
-                  <div className="group relative rounded-3xl border border-input p-px hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end transition-all duration-200 ease-in-out">
-                    <div className="relative">
-                      <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none">
-                        <Search className="w-5 h-5" />
-                      </div>
-                      <Input
-                        type="text"
-                        id="health-concern-example"
-                        placeholder="Ex: dor de cabeça, insônia, ansiedade..."
-                        className="block w-full rounded-[calc(1.75rem-1px)] border-none bg-card py-3.5 pl-12 pr-4 text-base leading-6 shadow-none outline-none placeholder:text-muted-foreground text-card-foreground"
-                      />
+            <h2 className="text-2xl font-semibold text-aroma-text mb-4">Input Fields</h2>
+            <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+                <div className="p-6">
+                    <div className="max-w-2xl mx-auto space-y-8">
+                        <div>
+                            <Label htmlFor="health-concern-example" className="block text-sm font-medium text-aroma-text mb-2">Health Concern Input (Old Style)</Label>
+                            <div className="group relative rounded-3xl border border-input p-px hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start/50 to-aroma-grad-end/50 transition-all duration-200 ease-in-out focus-within:from-aroma-grad-start focus-within:to-aroma-grad-end hover:shadow-[0_0_0_1px_hsl(var(--aroma-grad-start)_/_0.5),_0_0_0_1px_hsl(var(--aroma-grad-end)_/_0.5)] focus-within:shadow-[0_0_0_1px_hsl(var(--aroma-grad-start)),_0_0_0_1px_hsl(var(--aroma-grad-end))]">
+                                <div className="relative">
+                                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none">
+                                        <Search className="w-5 h-5" />
+                                    </div>
+                                    <Input 
+                                        type="text" 
+                                        id="health-concern-example" 
+                                        placeholder="Ex: dor de cabeça, insônia, ansiedade..." 
+                                        className="block w-full rounded-[calc(theme(borderRadius.3xl)-1px)] border-none bg-card py-3.5 pl-12 pr-4 text-base leading-6 shadow-none outline-none placeholder:text-muted-foreground text-foreground h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+                                    />
+                                </div>
+                            </div>
+                            <p className="text-sm text-aroma-text-muted mt-2">Represents: &lt;Input&gt; styled with large border-radius, icon, and custom gradient focus/hover effect.</p>
+                        </div>
+                        
+                        <div>
+                            <Label htmlFor="chat-input" className="block text-sm font-medium text-aroma-text mb-2">Chat Input (New Style)</Label>
+                            <form onSubmit={handleFormSubmit} className="group relative rounded-md border border-input p-px hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start/20 to-aroma-grad-end/20 transition-all duration-200 ease-in-out focus-within:from-aroma-grad-start/50 focus-within:to-aroma-grad-end/50 hover:shadow-[0_0_0_1px_hsl(var(--aroma-grad-start)_/_0.1),_0_0_0_1px_hsl(var(--aroma-grad-end)_/_0.1)] focus-within:shadow-[0_0_0_1px_hsl(var(--aroma-grad-start)_/_0.3),_0_0_0_1px_hsl(var(--aroma-grad-end)_/_0.3)]">
+                                <div className="flex items-center w-full bg-card rounded-[calc(theme(borderRadius.md)-1px)] p-1 pr-1.5 shadow-sm">
+                                    <Search className="h-5 w-5 text-muted-foreground mx-3 pointer-events-none" />
+                                    <Separator orientation="vertical" className="h-6 mr-2 bg-border" />
+                                    <Input
+                                        name="chat-input"
+                                        type="text"
+                                        placeholder="Digite sua mensagem ou ideia..."
+                                        className="flex-grow py-2.5 px-2 bg-transparent border-none outline-none text-card-foreground placeholder:text-muted-foreground text-sm h-12 focus-visible:ring-0 focus-visible:ring-offset-0"
+                                    />
+                                    <Button 
+                                        type="submit"
+                                        size="icon"
+                                        className="h-9 w-9 bg-aroma-secondary text-primary-foreground rounded-md hover:bg-aroma-secondary/90 focus:ring-aroma-secondary focus:ring-offset-card"
+                                        aria-label="Enviar mensagem"
+                                    >
+                                        <ArrowUp className="w-5 h-5" />
+                                    </Button>
+                                </div>
+                            </form>
+                            <p className="text-sm text-aroma-text-muted mt-2">Represents: Input with integrated send button, icon and gradient focus/hover border.</p>
+                        </div>
                     </div>
-                  </div>
-                  <p className="text-sm mt-2 text-aroma-text-muted">Represents: &lt;TextField variant="outlined"&gt; styled with gradient border effect.</p>
                 </div>
-
-                <div>
-                  <Label htmlFor="chat-input-example" className="block text-sm font-medium text-aroma-text mb-2">Chat Input (New Style)</Label>
-                  <form onSubmit={handleFormSubmit} className="space-y-2">
-                    <div className="group relative rounded-md border border-transparent p-px hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start/50 to-aroma-grad-end/50 focus-within:from-aroma-grad-start focus-within:to-aroma-grad-end hover:shadow-[0_0_0_1px_var(--aroma-grad-start-hsl),_0_0_0_1px_var(--aroma-grad-end-hsl)] focus-within:shadow-[0_0_0_1px_var(--aroma-grad-start-hsl),_0_0_0_1px_var(--aroma-grad-end-hsl)] transition-all duration-200 ease-in-out">
-                      <div className="flex items-center w-full bg-card rounded-[calc(theme(borderRadius.md)-2px)] p-1 pr-1.5 shadow-sm">
-                        <Search className="h-5 w-5 text-muted-foreground mx-3 pointer-events-none" />
-                        <Separator orientation="vertical" className="h-6 mr-2 bg-border" />
-                        <Input
-                          type="text"
-                          id="chat-input-example"
-                          name="chat-input"
-                          placeholder="Descreva sua ideia de receita..."
-                          className="flex-grow py-2.5 px-2 bg-transparent border-none outline-none text-card-foreground placeholder:text-muted-foreground text-sm h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
-                        />
-                        <Button
-                          type="submit"
-                          size="icon"
-                          className="h-9 w-9 bg-aroma-secondary text-primary-foreground rounded-md hover:bg-aroma-secondary/90 focus:ring-aroma-secondary focus:ring-offset-card"
-                          aria-label="Criar Receita"
-                        >
-                          <ArrowUp className="w-5 h-5" />
-                        </Button>
-                      </div>
-                    </div>
-                  </form>
-                  <p className="text-sm mt-2 text-aroma-text-muted">Represents: New chat-style input with action button. Gradient border on focus/hover.</p>
-                </div>
-              </div>
             </div>
-          </div>
         </section>
 
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4 text-aroma-text">Accordion Selection</h2>
-          <div className="rounded-lg border bg-card text-card-foreground shadow-sm md:p-6">
+          
+          {/* Accordion Style 1: Joined, Standard Switch, No Chevron */}
+          <div className="mb-8">
+            <h3 className="text-xl font-medium mb-3 text-aroma-text">Style 1: Joined Items, Switch, No Chevron</h3>
             <Accordion
               type="multiple"
-              value={openMockAccordionItems}
-              onValueChange={setOpenMockAccordionItems}
-              className="w-full md:space-y-2"
+              value={openStyle1}
+              onValueChange={setOpenStyle1}
+              className="w-full rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden"
             >
-              {mockAccordionItemsData.map((item) => {
-                const isChecked = selectedMockAccordionItems.includes(item.id);
+              {mockAccordionItemsData.map((item, index) => {
+                const isChecked = selectedStyle1.includes(item.id);
                 return (
                   <AccordionItem
                     value={item.id}
                     key={item.id}
                     className={cn(
                       "transition-colors",
-                      "border-b border-border last:border-b-0 md:border md:rounded-lg",
-                      isChecked ? "bg-primary/10" : "bg-background md:bg-card",
-                      "md:first:rounded-t-lg md:last:rounded-b-lg md:overflow-hidden"
+                      index !== 0 && "border-t", // Add top border for all but the first
+                      isChecked ? "bg-primary/10" : "bg-card"
                     )}
                   >
                     <AccordionTrigger
-                      onClick={() => handleAccordionTriggerClick(item.id)}
+                      onClick={() => handleTriggerClick(item.id, setOpenStyle1)}
                       className={cn(
                         "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 transition-colors",
                         isChecked ? "hover:bg-primary/15" : "hover:bg-muted/50",
-                         "focus-visible:ring-offset-background md:focus-visible:ring-offset-card"
+                        "focus-visible:ring-offset-card"
                       )}
+                      showChevron={false}
                     >
                       <div className="flex items-center space-x-3 flex-1 min-w-0">
                         <Switch
-                          id={`mock-switch-${item.id}`}
+                          id={`style1-switch-${item.id}`}
                           checked={isChecked}
-                          onCheckedChange={(checked) => handleMockAccordionToggle(item.id, checked)}
-                          className="shrink-0 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input"
-                          aria-labelledby={`mock-label-${item.id}`}
+                          onCheckedChange={(checked) => handleAccordionToggle(item.id, checked, selectedStyle1, setSelectedStyle1, setOpenStyle1)}
+                          className="shrink-0 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input" // Standard ShadCN switch
+                          aria-labelledby={`style1-label-${item.id}`}
                           onClick={(e) => e.stopPropagation()}
                         />
                         <Label
-                          htmlFor={`mock-switch-${item.id}`}
-                          id={`mock-label-${item.id}`}
+                          htmlFor={`style1-switch-${item.id}`}
+                          id={`style1-label-${item.id}`}
                           className="font-medium text-base cursor-pointer flex-1 truncate"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleMockAccordionToggle(item.id, !isChecked);
+                            handleAccordionToggle(item.id, !isChecked, selectedStyle1, setSelectedStyle1, setOpenStyle1);
                           }}
                         >
                           {item.name}
                         </Label>
                       </div>
-                      <ChevronDown
-                        className={cn(
-                          "h-4 w-4 shrink-0 transition-transform duration-200 text-muted-foreground group-hover:text-accent-foreground",
-                          openMockAccordionItems.includes(item.id) && "rotate-180"
-                        )}
-                      />
                     </AccordionTrigger>
-                    <AccordionContent className="px-4 pb-4 pt-1 space-y-1 bg-background/50 md:bg-card/50">
+                    <AccordionContent className="px-4 pb-4 pt-1 space-y-1 bg-card/50">
                       <p className="text-sm text-muted-foreground">{item.suggestion}</p>
                       <p className="text-xs text-muted-foreground/80">{item.explanation}</p>
                     </AccordionContent>
@@ -379,12 +396,115 @@ const DesignSystemPage: NextPage = () => {
                 );
               })}
             </Accordion>
-             <p className="text-sm mt-4 text-center text-aroma-text-muted md:text-left">Demonstrates accordion for selecting multiple items with responsive styling.</p>
+            <p className="text-sm mt-2 text-aroma-text-muted">Joined items with shared borders. Switch for selection. No chevron.</p>
+          </div>
+
+          {/* Accordion Style 2: Separated, Standard Switch, No Chevron */}
+          <div className="mb-8">
+            <h3 className="text-xl font-medium mb-3 text-aroma-text">Style 2: Separated Items, Switch, No Chevron</h3>
+            <Accordion
+              type="multiple"
+              value={openStyle2}
+              onValueChange={setOpenStyle2}
+              className="w-full space-y-2"
+            >
+              {mockAccordionItemsDataStyle2.map((item) => {
+                const isChecked = selectedStyle2.includes(item.id);
+                return (
+                  <AccordionItem
+                    value={item.id}
+                    key={item.id}
+                    className={cn(
+                      "transition-colors border rounded-lg overflow-hidden bg-card text-card-foreground shadow-sm",
+                      isChecked ? "bg-primary/10" : "bg-card"
+                    )}
+                  >
+                    <AccordionTrigger
+                      onClick={() => handleTriggerClick(item.id, setOpenStyle2)}
+                      className={cn(
+                        "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 transition-colors",
+                        isChecked ? "hover:bg-primary/15" : "hover:bg-muted/50",
+                        "focus-visible:ring-offset-card"
+                      )}
+                      showChevron={false}
+                    >
+                      <div className="flex items-center space-x-3 flex-1 min-w-0">
+                        <Switch
+                          id={`style2-switch-${item.id}`}
+                          checked={isChecked}
+                          onCheckedChange={(checked) => handleAccordionToggle(item.id, checked, selectedStyle2, setSelectedStyle2, setOpenStyle2)}
+                          className="shrink-0 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input" // Standard ShadCN switch
+                          aria-labelledby={`style2-label-${item.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <Label
+                          htmlFor={`style2-switch-${item.id}`}
+                          id={`style2-label-${item.id}`}
+                          className="font-medium text-base cursor-pointer flex-1 truncate"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAccordionToggle(item.id, !isChecked, selectedStyle2, setSelectedStyle2, setOpenStyle2);
+                          }}
+                        >
+                          {item.name}
+                        </Label>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 pb-4 pt-1 space-y-1 bg-card/50">
+                      <p className="text-sm text-muted-foreground">{item.suggestion}</p>
+                      <p className="text-xs text-muted-foreground/80">{item.explanation}</p>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
+            <p className="text-sm mt-2 text-aroma-text-muted">Separated, individually bordered items. Switch for selection. No chevron.</p>
+          </div>
+
+          {/* Accordion Style 3: Separated, No Switch, With Chevron */}
+          <div className="mb-8">
+            <h3 className="text-xl font-medium mb-3 text-aroma-text">Style 3: Separated Items, No Switch, With Chevron</h3>
+            <Accordion
+              type="multiple"
+              value={openStyle3}
+              onValueChange={setOpenStyle3}
+              className="w-full space-y-2"
+            >
+              {mockAccordionItemsDataStyle3.map((item) => (
+                <AccordionItem
+                  value={item.id}
+                  key={item.id}
+                  className={cn(
+                    "transition-colors border rounded-lg overflow-hidden bg-card text-card-foreground shadow-sm",
+                    openStyle3.includes(item.id) ? "bg-muted/30" : "bg-card"
+                  )}
+                >
+                  <AccordionTrigger
+                    onClick={() => handleTriggerClick(item.id, setOpenStyle3)}
+                    className={cn(
+                      "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 transition-colors group",
+                      openStyle3.includes(item.id) ? "hover:bg-muted/50" : "hover:bg-muted/50",
+                      "focus-visible:ring-offset-card"
+                    )}
+                    showChevron={true} 
+                  >
+                    <Label className="font-medium text-base cursor-pointer flex-1 truncate">
+                      {item.name}
+                    </Label>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4 pt-1 space-y-1 bg-card/50">
+                    <p className="text-sm text-muted-foreground">{item.suggestion}</p>
+                    <p className="text-xs text-muted-foreground/80">{item.explanation}</p>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+            <p className="text-sm mt-2 text-aroma-text-muted">Separated, individually bordered items. No switch. Chevron for expand/collapse.</p>
           </div>
         </section>
 
-
-        <section className="mb-12">
+        {/* Alerts & Badges Section */}
+         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4 text-aroma-text">Alerts & Badges</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
@@ -405,20 +525,21 @@ const DesignSystemPage: NextPage = () => {
               <h3 className="text-xl font-medium p-6 pb-0">Relevancy Badges</h3>
               <div className="p-6">
                 <div className="flex flex-wrap gap-3">
-                  <Badge className="bg-aroma-primary/80 text-primary-foreground">Relevância: 5/5</Badge>
-                  <Badge className="bg-aroma-accent/80 text-aroma-text">Relevância: 4/5</Badge>
-                  <Badge className="bg-yellow-500 text-primary-foreground">Relevância: 3/5</Badge>
-                  <Badge className="bg-aroma-secondary/80 text-primary-foreground">Relevância: 2/5</Badge>
-                  <Badge className="bg-red-500 text-primary-foreground">Relevância: 1/5</Badge>
+                  <RelevancyBadge score={5} />
+                  <RelevancyBadge score={4} />
+                  <RelevancyBadge score={3} />
+                  <RelevancyBadge score={2} />
+                  <RelevancyBadge score={1} />
                 </div>
-                <p className="text-sm mt-2 text-aroma-text-muted">Represents: &lt;Chip size="small"&gt;.</p>
+                <p className="text-sm mt-2 text-aroma-text-muted">Represents: New &lt;RelevancyBadge score={'{1-5}'} /&gt; component.</p>
               </div>
             </div>
           </div>
         </section>
 
+        {/* Layout Components Section */}
         <section className="mb-12">
-          <h2 className="text-2xl font-semibold mb-4 text-aroma-text">Layout Components (Conceptual)</h2>
+          <h2 className="text-2xl font-semibold text-aroma-text mb-4">Layout Components (Conceptual)</h2>
           <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
             <div className="p-6 space-y-4">
               <p>Layout structure will follow `01_saas_template.md` using components:</p>

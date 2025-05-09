@@ -25,10 +25,15 @@
                 'alert-text': '#d97706', // Amber-700
                 'alert-border': 'rgba(245, 158, 11, 0.5)', // Amber-500 border
                 'alert-icon': '#d97706', // Amber-700
+                'relevancy-1': '#FE737C',
+                'relevancy-2': '#FA947C',
+                'relevancy-3': '#F9D66B',
+                'relevancy-4': '#CBE453',
+                'relevancy-5': '#6CC15A',
               },
               fontFamily: {
                 sans: ['Poppins', 'system-ui', 'sans-serif'],
-                poppins: ['Poppins', 'sans-serif'], // Added for direct usage
+                poppins: ['Poppins', 'sans-serif'], 
               },
               borderRadius: {
                  'lg': "0.75rem", 
@@ -50,11 +55,11 @@
                   '50%': { opacity: '1', transform: 'translate(-50%, -50%) scale(1)' }
                 },
                 ellipsis: {
-                  '0%': { content: '" "' },
+                  '0%': { content: '"\\00a0"' }, /* nbsp */
                   '25%': { content: '"."' },
                   '50%': { content: '".."' },
                   '75%': { content: '"..."' },
-                  'to': { content: '" "' }
+                  '100%': { content: '"\\00a0"' } /* nbsp */
                 },
               },
               animation: {
@@ -66,99 +71,104 @@
         }
     </script>
     <style>
-        /* Base body styles - Tailwind handles most of this with bg-gray-100 and font-poppins */
         body {
-            /* font-family: 'Poppins', sans-serif; Replaced by font-poppins class */
-            /* color: #4B4763; Replaced by text-aroma-text class */
-            /* background-color: #f8f9fa; Replaced by bg-gray-100 class */
+            font-family: 'Poppins', sans-serif;
+            color: #4B4763;
+            background-color: #f8f9fa;
         }
-        /* Basic h tag styling if needed, but Tailwind's text-aroma-text and font-semibold should cover it */
         h1, h2, h3, h4, h5, h6 {
-            /* color: #4B4763; */
-            font-weight: 600; /* Can be achieved with font-semibold class */
+            font-weight: 600;
         }
-        /* .card class is handled by Tailwind classes directly on elements */
-        
-        .card-content { padding: 1.5rem; } /* Can be p-6 on the div */
+        .card-content { padding: 1.5rem; }
 
-        /* Gradient text - bg-clip-text and text-transparent are standard Tailwind */
-        
-        /* Input with Gradient Border Styling (Focus/Hover) - Complex, might need some custom CSS if Tailwind alone is tricky */
         .input-gradient-border {
-            border: 1px solid #d1d5db; /* Default gray border */
+            border: 1px solid #d1d5db; 
             padding: 1px;
-            border-radius: 1.75rem; /* 3xl - Match inner */
+            border-radius: 1.75rem; 
             background-image: none;
             transition: border-color 0.2s ease-in-out, background-image 0.2s ease-in-out;
         }
         .input-gradient-border:hover,
         .input-gradient-border:focus-within {
              border-color: transparent;
-             /* Tailwind gradient classes would be applied here dynamically or via group-hover/focus-within */
-             /* background-image: linear-gradient(to right, var(--tw-gradient-from), var(--tw-gradient-to)); */
-             /* --tw-gradient-from: #7b61ff; */
-             /* --tw-gradient-to: #ff5fa1; */
         }
         .input-gradient-border input {
              background-color: white;
              border: none;
-             border-radius: calc(1.75rem - 1px); /* Slightly smaller than parent */
+             border-radius: calc(1.75rem - 1px); 
              width: 100%;
-             padding-left: 3rem; /* pl-12 */
-             padding-right: 1rem; /* pr-4 */
-             padding-top: 0.875rem; /* py-3.5 equivalent */
+             padding-left: 3rem; 
+             padding-right: 1rem; 
+             padding-top: 0.875rem; 
              padding-bottom: 0.875rem;
-             font-size: 1rem; /* text-base */
-             line-height: 1.5rem; /* leading-6 */
-             color: #4B4763; /* text-aroma-text */
+             font-size: 1rem; 
+             line-height: 1.5rem; 
+             color: #4B4763; 
              outline: none;
              box-shadow: none;
         }
         .input-gradient-border input::placeholder {
-            color: #9ca3af; /* placeholder-gray-400 */
+            color: #9ca3af; 
         }
 
-        /* Loading Circle Animation - Uses Primary Color */
         .pulse-circle {
             position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); border-radius: 50%;
-            /* background-color: rgba(122, 92, 255, var(--tw-bg-opacity)); Tailwind bg-aroma-primary with opacity */
             animation: pulseRing 2.5s infinite ease-in-out;
         }
-        /* Opacity levels for pulsing effect - handled by Tailwind opacity classes bg-aroma-primary/XX */
 
-        /* Step List Styling - Uses Theme Text Colors */
          #step-list li {
-            transition: all .4s ease-in-out; /* Tailwind: transition-all duration-400 ease-in-out */
-            /* color: #9ca3af; text-gray-400 (Inactive) */
-            font-size: 1rem; font-weight: 400; opacity: .9; /* text-base font-normal opacity-90 */
-            min-height: 1.75rem; line-height: 1.75rem; /* min-h-[1.75rem] leading-[1.75rem] */
-            display: flex; align-items: center; justify-content: center; /* flex items-center justify-center */
+            transition: all .4s ease-in-out; 
+            font-size: 1rem; font-weight: 400; opacity: .9; 
+            min-height: 1.75rem; line-height: 1.75rem; 
+            display: flex; align-items: center; justify-content: center; 
         }
         #step-list li.step-active {
-            /* color: #4B4763; text-aroma-text (Active) */
-            font-weight: 700; font-size: 1.125rem; opacity: 1; /* font-bold text-lg opacity-100 */
+            font-weight: 700; font-size: 1.125rem; opacity: 1; 
         }
         #step-list li.step-completed {
-            /* color: #6f6b89; text-aroma-text-muted (Completed) */
-            font-size: 1rem; font-weight: 400; text-decoration: line-through; opacity: .7; /* text-base font-normal line-through opacity-70 */
+            font-size: 1rem; font-weight: 400; text-decoration: line-through; opacity: .7; 
         }
-        #step-list li.step-completed::before { content: '✓ '; font-weight: bold; } /* Handled in JSX */
+        #step-list li.step-completed::before { content: '✓ '; font-weight: bold; } 
         #step-list li.step-active.ellipsis:after {
-            /* Tailwind animate-ellipsis and other properties */
             color: inherit; font-size: inherit; display: inline-block;
             animation: ellipsis 1.6s infinite; content: " "; width: 1.5em;
             text-align: left; vertical-align: bottom;
         }
+        
+        /* Custom Switch CSS (basic example) */
+        .custom-switch { display: inline-flex; align-items: center; cursor: pointer; }
+        .custom-switch input { opacity: 0; width: 0; height: 0; }
+        .custom-switch .slider {
+            width: 44px; /* w-11 */
+            height: 24px; /* h-6 */
+            background-color: #D1D5DB; /* bg-input */
+            border-radius: 9999px; /* rounded-full */
+            position: relative;
+            transition: background-color 0.2s;
+        }
+        .custom-switch .slider::before {
+            content: "";
+            position: absolute;
+            width: 20px; /* w-5 */
+            height: 20px; /* h-5 */
+            background-color: white; /* bg-background */
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s;
+        }
+        .custom-switch input:checked + .slider { background-color: #7a5cff; /* bg-primary */ }
+        .custom-switch input:checked + .slider::before { transform: translateX(20px); /* translate-x-5 */ }
 
-        /* Alert Component Styling - Example using Orange/Amber - Handled by Tailwind bg-alert-bg, text-alert-text etc. */
     </style>
 </head>
 <body class="bg-gray-100 font-poppins text-aroma-text">
 
 <div class="container mx-auto py-10 px-4">
     <h1 class="text-3xl md:text-4xl font-bold text-aroma-text mb-2">AromaChat Design System</h1>
-    <p class="mb-10 text-aroma-text-muted">Showcasing styles for Material UI React components based on PRD guidelines (v2).</p>
+    <p class="mb-10 text-aroma-text-muted">Showcasing styles for React components based on PRD guidelines (v2).</p>
 
+    <!-- Color Palette Section -->
     <section class="mb-12">
         <h2 class="text-2xl font-semibold text-aroma-text mb-4">Color Palette (PRD 4.1.1)</h2>
         <div class="bg-white rounded-lg border border-gray-200 shadow-card">
@@ -192,45 +202,47 @@
         </div>
     </section>
 
+    <!-- Typography Section -->
     <section class="mb-12">
         <h2 class="text-2xl font-semibold text-aroma-text mb-4">Typography (Poppins)</h2>
         <div class="bg-white rounded-lg border border-gray-200 shadow-card">
             <div class="p-6 space-y-4">
                 <div>
                     <h1 class="text-3xl md:text-4xl font-bold">Heading 1 (Poppins Bold)</h1>
-                    <p class="text-sm text-aroma-text-muted">Represents: MUI `<Typography variant="h1">`</p>
+                    <p class="text-sm text-aroma-text-muted">Represents: MUI &lt;Typography variant="h1"&gt;</p>
                 </div>
                  <div>
                     <h2 class="text-2xl font-semibold">Heading 2 (Poppins SemiBold)</h2>
-                     <p class="text-sm text-aroma-text-muted">Represents: MUI `<Typography variant="h2">`</p>
+                     <p class="text-sm text-aroma-text-muted">Represents: MUI &lt;Typography variant="h2"&gt;</p>
                 </div>
                 <div>
                     <h3 class="text-xl font-medium">Heading 3 (Poppins Medium)</h3>
-                     <p class="text-sm text-aroma-text-muted">Represents: MUI `<Typography variant="h3">`</p>
+                     <p class="text-sm text-aroma-text-muted">Represents: MUI &lt;Typography variant="h3"&gt;</p>
                 </div>
                  <div>
                     <p class="text-base font-normal">Body text (Poppins Regular). Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                     <p class="text-sm text-aroma-text-muted">Represents: MUI `<Typography variant="body1">`</p>
+                     <p class="text-sm text-aroma-text-muted">Represents: MUI &lt;Typography variant="body1"&gt;</p>
                 </div>
                  <div>
                     <p class="text-sm font-normal text-aroma-text-muted">Small text / captions (Poppins Regular).</p>
-                     <p class="text-xs text-aroma-text-muted">Represents: MUI `<Typography variant="caption">` or `variant="body2"`</p>
+                     <p class="text-xs text-aroma-text-muted">Represents: MUI &lt;Typography variant="caption"&gt; or `variant="body2"`</p>
                 </div>
                  <div>
                      <p class="text-base font-semibold">SemiBold Body text</p>
-                      <p class="text-sm text-aroma-text-muted">For emphasis. Use `fontWeight` prop on `<Typography>`.</p>
+                      <p class="text-sm text-aroma-text-muted">For emphasis. Use `fontWeight` prop on &lt;Typography&gt;.</p>
                  </div>
                  <div class="mt-6">
                       <h3 class="text-xl font-medium mb-2">Gradient Heading Example</h3>
                       <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end text-transparent bg-clip-text">
                            Qual receita você quer criar hoje?
                       </h1>
-                      <p class="text-sm text-aroma-text-muted mt-1">Represents: MUI `<Typography>` styled with gradient background clip.</p>
+                      <p class="text-sm text-aroma-text-muted mt-1">Represents: MUI &lt;Typography&gt; styled with gradient background clip.</p>
                   </div>
             </div>
         </div>
     </section>
 
+    <!-- Loading & Progress Section -->
     <section class="mb-12">
         <h2 class="text-2xl font-semibold text-aroma-text mb-4">Loading & Progress</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -250,7 +262,7 @@
                         </div>
                     </div>
                 </div>
-                 <p class="text-sm text-aroma-text-muted p-6 pt-0 text-center">Represents: Custom loading component or styled MUI `<CircularProgress variant="determinate">` (if animated via value).</p>
+                 <p class="text-sm text-aroma-text-muted p-6 pt-0 text-center">Represents: Custom loading component or styled MUI &lt;CircularProgress variant="determinate"&gt; (if animated via value).</p>
             </div>
             <div class="bg-white rounded-lg border border-gray-200 shadow-card">
                  <h3 class="text-xl font-medium p-6 pb-0">Progress Steps</h3>
@@ -264,24 +276,25 @@
                             <span>65% Complete</span>
                             <span>Time elapsed: 01:15</span>
                         </div>
-                         <p class="text-sm text-aroma-text-muted mt-2 text-center">Represents: MUI `<LinearProgress>` styled with gradient.</p>
+                         <p class="text-sm text-aroma-text-muted mt-2 text-center">Represents: MUI &lt;LinearProgress&gt; styled with gradient.</p>
                     </div>
                     <div>
                         <p class="text-base font-medium mb-3 text-center">Step List Example</p>
                         <ul id="step-list" class="space-y-2 text-center">
                              <li data-step="1" class="transition-all duration-400 ease-in-out text-sm font-normal opacity-70 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center line-through text-aroma-text-muted"><span class="font-bold mr-1">✓ </span>Enter Health Concern</li>
                              <li data-step="2" class="transition-all duration-400 ease-in-out text-sm font-normal opacity-70 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center line-through text-aroma-text-muted"><span class="font-bold mr-1">✓ </span>Provide Demographics</li>
-                             <li data-step="3" class="transition-all duration-400 ease-in-out text-lg font-bold opacity-100 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center relative text-aroma-text after:inline-block after:ml-1 after:w-[1.5em] after:text-left after:align-bottom after:content-['\00a0'] after:animate-ellipsis">Select Causes</li>
+                             <li data-step="3" class="transition-all duration-400 ease-in-out text-lg font-bold opacity-100 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center relative text-aroma-text after:inline-block after:ml-1 after:w-[1.5em] after:text-left after:align-bottom after:content-[''] after:animate-ellipsis">Select Causes</li>
                              <li data-step="4" class="transition-all duration-400 ease-in-out text-gray-400 text-sm font-normal opacity-90 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center">Select Symptoms</li>
                              <li data-step="5" class="transition-all duration-400 ease-in-out text-gray-400 text-sm font-normal opacity-90 min-h-[1.75rem] leading-[1.75rem] flex items-center justify-center">Review Properties</li>
                         </ul>
-                         <p class="text-sm text-aroma-text-muted mt-2 text-center">Represents: MUI `<Stepper>` or custom list component.</p>
+                         <p class="text-sm text-aroma-text-muted mt-2 text-center">Represents: MUI &lt;Stepper&gt; or custom list component.</p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
+    <!-- Buttons Section -->
     <section class="mb-12">
         <h2 class="text-2xl font-semibold text-aroma-text mb-4">Buttons</h2>
         <div class="bg-white rounded-lg border border-gray-200 shadow-card">
@@ -294,7 +307,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                         </button>
                     </div>
-                    <p class="text-sm text-aroma-text-muted mt-2">Represents: MUI `<Button variant="contained">` heavily styled with gradient, padding, border-radius, shadow, and icon.</p>
+                    <p class="text-sm text-aroma-text-muted mt-2">Represents: MUI &lt;Button variant="contained"&gt; heavily styled with gradient, padding, border-radius, shadow, and icon.</p>
                 </div>
 
                 <div>
@@ -304,89 +317,228 @@
                         <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 border border-aroma-primary text-aroma-primary bg-white hover:bg-aroma-primary/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aroma-primary">Primary Outlined</button>
                          <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 text-aroma-primary hover:bg-aroma-primary/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aroma-primary">Primary Text</button>
                     </div>
-                    <p class="text-sm text-aroma-text-muted mt-2">Represents: Standard MUI `<Button>` variants (`contained`, `outlined`, `text`) using `color="primary"`.</p>
+                    <p class="text-sm text-aroma-text-muted mt-2">Represents: Standard MUI &lt;Button&gt; variants (`contained`, `outlined`, `text`) using `color="primary"`.</p>
                      <div class="flex flex-wrap gap-4 items-center mt-4">
                         <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 bg-aroma-secondary text-white shadow-sm hover:bg-aroma-secondary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aroma-secondary">Secondary Contained</button>
                         <button class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium px-4 py-2 border border-aroma-secondary text-aroma-secondary bg-white hover:bg-aroma-secondary/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aroma-secondary">Secondary Outlined</button>
                      </div>
-                      <p class="text-sm text-aroma-text-muted mt-2">Represents: Standard MUI `<Button>` variants using `color="secondary"` (requires theme setup).</p>
+                      <p class="text-sm text-aroma-text-muted mt-2">Represents: Standard MUI &lt;Button&gt; variants using `color="secondary"` (requires theme setup).</p>
                 </div>
 
                 <div>
                     <h3 class="text-lg font-medium mb-3">Suggestion Chips / Small Actions</h3>
                     <div class="flex flex-wrap gap-3">
-                       <button class="bg-purple-50 border border-purple-200 text-aroma-primary text-sm font-medium py-2 px-4 rounded-full hover:bg-purple-100 transition-colors duration-200">Relaxar</button>
-                       <button class="bg-purple-50 border border-purple-200 text-aroma-primary text-sm font-medium py-2 px-4 rounded-full hover:bg-purple-100 transition-colors duration-200">Dormir melhor</button>
-                       <button class="bg-purple-50 border border-purple-200 text-aroma-primary text-sm font-medium py-2 px-4 rounded-full hover:bg-purple-100 transition-colors duration-200">Alívio da tensão</button>
+                       <button class="bg-aroma-primary/10 border border-aroma-primary/30 text-aroma-primary text-sm font-medium py-2 px-4 rounded-full hover:bg-aroma-primary/20 transition-colors duration-200">Relaxar</button>
+                       <button class="bg-aroma-primary/10 border border-aroma-primary/30 text-aroma-primary text-sm font-medium py-2 px-4 rounded-full hover:bg-aroma-primary/20 transition-colors duration-200">Dormir melhor</button>
+                       <button class="bg-aroma-primary/10 border border-aroma-primary/30 text-aroma-primary text-sm font-medium py-2 px-4 rounded-full hover:bg-aroma-primary/20 transition-colors duration-200">Alívio da tensão</button>
                     </div>
-                     <p class="text-sm text-aroma-text-muted mt-2">Represents: MUI `<Chip>` components, possibly with `clickable={true}` and custom styling for background/border.</p>
+                     <p class="text-sm text-aroma-text-muted mt-2">Represents: MUI &lt;Chip&gt; components, possibly with `clickable={true}` and custom styling for background/border.</p>
                 </div>
             </div>
         </div>
     </section>
 
+    <!-- Input Fields Section -->
     <section class="mb-12">
         <h2 class="text-2xl font-semibold text-aroma-text mb-4">Input Fields</h2>
          <div class="bg-white rounded-lg border border-gray-200 shadow-card">
              <div class="p-6">
-                 <div class="max-w-lg mx-auto">
-                     <label for="health-concern-example" class="block text-sm font-medium text-aroma-text mb-2">Health Concern Input</label>
-                     <div class="group relative rounded-3xl border border-gray-300 p-px hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end">
-                         <div class="relative">
-                             <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
-                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                 <div class="max-w-2xl mx-auto space-y-8">
+                     <div>
+                         <label for="health-concern-example" class="block text-sm font-medium text-aroma-text mb-2">Health Concern Input (Old Style)</label>
+                         <div class="group relative rounded-3xl border border-gray-300 p-px hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end transition-all duration-200 ease-in-out">
+                             <div class="relative">
+                                 <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
+                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                 </div>
+                                 <input type="text" id="health-concern-example" placeholder="Ex: dor de cabeça, insônia, ansiedade..." class="block w-full rounded-[calc(1.75rem-1px)] border-none bg-white py-3.5 pl-12 pr-4 text-base leading-6 text-aroma-text shadow-none outline-none placeholder-gray-400">
                              </div>
-                             <input type="text" id="health-concern-example" placeholder="Ex: dor de cabeça, insônia, ansiedade..." class="block w-full rounded-[calc(1.75rem-1px)] border-none bg-white py-3.5 pl-12 pr-4 text-base leading-6 text-aroma-text shadow-none outline-none placeholder-gray-400">
                          </div>
+                         <p class="text-sm text-aroma-text-muted mt-2">Represents: &lt;Input&gt; styled with large border-radius, icon, and custom gradient focus/hover effect.</p>
                      </div>
-                     <p class="text-sm text-aroma-text-muted mt-2">Represents: MUI `<TextField variant="outlined">` styled with large border-radius, icon (`InputProps`), and custom gradient focus/hover effect on the fieldset/border.</p>
+                     
+                     <div>
+                         <label for="chat-input" class="block text-sm font-medium text-aroma-text mb-2">Chat Input (New Style)</label>
+                         <div class="group relative rounded-md border border-gray-300 p-px hover:border-transparent focus-within:border-transparent hover:bg-gradient-to-r focus-within:bg-gradient-to-r from-aroma-grad-start/20 to-aroma-grad-end/20 transition-all duration-200 ease-in-out focus-within:from-aroma-grad-start/50 focus-within:to-aroma-grad-end/50 hover:shadow-[0_0_0_1px_theme(colors.aroma-grad-start_/_0.1),_0_0_0_1px_theme(colors.aroma-grad-end_/_0.1)] focus-within:shadow-[0_0_0_1px_theme(colors.aroma-grad-start_/_0.3),_0_0_0_1px_theme(colors.aroma-grad-end_/_0.3)]">
+                            <div class="flex items-center w-full bg-white rounded-[calc(theme(borderRadius.md)-1px)] p-1 pr-1.5 shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5 text-gray-400 mx-3 pointer-events-none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                <div class="h-6 w-px bg-gray-300 mr-2"></div>
+                                <input
+                                    name="chat-input"
+                                    type="text"
+                                    placeholder="Digite sua mensagem ou ideia..."
+                                    class="flex-grow py-2.5 px-2 bg-transparent border-none outline-none text-aroma-text placeholder:text-gray-400 text-sm h-12 focus:ring-0"
+                                />
+                                <button 
+                                    type="submit"
+                                    aria-label="Enviar mensagem"
+                                    class="h-9 w-9 flex items-center justify-center bg-aroma-secondary text-white rounded-md hover:bg-aroma-secondary/90 focus:outline-none focus:ring-2 focus:ring-aroma-secondary focus:ring-offset-2 focus:ring-offset-white"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+                                </button>
+                            </div>
+                        </div>
+                         <p class="text-sm text-aroma-text-muted mt-2">Represents: Input with integrated send button, icon and gradient focus/hover border.</p>
+                     </div>
                  </div>
              </div>
          </div>
     </section>
 
+    <!-- Accordion Selection Section -->
+    <section class="mb-12">
+        <h2 class="text-2xl font-semibold text-aroma-text mb-4">Accordion Selection</h2>
+        
+        <!-- Style 1: Joined Items, Switch, No Chevron -->
+        <div class="mb-8">
+            <h3 class="text-xl font-medium mb-3 text-aroma-text">Style 1: Joined Items, Switch, No Chevron</h3>
+            <div class="rounded-lg border border-gray-200 bg-white shadow-card overflow-hidden">
+                <!-- Accordion Item 1 -->
+                <div class="border-b border-gray-200 last:border-b-0 hover:bg-gray-50/50 transition-colors">
+                    <button class="flex w-full items-center justify-between px-4 py-3 text-left focus:outline-none">
+                        <div class="flex items-center space-x-3 flex-1 min-w-0">
+                            <label class="custom-switch">
+                                <input type="checkbox" checked/>
+                                <span class="slider"></span>
+                            </label>
+                            <span class="font-medium text-base text-aroma-text truncate">Stress & Anxiety</span>
+                        </div>
+                    </button>
+                    <div class="px-4 pb-4 pt-1 space-y-1">
+                        <p class="text-sm text-aroma-text-muted">Common trigger for various health concerns.</p>
+                        <p class="text-xs text-aroma-text-muted/80">Chronic stress can impact sleep, digestion, and overall well-being. It is important to manage stress levels through relaxation techniques.</p>
+                    </div>
+                </div>
+                <!-- Accordion Item 2 (Collapsed example) -->
+                <div class="border-b border-gray-200 last:border-b-0 hover:bg-gray-50/50 transition-colors">
+                    <button class="flex w-full items-center justify-between px-4 py-3 text-left focus:outline-none">
+                        <div class="flex items-center space-x-3 flex-1 min-w-0">
+                             <label class="custom-switch">
+                                <input type="checkbox"/>
+                                <span class="slider"></span>
+                            </label>
+                            <span class="font-medium text-base text-aroma-text truncate">Poor Diet</span>
+                        </div>
+                    </button>
+                    <!-- Collapsed content (hidden) -->
+                </div>
+            </div>
+            <p class="text-sm mt-2 text-aroma-text-muted">Joined items with shared borders. Switch for selection. No chevron.</p>
+        </div>
+
+        <!-- Style 2: Separated Items, Switch, No Chevron -->
+        <div class="mb-8">
+            <h3 class="text-xl font-medium mb-3 text-aroma-text">Style 2: Separated Items, Switch, No Chevron</h3>
+            <div class="space-y-2">
+                <!-- Accordion Item 1 -->
+                <div class="border border-gray-200 rounded-lg bg-white shadow-card overflow-hidden hover:bg-gray-50/50 transition-colors">
+                    <button class="flex w-full items-center justify-between px-4 py-3 text-left focus:outline-none">
+                        <div class="flex items-center space-x-3 flex-1 min-w-0">
+                             <label class="custom-switch">
+                                <input type="checkbox"/>
+                                <span class="slider"></span>
+                            </label>
+                            <span class="font-medium text-base text-aroma-text truncate">Nutritional Deficiencies</span>
+                        </div>
+                    </button>
+                    <!-- Collapsed content for example -->
+                </div>
+                <!-- Accordion Item 2 (Open and checked example) -->
+                <div class="border border-gray-200 rounded-lg bg-aroma-primary/10 shadow-card overflow-hidden hover:bg-aroma-primary/15 transition-colors">
+                     <button class="flex w-full items-center justify-between px-4 py-3 text-left focus:outline-none">
+                        <div class="flex items-center space-x-3 flex-1 min-w-0">
+                             <label class="custom-switch">
+                                <input type="checkbox" checked/>
+                                <span class="slider"></span>
+                            </label>
+                            <span class="font-medium text-base text-aroma-text truncate">Dehydration</span>
+                        </div>
+                    </button>
+                    <div class="px-4 pb-4 pt-1 space-y-1 bg-white/50">
+                        <p class="text-sm text-aroma-text-muted">Can cause headaches and dizziness.</p>
+                        <p class="text-xs text-aroma-text-muted/80">Drink an adequate amount of water throughout the day, especially in warm weather or during exercise.</p>
+                    </div>
+                </div>
+            </div>
+            <p class="text-sm mt-2 text-aroma-text-muted">Separated, individually bordered items. Switch for selection. No chevron.</p>
+        </div>
+
+        <!-- Style 3: Separated Items, No Switch, With Chevron -->
+        <div class="mb-8">
+            <h3 class="text-xl font-medium mb-3 text-aroma-text">Style 3: Separated Items, No Switch, With Chevron</h3>
+            <div class="space-y-2">
+                <!-- Accordion Item 1 (Open example) -->
+                <div class="border border-gray-200 rounded-lg bg-gray-50/30 shadow-card overflow-hidden hover:bg-gray-50/50 transition-colors">
+                    <button class="group flex w-full items-center justify-between px-4 py-3 text-left focus:outline-none">
+                        <span class="font-medium text-base text-aroma-text truncate">Environmental Factors</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 text-aroma-text-muted group-hover:text-aroma-accent transition-transform duration-200 rotate-180">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="px-4 pb-4 pt-1 space-y-1 bg-white/50">
+                        <p class="text-sm text-aroma-text-muted">Allergens or pollutants.</p>
+                        <p class="text-xs text-aroma-text-muted/80">Identify potential environmental triggers and minimize exposure. Air purifiers may be helpful.</p>
+                    </div>
+                </div>
+                <!-- Accordion Item 2 -->
+                <div class="border border-gray-200 rounded-lg bg-white shadow-card overflow-hidden hover:bg-gray-50/50 transition-colors">
+                     <button class="group flex w-full items-center justify-between px-4 py-3 text-left focus:outline-none">
+                        <span class="font-medium text-base text-aroma-text truncate">Lack of Exercise</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0 text-aroma-text-muted group-hover:text-aroma-accent transition-transform duration-200">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <!-- Collapsed content -->
+                </div>
+            </div>
+            <p class="text-sm mt-2 text-aroma-text-muted">Separated, individually bordered items. No switch. Chevron for expand/collapse.</p>
+        </div>
+    </section>
+
+    <!-- Alerts & Badges Section -->
     <section class="mb-12">
         <h2 class="text-2xl font-semibold text-aroma-text mb-4">Alerts & Badges</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-white rounded-lg border border-gray-200 shadow-card">
                  <h3 class="text-xl font-medium p-6 pb-0">Alert Example</h3>
                 <div class="p-6">
-                     <div class="relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 bg-alert-bg border-alert-border">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-alert-icon"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                     <div class="relative w-full rounded-lg border p-4 [&gt;svg~*]:pl-7 [&gt;svg+div]:translate-y-[-3px] [&gt;svg]:absolute [&gt;svg]:left-4 [&gt;svg]:top-4 bg-alert-bg border-alert-border">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-alert-icon"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                         <div class="text-sm [&_p]:leading-relaxed text-alert-text">
                            Estamos com alta demanda. Pode haver pequenos atrasos nas sugestões. Obrigada!
                         </div>
                     </div>
-                     <p class="text-sm text-aroma-text-muted mt-2">Represents: MUI `<Alert severity="warning">` (or other severities) with custom background/text/border colors defined in the theme.</p>
+                     <p class="text-sm text-aroma-text-muted mt-2">Represents: MUI &lt;Alert severity="warning"&gt; (or other severities) with custom background/text/border colors defined in the theme.</p>
                 </div>
             </div>
             <div class="bg-white rounded-lg border border-gray-200 shadow-card">
                  <h3 class="text-xl font-medium p-6 pb-0">Relevancy Badges</h3>
                 <div class="p-6">
                     <div class="flex flex-wrap gap-3">
-                        <span class="inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold bg-aroma-primary/80 text-white">Relevância: 5/5</span>
-                        <span class="inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold bg-aroma-accent/80 text-aroma-text">Relevância: 4/5</span>
-                        <span class="inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold bg-yellow-500 text-white">Relevância: 3/5</span>
-                        <span class="inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold bg-aroma-secondary/80 text-white">Relevância: 2/5</span>
-                        <span class="inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold bg-red-500 text-white">Relevância: 1/5</span>
+                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-relevancy-5 text-white">Relevância: 5/5</span>
+                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-relevancy-4 text-slate-900">Relevância: 4/5</span>
+                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-relevancy-3 text-slate-900">Relevância: 3/5</span>
+                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-relevancy-2 text-white">Relevância: 2/5</span>
+                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-relevancy-1 text-white">Relevância: 1/5</span>
                     </div>
-                     <p class="text-sm text-aroma-text-muted mt-2">Represents: MUI `<Chip size="small">` with custom background colors based on relevancy score.</p>
+                     <p class="text-sm text-aroma-text-muted mt-2">Represents: New &lt;RelevancyBadge score={'1-5'} /&gt; component (based on MUI &lt;Chip size="small"&gt;).</p>
                 </div>
             </div>
         </div>
     </section>
 
+    <!-- Layout Components Section -->
      <section class="mb-12">
         <h2 class="text-2xl font-semibold text-aroma-text mb-4">Layout Components (Conceptual)</h2>
         <div class="bg-white rounded-lg border border-gray-200 shadow-card">
             <div class="p-6 space-y-4 text-aroma-text">
                <p>Layout structure will follow `01_saas_template.md` using MUI components:</p>
                 <ul class="list-disc pl-5 space-y-1 text-sm">
-                    <li>**Sidebar:** MUI `<Drawer>` component (persistent or temporary variant) with `<List>`, `<ListItem>`, `<ListItemIcon>`, `<ListItemText>`.</li>
-                    <li>**User Menu:** MUI `<Menu>` or `<Popover>` anchored to a `<Button>` or `<Avatar>` in the sidebar.</li>
-                    <li>**Settings Page:** Main content area with MUI `<Tabs orientation="vertical">` and `<TabPanel>`.</li>
-                    <li>**Modals:** MUI `<Dialog>` for confirmations (logout) or full-screen content (Subscription).</li>
-                    <li>**Cards:** MUI `<Card>` with `<CardContent>`, `<CardHeader>`, etc. (as used in this design system).</li>
+                    <li>**Sidebar:** MUI &lt;Drawer&gt; component (persistent or temporary variant) with &lt;List&gt;, &lt;ListItem&gt;, &lt;ListItemIcon&gt;, &lt;ListItemText&gt;.</li>
+                    <li>**User Menu:** MUI &lt;Menu&gt; or &lt;Popover&gt; anchored to a &lt;Button&gt; or &lt;Avatar&gt; in the sidebar.</li>
+                    <li>**Settings Page:** Main content area with MUI &lt;Tabs orientation="vertical"&gt; and &lt;TabPanel&gt;.</li>
+                    <li>**Modals:** MUI &lt;Dialog&gt; for confirmations (logout) or full-screen content (Subscription).</li>
+                    <li>**Cards:** MUI &lt;Card&gt; with &lt;CardContent&gt;, &lt;CardHeader&gt;, etc. (as used in this design system).</li>
                </ul>
                 <p class="text-sm text-aroma-text-muted">Refer to `01_saas_template.md` for layout details and Material UI documentation for component implementation.</p>
             </div>
@@ -394,6 +546,27 @@
     </section>
 
 </div>
-
+<script>
+    // Simple Accordion Toggle for HTML example (Style 3)
+    document.querySelectorAll('.accordion-toggle-html').forEach(button => {
+        button.addEventListener('click', () => {
+            const content = button.nextElementSibling;
+            const chevron = button.querySelector('svg');
+            if (content.style.maxHeight) {
+                content.style.maxHeight = null;
+                content.style.paddingTop = null;
+                content.style.paddingBottom = null;
+                content.style.opacity = 0;
+                chevron.style.transform = 'rotate(0deg)';
+            } else {
+                content.style.maxHeight = content.scrollHeight + "px";
+                content.style.paddingTop = '0.25rem'; // pt-1
+                content.style.paddingBottom = '1rem'; // pb-4
+                content.style.opacity = 1;
+                chevron.style.transform = 'rotate(180deg)';
+            }
+        });
+    });
+</script>
 </body>
 </html>

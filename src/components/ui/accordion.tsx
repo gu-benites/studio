@@ -1,9 +1,8 @@
-
 "use client"
 
 import * as React from "react"
 import * as AccordionPrimitive from "@radix-ui/react-accordion"
-import { ChevronDown } from "lucide-react" // Import ChevronDown
+import { ChevronDown } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -21,34 +20,32 @@ const AccordionItem = React.forwardRef<
 ))
 AccordionItem.displayName = "AccordionItem"
 
+// Define props for AccordionTrigger to include showChevron
+interface CustomAccordionTriggerProps extends React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger> {
+  showChevron?: boolean;
+}
+
 const AccordionTrigger = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
+  CustomAccordionTriggerProps // Use the new props interface
+>(({ className, children, showChevron = true, ...props }, ref) => ( // Default showChevron to true
   <AccordionPrimitive.Header className="flex">
     <AccordionPrimitive.Trigger
       ref={ref}
-      asChild // Allow custom button/div structure inside
       className={cn(
-        "flex flex-1 items-center justify-between py-4 font-medium transition-all",
-        "hover:no-underline",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-        "[&[data-state=open]>svg.accordion-chevron]:rotate-180", // Added class for icon rotation
+        "flex flex-1 items-center justify-between py-4 font-medium transition-all", // Base classes
+        "hover:no-underline", // User's custom style preserved
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background", // User's custom style preserved
+        showChevron && "[&[data-state=open]>svg.accordion-chevron]:rotate-180", // Apply rotation only if chevron is shown
         className
       )}
       {...props}
     >
-      {/* Allow children to define the layout including the icon if needed, or add a default icon here */}
-      {/* Example structure if children don't include the icon: */}
-      <div className="flex flex-1 items-center justify-between w-full">
-        <div className="flex-1">{children}</div>
-        {/* Default ChevronDown icon - can be overridden by children if they provide their own icon logic */}
-        {!React.Children.toArray(children).some(
-          (child) => React.isValidElement(child) && (child.type as any).displayName === 'ChevronDown' // Crude check
-        ) && (
-          <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 text-muted-foreground group-hover:text-accent-foreground accordion-chevron" />
-        )}
-      </div>
+      {/* The children prop will now be the main content for the trigger, e.g., a Label and a Switch */}
+      {children}
+      {showChevron && (
+        <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 text-muted-foreground group-hover:text-accent-foreground accordion-chevron" />
+      )}
     </AccordionPrimitive.Trigger>
   </AccordionPrimitive.Header>
 ))
