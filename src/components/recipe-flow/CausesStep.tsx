@@ -1,3 +1,4 @@
+
 // src/components/recipe-flow/CausesStep.tsx
 "use client";
 
@@ -21,17 +22,33 @@ interface PotentialCause {
 
 const CausesStep: React.FC = () => {
   const router = useRouter();
-  const { formData, updateFormData, setCurrentStep, setIsLoading, setIsFetchingSymptoms, setError, updateFormValidity } = useRecipeForm();
+  const { 
+    formData, 
+    updateFormData, 
+    setCurrentStep, 
+    setIsLoading, // General loading state
+    setIsFetchingNextStepData, // Specific for step transitions
+    setLoadingScreenTargetStepKey, // To specify messages for LoadingScreen
+    setError, 
+    updateFormValidity 
+  } = useRecipeForm();
   
   const [selectedCausesState, setSelectedCausesState] = useState<PotentialCause[]>(formData.selectedCauses || []);
   const [openAccordionItems, setOpenAccordionItems] = useState<string[]>(formData.selectedCauses?.map(c => c.cause_name) || []);
 
   useEffect(() => {
     if (formData.selectedCauses) {
-      setSelectedCausesState(formData.selectedCauses);
-      // Sync accordion open state with selected causes when form data initially loads
-      setOpenAccordionItems(formData.selectedCauses.map(c => c.cause_name).filter(Boolean) as string[]);
+      const currentSelectedNames = selectedCausesState.map(c => c.cause_name).sort();
+      const formSelectedNames = formData.selectedCauses.map(c => c.cause_name).sort();
+      if (JSON.stringify(currentSelectedNames) !== JSON.stringify(formSelectedNames)) {
+        setSelectedCausesState(formData.selectedCauses);
+      }
+      const newOpenItems = formData.selectedCauses.map(c => c.cause_name).filter(Boolean) as string[];
+      if (JSON.stringify(openAccordionItems.sort()) !== JSON.stringify(newOpenItems.sort())) {
+          setOpenAccordionItems(newOpenItems);
+      }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.selectedCauses]);
 
 
@@ -49,10 +66,10 @@ const CausesStep: React.FC = () => {
         return prevSelected.filter(c => c.cause_name !== causeId);
       }
     });
-    // Accordion open/close logic
+    
     setOpenAccordionItems(prevOpen => {
       if (newCheckedState) {
-        return [...new Set([...prevOpen, causeId])]; // Add and ensure uniqueness
+        return [...new Set([...prevOpen, causeId])]; 
       } else {
         return prevOpen.filter(id => id !== causeId);
       }
@@ -70,13 +87,13 @@ const CausesStep: React.FC = () => {
 
     updateFormData({ selectedCauses: selectedCausesState });
 
-    setIsLoading(true);
-    setIsFetchingSymptoms(true); // Set fetching symptoms to true
+    setIsFetchingNextStepData(true); 
+    setLoadingScreenTargetStepKey('symptoms');
     setError(null);
 
     // Navigate immediately
     router.push('/create-recipe/symptoms');
-    setCurrentStep('symptoms'); // Set current step before API call for loading screen context
+    setCurrentStep('symptoms'); 
 
     try {
        if (!formData.healthConcern || !formData.gender || !formData.ageCategory || !formData.ageSpecific) {
@@ -91,14 +108,13 @@ const CausesStep: React.FC = () => {
       };
       const potentialSymptoms = await getPotentialSymptoms(apiPayload);
       updateFormData({ potentialSymptomsResult: potentialSymptoms });
-      // Navigation and setCurrentStep already handled above
     } catch (apiError: any) {
       setError(apiError.message || "Falha ao buscar sintomas potenciais.");
       console.error("API Error in CausesStep:", apiError);
-      // router.push('/create-recipe/causes'); // Or handle error on symptoms page
     } finally {
+      setIsFetchingNextStepData(false);
+      // setLoadingScreenTargetStepKey(null); 
       setIsLoading(false);
-      setIsFetchingSymptoms(false); // Set fetching symptoms to false after API call
     }
   };
 

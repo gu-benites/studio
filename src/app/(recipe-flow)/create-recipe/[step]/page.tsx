@@ -1,3 +1,4 @@
+
 // src/app/(recipe-flow)/create-recipe/[step]/page.tsx
 "use client";
 
@@ -9,9 +10,7 @@ import CausesStep from '@/components/recipe-flow/CausesStep';
 import SymptomsStep from '@/components/recipe-flow/SymptomsStep';
 import PropertiesOilsStep from '@/components/recipe-flow/PropertiesOilsStep';
 import { useRecipeForm } from '@/contexts/RecipeFormContext';
-import LoadingCausesScreen from '@/components/recipe-flow/LoadingCausesScreen'; 
-import LoadingSymptomsScreen from '@/components/recipe-flow/LoadingSymptomsScreen';
-import LoadingPropertiesScreen from '@/components/recipe-flow/LoadingPropertiesScreen'; // Import the new loading screen
+import LoadingScreen from '@/components/recipe-flow/LoadingScreen'; // Import the new reusable loading screen
 
 const stepComponents: Record<string, React.ComponentType<any>> = {
   demographics: DemographicsStep,
@@ -28,9 +27,10 @@ const stepTitles: Record<string, string> = {
 };
 
 const stepInstructions: Record<string, string> = {
-  causes: "Selecione as causas que você acredita estarem relacionadas ao seu problema de saúde.",
-  symptoms: "Selecione os sintomas que você está experienciando.",
-  properties: "Revise as propriedades terapêuticas e os óleos sugeridos.",
+  demographics: "Para começar, precisamos de algumas informações sobre você.",
+  causes: "Selecione as causas que você acredita estarem relacionadas ao seu problema de saúde. Clique no título para ver mais detalhes.",
+  symptoms: "Selecione os sintomas que você está experienciando. Clique no título para ver mais detalhes.",
+  properties: "Revise as propriedades terapêuticas e os óleos sugeridos para cada uma. Clique no título para ver os óleos.",
 };
 
 const CreateRecipeStepPage = () => {
@@ -41,10 +41,9 @@ const CreateRecipeStepPage = () => {
     currentStep, 
     setCurrentStep, 
     isFormValid, 
-    isLoading, 
-    isFetchingCauses, 
-    isFetchingSymptoms, 
-    isFetchingProperties, // Destructure isFetchingProperties
+    isLoading, // General loading, not for step transitions specifically managed by isFetchingNextStepData
+    isFetchingNextStepData, // Use this for loading screen visibility
+    loadingScreenTargetStepKey, // To tell LoadingScreen which messages to show
     setError 
   } = useRecipeForm();
   const step = Array.isArray(params.step) ? params.step[0] : params.step;
@@ -56,10 +55,12 @@ const CreateRecipeStepPage = () => {
   }, [step, setCurrentStep]);
   
   useEffect(() => {
-    if (!formData.healthConcern && step && step !== 'demographics' && step !== 'properties') {
-      // Consider redirecting if essential data is missing
+    // Basic guard for direct access to later steps without initial data
+    if (!formData.healthConcern && step && step !== 'demographics' && currentStep !== 'demographics' ) {
+       // router.push('/'); // Consider redirecting if essential data is missing
+       console.warn("Health concern not set, user might have jumped steps.");
     }
-  }, [formData.healthConcern, router, step]);
+  }, [formData.healthConcern, router, step, currentStep]);
 
   const StepComponent = step ? stepComponents[step] : null;
   const pageTitle = step ? stepTitles[step] || "Etapa Desconhecida" : "Carregando Etapa...";
@@ -71,51 +72,37 @@ const CreateRecipeStepPage = () => {
       internalSubmitButton.click();
     } else {
       console.warn("Ação para 'Próxima Etapa' não encontrada ou não implementada em PropertiesOilsStep.");
+      // Potentially navigate to a summary or final step if applicable
+      // router.push('/create-recipe/summary'); 
     }
   }, []);
 
-  const isFetchingOilsForPropertiesStep = step === 'properties' && 
-                        isLoading && 
-                        (!formData.suggestedOilsByProperty || 
-                         (formData.medicalPropertiesResult?.therapeutic_properties && Object.keys(formData.suggestedOilsByProperty || {}).length < formData.medicalPropertiesResult.therapeutic_properties.length));
+  // This isLoading is the general one, mainly for PropertiesOilsStep internal fetching
+  const isPropertiesOilsStepInternallyLoading = step === 'properties' && isLoading;
 
   const getNavProps = useCallback(() => {
     const basePath = "/create-recipe";
+    let nextDisabled = !isFormValid || isFetchingNextStepData || isLoading; // isLoading for general loading like properties oils fetching
+    
     switch(step) {
       case 'demographics':
-        return {
-          previousRoute: '/',
-          onNext: undefined, 
-          isNextDisabled: !isFormValid || isLoading, 
-        };
+        return { previousRoute: '/', onNext: undefined, isNextDisabled: nextDisabled };
       case 'causes':
-        return {
-          previousRoute: `${basePath}/demographics`,
-          onNext: undefined, 
-          isNextDisabled: isFetchingCauses || !isFormValid || isLoading, 
-        };
+        return { previousRoute: `${basePath}/demographics`, onNext: undefined, isNextDisabled: nextDisabled };
       case 'symptoms':
-        return {
-          previousRoute: `${basePath}/causes`,
-          onNext: undefined, 
-          isNextDisabled: isFetchingSymptoms || !isFormValid || isLoading, 
-        }
+        return { previousRoute: `${basePath}/causes`, onNext: undefined, isNextDisabled: nextDisabled };
       case 'properties':
         return {
             previousRoute: `${basePath}/symptoms`,
             onNext: onNextProperties, 
             nextButtonText: "Gerar Receita (Em Breve)",
-            isNextDisabled: isLoading || isFetchingProperties || isFetchingOilsForPropertiesStep, // Added isFetchingProperties
-            hideNextButton: true, 
-        }
-      default:
-        return { 
-            previousRoute: '/',
-            isNextDisabled: true,
+            isNextDisabled: nextDisabled || isPropertiesOilsStepInternallyLoading,
             hideNextButton: true, 
         };
+      default:
+        return { previousRoute: '/', isNextDisabled: true, hideNextButton: true };
     }
-  }, [step, isFormValid, isLoading, isFetchingCauses, isFetchingSymptoms, isFetchingProperties, onNextProperties, isFetchingOilsForPropertiesStep]); 
+  }, [step, isFormValid, isLoading, isFetchingNextStepData, onNextProperties, isPropertiesOilsStepInternallyLoading]); 
 
   if (!step || !StepComponent) {
     return <p className="text-center mt-10">Passo inválido ou não encontrado.</p>;
@@ -123,16 +110,9 @@ const CreateRecipeStepPage = () => {
   
   const navProps = getNavProps();
 
-  if (step === 'causes' && isFetchingCauses) {
-    return <LoadingCausesScreen />;
-  }
-  
-  if (step === 'symptoms' && isFetchingSymptoms) { 
-    return <LoadingSymptomsScreen />;
-  }
-
-  if (step === 'properties' && isFetchingProperties) { // Conditional render for properties loading
-    return <LoadingPropertiesScreen />;
+  // Use the single isFetchingNextStepData and loadingScreenTargetStepKey
+  if (isFetchingNextStepData && loadingScreenTargetStepKey) {
+    return <LoadingScreen targetStepKey={loadingScreenTargetStepKey} />;
   }
 
   return (

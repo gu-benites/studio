@@ -1,3 +1,4 @@
+
 // src/components/recipe-flow/SymptomsStep.tsx
 "use client";
 
@@ -24,10 +25,11 @@ const SymptomsStep: React.FC = () => {
     formData, 
     updateFormData, 
     setCurrentStep, 
-    setIsLoading, 
+    setIsLoading, // General loading state
+    setIsFetchingNextStepData, // Specific for step transitions
+    setLoadingScreenTargetStepKey, // To specify messages for LoadingScreen
     setError, 
-    updateFormValidity,
-    setIsFetchingProperties // Destructure new setter
+    updateFormValidity
   } = useRecipeForm();
 
   const [selectedSymptomsState, setSelectedSymptomsState] = useState<Pick<PotentialSymptom, 'symptom_name'>[]>(
@@ -39,8 +41,12 @@ const SymptomsStep: React.FC = () => {
 
   useEffect(() => {
     if (formData.selectedSymptoms) {
-      setSelectedSymptomsState(formData.selectedSymptoms);
-      // Sync accordion open state with selected symptoms when form data initially loads
+      const currentSelectedNames = selectedSymptomsState.map(s => s.symptom_name).sort();
+      const formSelectedNames = formData.selectedSymptoms.map(s => s.symptom_name).sort();
+      if (JSON.stringify(currentSelectedNames) !== JSON.stringify(formSelectedNames)) {
+        setSelectedSymptomsState(formData.selectedSymptoms);
+      }
+      
       const newOpenItems = formData.selectedSymptoms.map(s => s.symptom_name).filter(Boolean) as string[];
       if (JSON.stringify(openAccordionItems.sort()) !== JSON.stringify(newOpenItems.sort())) {
         setOpenAccordionItems(newOpenItems);
@@ -84,13 +90,12 @@ const SymptomsStep: React.FC = () => {
     }
     updateFormData({ selectedSymptoms: selectedSymptomsState });
 
-    setIsLoading(true);
-    setIsFetchingProperties(true); // Set fetching properties to true
+    setIsFetchingNextStepData(true);
+    setLoadingScreenTargetStepKey('properties');
     setError(null);
 
-    // Navigate immediately
     router.push('/create-recipe/properties');
-    setCurrentStep('properties'); // Set current step before API call for loading screen context
+    setCurrentStep('properties');
 
     try {
       if (!formData.healthConcern || !formData.gender || !formData.ageCategory || !formData.ageSpecific || !formData.selectedCauses) {
@@ -106,14 +111,13 @@ const SymptomsStep: React.FC = () => {
       };
       const medicalProperties = await getMedicalProperties(apiPayload);
       updateFormData({ medicalPropertiesResult: medicalProperties });
-      // Navigation and setCurrentStep already handled above
     } catch (apiError: any) {
       setError(apiError.message || "Falha ao buscar propriedades médicas.");
       console.error("API Error in SymptomsStep:", apiError);
-      // router.push('/create-recipe/symptoms'); // Or handle error on properties page
     } finally {
+      setIsFetchingNextStepData(false);
+      // setLoadingScreenTargetStepKey(null); 
       setIsLoading(false);
-      setIsFetchingProperties(false); // Set fetching properties to false after API call
     }
   };
 
@@ -138,8 +142,8 @@ const SymptomsStep: React.FC = () => {
               key={symptomId}
               className={cn(
                 "transition-colors",
-                "border-b border-border last:border-b-0", // Mobile: only bottom border for items
-                "md:border md:rounded-lg md:first:rounded-t-lg md:last:rounded-b-lg md:overflow-hidden", // Desktop: full border, rounded corners
+                "border-b border-border last:border-b-0", 
+                "md:border md:rounded-lg md:first:rounded-t-lg md:last:rounded-b-lg md:overflow-hidden",
                 isChecked ? "bg-primary/10" : "bg-background md:bg-card"
               )}
             >

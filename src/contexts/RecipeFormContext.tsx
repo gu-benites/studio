@@ -1,3 +1,4 @@
+
 // src/contexts/RecipeFormContext.tsx
 "use client";
 
@@ -67,7 +68,7 @@ export interface RecipeFormData {
   suggestedOilsByProperty: Record<string, SuggestedOilsForProperty> | null; 
   
   finalSelectedOils: SuggestedOil[] | null; 
-  isLoading: boolean; // Moved isLoading here to be part of formData for persistence if needed
+  isLoading: boolean; // General loading for form-wide operations, not step transitions
 }
 
 interface RecipeFormContextType {
@@ -76,18 +77,23 @@ interface RecipeFormContextType {
   resetFormData: () => void;
   currentStep: string | null;
   setCurrentStep: (step: string | null) => void;
-  isLoading: boolean; // Global loading state for API calls
+  
+  // Replaces individual isFetching... states
+  isFetchingNextStepData: boolean; 
+  setIsFetchingNextStepData: (fetching: boolean) => void; 
+
+  //isLoading and setIsLoading are for non-step-transition loading, e.g. propertiesOils internal oil fetching
+  isLoading: boolean; 
   setIsLoading: (loading: boolean) => void;
-  isFetchingCauses: boolean; 
-  setIsFetchingCauses: (fetching: boolean) => void; 
-  isFetchingSymptoms: boolean; 
-  setIsFetchingSymptoms: (fetching: boolean) => void; 
-  isFetchingProperties: boolean; // New state for properties loading screen
-  setIsFetchingProperties: (fetching: boolean) => void; // Setter for the new state
+  
   error: string | null;
   setError: (error: string | null) => void;
-  isFormValid: boolean; // Represents validity of the current step's form
+  isFormValid: boolean; 
   updateFormValidity: (isValid: boolean) => void;
+
+  // To inform LoadingScreen which set of messages to display
+  loadingScreenTargetStepKey: 'causes' | 'symptoms' | 'properties' | null;
+  setLoadingScreenTargetStepKey: (key: 'causes' | 'symptoms' | 'properties' | null) => void;
 }
 
 const SESSION_STORAGE_KEY = 'recipeFormData';
@@ -105,7 +111,7 @@ const initialFormData: RecipeFormData = {
   selectedTherapeuticProperties: null,
   suggestedOilsByProperty: null,
   finalSelectedOils: null,
-  isLoading: false, // Initialize isLoading
+  isLoading: false,
 };
 
 const RecipeFormContext = createContext<RecipeFormContextType | undefined>(undefined);
@@ -113,25 +119,23 @@ const RecipeFormContext = createContext<RecipeFormContextType | undefined>(undef
 export const RecipeFormProvider = ({ children }: { children: ReactNode }) => {
   const [formData, setFormDataState] = useState<RecipeFormData>(initialFormData);
   const [currentStep, setCurrentStepState] = useState<string | null>(null);
-  const [isLoading, setIsLoadingState] = useState<boolean>(false); // Global API loading
-  const [isFetchingCauses, setIsFetchingCausesState] = useState<boolean>(false); 
-  const [isFetchingSymptoms, setIsFetchingSymptomsState] = useState<boolean>(false); 
-  const [isFetchingProperties, setIsFetchingPropertiesState] = useState<boolean>(false); // Initialize new state
+  const [isLoading, setIsLoadingState] = useState<boolean>(false); // For general loading, not step transitions
+  const [isFetchingNextStepData, setIsFetchingNextStepDataState] = useState<boolean>(false);
+  const [loadingScreenTargetStepKey, setLoadingScreenTargetStepKeyState] = useState<'causes' | 'symptoms' | 'properties' | null>(null);
   const [error, setErrorState] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [isFormValid, setIsFormValid] = useState<boolean>(false); // Current step form validity
+  const [isFormValid, setIsFormValid] = useState<boolean>(false);
 
   useEffect(() => {
     const storedData = getItem<RecipeFormData>(SESSION_STORAGE_KEY);
     if (storedData) {
-      setFormDataState(prev => ({...prev, ...storedData, isLoading: false})); // Ensure isLoading resets
+      setFormDataState(prev => ({...prev, ...storedData, isLoading: false})); 
     }
     setIsInitialized(true);
   }, []);
 
   useEffect(() => {
     if (isInitialized) {
-      // Do not persist isLoading state from formData to session storage
       const { isLoading: formIsLoading, ...dataToStore } = formData;
       setItem(SESSION_STORAGE_KEY, dataToStore);
     }
@@ -148,9 +152,8 @@ export const RecipeFormProvider = ({ children }: { children: ReactNode }) => {
     setFormDataState(initialFormData);
     setCurrentStepState(null);
     setIsLoadingState(false);
-    setIsFetchingCausesState(false); 
-    setIsFetchingSymptomsState(false); 
-    setIsFetchingPropertiesState(false); // Reset new state
+    setIsFetchingNextStepDataState(false);
+    setLoadingScreenTargetStepKeyState(null);
     setErrorState(null);
     setIsFormValid(false);
     removeItem(SESSION_STORAGE_KEY);
@@ -158,27 +161,22 @@ export const RecipeFormProvider = ({ children }: { children: ReactNode }) => {
 
   const setCurrentStep = useCallback((step: string | null) => {
     setCurrentStepState(step);
-    setIsFormValid(false); // Reset form validity when step changes
+    setIsFormValid(false); 
   }, []);
 
   const setIsLoading = useCallback((loading: boolean) => {
     setIsLoadingState(loading);
-    // Update formData.isLoading if you want it persisted or reacted to elsewhere
     setFormDataState(prev => ({ ...prev, isLoading: loading }));
   }, []);
 
-  const setIsFetchingCauses = useCallback((fetching: boolean) => {
-    setIsFetchingCausesState(fetching);
+  const setIsFetchingNextStepData = useCallback((fetching: boolean) => {
+    setIsFetchingNextStepDataState(fetching);
   }, []);
 
-  const setIsFetchingSymptoms = useCallback((fetching: boolean) => { 
-    setIsFetchingSymptomsState(fetching);
+  const setLoadingScreenTargetStepKey = useCallback((key: 'causes' | 'symptoms' | 'properties' | null) => {
+    setLoadingScreenTargetStepKeyState(key);
   }, []);
 
-  const setIsFetchingProperties = useCallback((fetching: boolean) => { // Define setter for new state
-    setIsFetchingPropertiesState(fetching);
-  }, []);
-  
   const setError = useCallback((errorMsg: string | null) => {
     setErrorState(errorMsg);
   }, []);
@@ -200,12 +198,10 @@ export const RecipeFormProvider = ({ children }: { children: ReactNode }) => {
         setCurrentStep,
         isLoading, 
         setIsLoading,
-        isFetchingCauses, 
-        setIsFetchingCauses, 
-        isFetchingSymptoms, 
-        setIsFetchingSymptoms, 
-        isFetchingProperties, // Provide new state
-        setIsFetchingProperties, // Provide setter for new state
+        isFetchingNextStepData, 
+        setIsFetchingNextStepData,
+        loadingScreenTargetStepKey,
+        setLoadingScreenTargetStepKey,
         error,
         setError,
         isFormValid,

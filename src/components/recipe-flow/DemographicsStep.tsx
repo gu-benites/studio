@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect } from 'react';
@@ -59,8 +60,16 @@ type DemographicsFormData = z.infer<typeof demographicsSchema>;
 
 const DemographicsStepComponent: React.FC = () => {
   const router = useRouter();
-  // Destructure setIsFetchingCauses from useRecipeForm
-  const { formData, updateFormData, setCurrentStep, setIsLoading, setIsFetchingCauses, setError, updateFormValidity } = useRecipeForm();
+  const { 
+    formData, 
+    updateFormData, 
+    setCurrentStep, 
+    setIsLoading, // General loading state
+    setIsFetchingNextStepData, // Specific for step transitions
+    setLoadingScreenTargetStepKey, // To specify messages for LoadingScreen
+    setError, 
+    updateFormValidity 
+  } = useRecipeForm();
 
   const { control, handleSubmit, formState: { errors, isValid }, watch, setValue, reset, trigger } = useForm<DemographicsFormData>({
     resolver: zodResolver(demographicsSchema),
@@ -124,13 +133,13 @@ const DemographicsStepComponent: React.FC = () => {
       ageSpecific: data.ageSpecific,
     });
     
-    setIsLoading(true);
-    setIsFetchingCauses(true); // Set fetching causes to true
+    setIsFetchingNextStepData(true); // Start loading screen
+    setLoadingScreenTargetStepKey('causes'); // Tell LoadingScreen which messages to use
     setError(null);
     
     // Navigate immediately
     router.push('/create-recipe/causes');
-    setCurrentStep('causes'); // Set current step before API call for loading screen context
+    setCurrentStep('causes'); 
 
     try {
       if (!formData.healthConcern) {
@@ -144,15 +153,15 @@ const DemographicsStepComponent: React.FC = () => {
       };
       const potentialCauses = await getPotentialCauses(apiPayload);
       updateFormData({ potentialCausesResult: potentialCauses }); 
-      // Navigation and setCurrentStep already handled above
     } catch (apiError: any) {
       setError(apiError.message || "Falha ao buscar causas potenciais.");
       console.error("API Error in DemographicsStep:", apiError);
-      // Optionally, navigate back or show error on the current page (causes page)
-      // router.push('/create-recipe/demographics'); // Or handle error on causes page
+      // If error, you might want to navigate back or clear the target step key
+      // For now, let the loading screen disappear due to setIsFetchingNextStepData(false)
     } finally {
-      setIsLoading(false);
-      setIsFetchingCauses(false); // Set fetching causes to false after API call
+      setIsFetchingNextStepData(false); // Stop loading screen
+      // setLoadingScreenTargetStepKey(null); // Optionally clear the target key
+      setIsLoading(false); // Also ensure general loading is false if it was used
     }
   };
   
