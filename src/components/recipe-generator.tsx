@@ -70,7 +70,7 @@ export const RecipeGenerator: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-full p-4 sm:p-8">
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 sm:p-8">
       <div className="w-full max-w-2xl text-center">
         <h1 
             className="text-4xl sm:text-5xl font-bold mb-3 bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end bg-clip-text text-transparent"

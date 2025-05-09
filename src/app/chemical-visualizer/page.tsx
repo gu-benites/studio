@@ -5,6 +5,7 @@ import Head from 'next/head';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, Loader2, ImageOff, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic'; // Import dynamic
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,8 +17,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from "@/hooks/use-toast";
-import { ThreeDViewer } from '@/components/chemical-visualizer/ThreeDViewer'; 
+// import { ThreeDViewer } from '@/components/chemical-visualizer/ThreeDViewer'; 
 import type { MoleculeData } from '@/components/chemical-visualizer/ThreeDViewer';
+
+// Dynamically import ThreeDViewer
+const ThreeDViewer = dynamic(() => 
+  import('@/components/chemical-visualizer/ThreeDViewer').then(mod => mod.ThreeDViewer),
+  { 
+    ssr: false, // Often good for client-side heavy components
+    loading: () => (
+      <div className="absolute inset-0 flex items-center justify-center bg-muted/50">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="ml-2">Loading 3D Viewer...</p>
+      </div>
+    )
+  }
+);
 
 interface Atom {
   element: string;
@@ -67,7 +82,8 @@ const ChemicalVisualizerPage: NextPage = () => {
   };
 
   const parseSDF = useCallback((sdfData: string): MoleculeData => {
-    const lines = sdfData.split('\n'); 
+    const lines = sdfData.split('
+'); 
     const atoms: Atom[] = []; // Explicitly type 'atoms'
     const bonds: Bond[] = []; // Explicitly type 'bonds'
     if (lines.length < 4) {
@@ -469,14 +485,14 @@ const ChemicalVisualizerPage: NextPage = () => {
                 <CardTitle>3D Structure Viewer</CardTitle>
               </CardHeader>
               <CardContent className="flex-grow relative min-h-[400px] md:min-h-[500px] lg:min-h-[600px]">
-                 <ThreeDViewer
+                 {hasMounted && <ThreeDViewer
                     moleculeData={parsedMoleculeData}
                     representation={representation}
                     atomScaleFactor={atomScaleFactor}
                     bondRadius={bondRadius}
                     showHydrogens={showHydrogens}
                     isLoading={isViewerBusy || isLoading} // Pass combined loading state
-                 />
+                 />}
               </CardContent>
             </Card>
           </div>

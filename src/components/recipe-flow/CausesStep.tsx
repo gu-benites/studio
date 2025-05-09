@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { getPotentialSymptoms } from '@/services/aromarx-api-client';
-import type { RecipeFormData } from '@/contexts/RecipeFormContext'; // Assuming PotentialCause is defined here or imported
+import type { RecipeFormData } from '@/contexts/RecipeFormContext'; 
 import { cn } from '@/lib/utils';
 
 interface PotentialCause {
@@ -21,25 +21,18 @@ interface PotentialCause {
 
 const CausesStep: React.FC = () => {
   const router = useRouter();
-  const { formData, updateFormData, setCurrentStep, setIsLoading, setError, updateFormValidity } = useRecipeForm();
+  const { formData, updateFormData, setCurrentStep, setIsLoading, setIsFetchingSymptoms, setError, updateFormValidity } = useRecipeForm();
   
   const [selectedCausesState, setSelectedCausesState] = useState<PotentialCause[]>(formData.selectedCauses || []);
-  const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([]);
+  const [openAccordionItems, setOpenAccordionItems] = useState<string[]>(formData.selectedCauses?.map(c => c.cause_name) || []);
 
   useEffect(() => {
     if (formData.selectedCauses) {
       setSelectedCausesState(formData.selectedCauses);
+      // Sync accordion open state with selected causes when form data initially loads
+      setOpenAccordionItems(formData.selectedCauses.map(c => c.cause_name).filter(Boolean) as string[]);
     }
   }, [formData.selectedCauses]);
-
-  // Synchronize accordion open state with selected causes
-  useEffect(() => {
-    const newOpenItems = selectedCausesState.map(cause => cause.cause_name).filter(Boolean) as string[];
-    // Basic check to prevent re-setting identical array (though sort makes it more robust for content check)
-    if (JSON.stringify(openAccordionItems.sort()) !== JSON.stringify(newOpenItems.sort())) {
-      setOpenAccordionItems(newOpenItems);
-    }
-  }, [selectedCausesState, openAccordionItems]); // openAccordionItems added to prevent stale closures if setOpenAccordionItems was directly called elsewhere based on old openAccordionItems
 
 
   useEffect(() => {
@@ -47,15 +40,21 @@ const CausesStep: React.FC = () => {
   }, [selectedCausesState, updateFormValidity]);
 
   const handleSelectionToggle = useCallback((toggledCause: PotentialCause, newCheckedState: boolean) => {
+    const causeId = toggledCause.cause_name;
     setSelectedCausesState(prevSelected => {
-      const causeId = toggledCause.cause_name;
-      if (newCheckedState) { // If switch is now checked (or should be)
-        // Add if not already present
+      if (newCheckedState) {
         if (prevSelected.some(c => c.cause_name === causeId)) return prevSelected;
         return [...prevSelected, toggledCause];
-      } else { // If switch is now unchecked (or should be)
-        // Remove if present
+      } else {
         return prevSelected.filter(c => c.cause_name !== causeId);
+      }
+    });
+    // Accordion open/close logic
+    setOpenAccordionItems(prevOpen => {
+      if (newCheckedState) {
+        return [...new Set([...prevOpen, causeId])]; // Add and ensure uniqueness
+      } else {
+        return prevOpen.filter(id => id !== causeId);
       }
     });
   }, []);
@@ -72,7 +71,13 @@ const CausesStep: React.FC = () => {
     updateFormData({ selectedCauses: selectedCausesState });
 
     setIsLoading(true);
+    setIsFetchingSymptoms(true); // Set fetching symptoms to true
     setError(null);
+
+    // Navigate immediately
+    router.push('/create-recipe/symptoms');
+    setCurrentStep('symptoms'); // Set current step before API call for loading screen context
+
     try {
        if (!formData.healthConcern || !formData.gender || !formData.ageCategory || !formData.ageSpecific) {
         throw new Error("Dados demográficos ou problema de saúde faltando.");
@@ -86,13 +91,14 @@ const CausesStep: React.FC = () => {
       };
       const potentialSymptoms = await getPotentialSymptoms(apiPayload);
       updateFormData({ potentialSymptomsResult: potentialSymptoms });
-      setCurrentStep('symptoms');
-      router.push('/create-recipe/symptoms');
+      // Navigation and setCurrentStep already handled above
     } catch (apiError: any) {
       setError(apiError.message || "Falha ao buscar sintomas potenciais.");
       console.error("API Error in CausesStep:", apiError);
+      // router.push('/create-recipe/causes'); // Or handle error on symptoms page
     } finally {
       setIsLoading(false);
+      setIsFetchingSymptoms(false); // Set fetching symptoms to false after API call
     }
   };
 
@@ -106,7 +112,7 @@ const CausesStep: React.FC = () => {
         type="multiple"
         value={openAccordionItems}
         onValueChange={setOpenAccordionItems}
-        className="w-full"
+        className="w-full md:space-y-2"
       >
         {formData.potentialCausesResult.map((cause) => {
           const causeId = cause.cause_name;
@@ -118,11 +124,12 @@ const CausesStep: React.FC = () => {
               className={cn(
                 "transition-colors",
                 "border-b border-border last:border-b-0",
-                isChecked ? "bg-primary/10" : "bg-background md:bg-card", 
-                "md:first:rounded-t-lg md:last:rounded-b-lg"
+                "md:border md:rounded-lg md:first:rounded-t-lg md:last:rounded-b-lg md:overflow-hidden",
+                isChecked ? "bg-primary/10" : "bg-background md:bg-card"
               )}
             >
               <AccordionTrigger
+                onClick={() => handleSelectionToggle(cause, !isChecked)}
                 className={cn(
                   "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 transition-colors",
                   isChecked ? "hover:bg-primary/15" : "hover:bg-muted/50",
@@ -138,15 +145,15 @@ const CausesStep: React.FC = () => {
                     }}
                     className="shrink-0 h-6 w-11 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input [&>span]:h-5 [&>span]:w-5 [&>span[data-state=checked]]:translate-x-5 [&>span[data-state=unchecked]]:translate-x-0"
                     aria-labelledby={`cause-label-${causeId}`}
-                    onClick={(e) => e.stopPropagation()} // Prevent accordion trigger from toggling switch again
+                    onClick={(e) => e.stopPropagation()} 
                   />
                   <Label
                     htmlFor={`cause-switch-${causeId}`}
                     id={`cause-label-${causeId}`}
                     className="font-medium text-base cursor-pointer flex-1 truncate"
                     onClick={(e) => {
-                        e.stopPropagation(); // Prevent accordion trigger
-                        handleSelectionToggle(cause, !isChecked); // Manually toggle state
+                        e.stopPropagation();
+                        handleSelectionToggle(cause, !isChecked);
                     }}
                   >
                     {cause.cause_name}
