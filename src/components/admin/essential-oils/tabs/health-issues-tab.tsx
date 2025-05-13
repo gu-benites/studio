@@ -22,31 +22,31 @@ import { HealthIssue } from "../essential-oil-form-types";
 import { Control } from "react-hook-form";
 
 interface HealthIssuesTabProps {
-  control: Control<any>; // Control object from react-hook-form
-  healthIssues: HealthIssue[]; // List of all available health issues from parent
-  isLoading: boolean;
-  setHealthIssues: (issues: HealthIssue[]) => void; // Function to update the list of all health issues in the parent
+  control: Control<any>; 
+  healthIssues: HealthIssue[]; 
+  isLoading: boolean; // This prop determines if the MultiSelect should be disabled
+  setHealthIssues: (issues: HealthIssue[]) => void; 
 }
 
 export function HealthIssuesTab({
   control,
-  healthIssues, // This is the global list of available options
-  isLoading,
-  setHealthIssues // This updates the global list of available options
+  healthIssues, 
+  isLoading, // Received from EssentialOilForm
+  setHealthIssues 
 }: HealthIssuesTabProps) {
   const supabase = createClient();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [newHealthIssueName, setNewHealthIssueName] = useState("");
   const [newHealthIssueDesc, setNewHealthIssueDesc] = useState("");
 
+  // console.log(`[HealthIssuesTab] Rendering. isLoading prop from parent: ${isLoading}`);
+
   return (
     <FormField
       control={control}
-      name="health_issues" // This name must match the key in your form schema
+      name="health_issues" 
       render={({ field }) => {
-        // field.value is expected to be an array of selected health issue IDs from RHF
-        // field.onChange is the function to update RHF's state for this field
-
+        
         const handleAddNewHealthIssueViaPopover = async () => {
           if (!newHealthIssueName.trim()) {
             toast({
@@ -76,18 +76,14 @@ export function HealthIssuesTab({
                 description: newDbEntry.description
               };
               
-              // 1. Update the global list of available health issues
               setHealthIssues((prevGlobalIssues) => {
                 const updatedList = [...prevGlobalIssues, newHealthIssueForGlobalList];
-                console.log("[HealthIssuesTab] Updated global health issues list:", updatedList);
                 return updatedList;
               });
               
-              // 2. Add the new health issue's ID to the RHF field for this essential oil
               const currentSelectedIdsInForm = Array.isArray(field.value) ? field.value : [];
               const newSelectedIdsForForm = [...currentSelectedIdsInForm, newDbEntry.id];
-              field.onChange(newSelectedIdsForForm); // Update react-hook-form state
-              console.log("[HealthIssuesTab] Updated RHF 'health_issues' field with new ID:", newSelectedIdsForForm);
+              field.onChange(newSelectedIdsForForm); 
               
               toast({
                 title: "Success",
@@ -104,7 +100,6 @@ export function HealthIssuesTab({
               description: error.message || "Failed to add health issue to database.",
               variant: "destructive",
             });
-            console.error("[HealthIssuesTab] Error adding new health issue:", error);
           }
         };
 
@@ -114,21 +109,15 @@ export function HealthIssuesTab({
             <div className="flex items-center gap-2">
               <FormControl className="flex-1">
                 <MultiSelect
-                  // `options` prop should use the `healthIssues` state from EssentialOilForm,
-                  // which is updated by the popover.
                   options={healthIssues.map(issue => ({
                     label: issue.name,
                     value: issue.id,
                   }))}
-                  // `selected` prop directly uses `field.value` from RHF.
-                  // `field.value` is expected to be an array of IDs.
                   selected={Array.isArray(field.value) ? field.value : []}
-                  // `onChange` prop directly uses `field.onChange` from RHF.
-                  // MultiSelect should call this with the new array of selected IDs.
                   onChange={field.onChange}
                   placeholder="Select health issues..."
-                  disabled={isLoading}
-                  mode="multiple" // Ensure mode is multiple
+                  disabled={isLoading} // Pass the isLoading prop as disabled
+                  mode="multiple" 
                 />
               </FormControl>
               <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>

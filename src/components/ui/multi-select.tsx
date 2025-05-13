@@ -8,7 +8,7 @@ import {
   Command,
   CommandEmpty,
   CommandGroup,
-  // CommandInput, // Removed CommandInput
+  CommandInput, // Temporarily re-added for full cmdk behavior test, can be removed if not the cause
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
@@ -49,10 +49,18 @@ export function MultiSelect({
   popoverContentClassName
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
-  // const [searchQuery, setSearchQuery] = React.useState(""); // Search query state removed
+  const [searchQuery, setSearchQuery] = React.useState(""); // Re-added for testing
+
+  React.useEffect(() => {
+    // console.log(`[MultiSelect] Render/Update. Disabled: ${disabled}, Selected:`, selected);
+  }, [disabled, selected]);
 
   const handleValueChange = (valueToToggle: string) => {
-    if (disabled) return;
+    // console.log(`[MultiSelect] handleValueChange called. Value: ${valueToToggle}, Current Selected:`, selected, `Component Disabled: ${disabled}`);
+    if (disabled) {
+      // console.log('[MultiSelect] Attempted to change value while disabled.');
+      return;
+    }
 
     let newSelectedValues: string[];
     if (mode === 'single') {
@@ -62,13 +70,14 @@ export function MultiSelect({
         ? selected.filter(v => v !== valueToToggle)
         : [...selected, valueToToggle];
     }
+    // console.log('[MultiSelect] Calling onChange with new values:', newSelectedValues);
     onChange(newSelectedValues);
   };
   
   const handleRemoveBadge = (valueToRemove: string, event: React.MouseEvent) => {
     event.stopPropagation();
     if (disabled) return;
-    onChange(selected.filter(v => v !== valueToRemove));
+    onChange(selected.filter(v => v !== valueToToggle));
   };
   
   const handleClearAll = (event: React.MouseEvent) => {
@@ -77,14 +86,12 @@ export function MultiSelect({
     onChange([]);
   }
 
-  // Since search is removed, filteredOptions is now just options
-  // const filteredOptions = React.useMemo(() => {
-  //   return searchQuery
-  //     ? options.filter((option) =>
-  //         option.label.toLowerCase().includes(searchQuery.toLowerCase())
-  //       )
-  //     : options;
-  // }, [searchQuery, options]);
+  const filteredOptions = React.useMemo(() => {
+    if (!searchQuery) return options;
+    return options.filter((option) =>
+      option.label.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery, options]);
   
   const selectedOptionsToDisplay = selected
     .map(value => options.find(opt => opt.value === value))
@@ -93,7 +100,7 @@ export function MultiSelect({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild disabled={disabled}>
+      <PopoverTrigger asChild>
         <Button
           variant="outline"
           role="combobox"
@@ -103,6 +110,7 @@ export function MultiSelect({
             selected.length > 0 ? "text-left" : "text-muted-foreground",
             className
           )}
+          disabled={disabled} // Main trigger button respects disabled prop
         >
           <div className="flex flex-wrap items-center gap-1 flex-grow overflow-hidden">
             {selectedOptionsToDisplay.length > 0 ? (
@@ -119,7 +127,7 @@ export function MultiSelect({
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={(e) => handleRemoveBadge(option.value, e)}
                       className="ml-1 rounded-full outline-none ring-offset-background focus:ring-1 focus:ring-ring focus:ring-offset-1 disabled:pointer-events-none"
-                      disabled={disabled}
+                      disabled={disabled} // Badge remove button also respects disabled
                     >
                       <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
                     </button>
@@ -145,31 +153,31 @@ export function MultiSelect({
         align="start"
       >
         <Command>
-          {/* CommandInput removed as per request */}
-          {/* <CommandInput
+           <CommandInput // Re-added CommandInput for testing if it affects item selectability
             placeholder="Search..."
             value={searchQuery}
             onValueChange={setSearchQuery}
-            disabled={disabled}
+            // disabled={disabled} // CommandInput itself doesn't need to be disabled if PopoverTrigger is
             className="h-9"
-          /> */}
+          />
           <CommandList>
             <CommandEmpty>No options found.</CommandEmpty>
             <CommandGroup className="max-h-[200px] overflow-auto">
-              {/* Display all options since search is removed */}
-              {options.map((option) => (
+              {filteredOptions.map((option) => (
                 <CommandItem
                   key={option.value}
-                  value={option.value}
-                  // removed disabled={disabled} to ensure items are selectable
-                  // the handleValueChange function already checks for the disabled state of the component
-                  onSelect={(currentValue) => {
-                    if (disabled) return;
+                  value={option.value} // This value is used by cmdk for its internal logic and passed to onSelect
+                  onSelect={(currentValue) => { // currentValue is option.value
+                    // console.log(`[MultiSelect] CommandItem onSelect fired! Value: ${currentValue}, Component Disabled: ${disabled}`);
+                    // The main `disabled` prop for MultiSelect is checked in `handleValueChange`.
+                    // No need to check `disabled` directly here on CommandItem, as an open Popover implies the trigger wasn't disabled.
                     handleValueChange(currentValue);
                     if(mode === 'single') setOpen(false);
-                    // setSearchQuery(""); // No longer needed
+                     setSearchQuery(""); // Reset search query after selection
                   }}
                   className="cursor-pointer"
+                  // Do NOT put disabled={disabled} here directly, as it makes items unclickable
+                  // even if the popover is open. The overall component disabled state is handled by the PopoverTrigger.
                 >
                   <Check
                     className={cn(
