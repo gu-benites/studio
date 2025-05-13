@@ -1,3 +1,4 @@
+// src/components/admin/essential-oils/essential-oil-form.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -73,9 +74,9 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
 
   // Custom setIsLoading wrapper for logging
   const customSetIsLoading = (value: boolean) => {
-    console.log(`[EssentialOilForm] customSetIsLoading CALLED with: ${value}. Current isLoading BEFORE set: ${isLoading}`);
+    // console.log(`[EssentialOilForm] customSetIsLoading CALLED with: ${value}. Current isLoading BEFORE set: ${isLoading}`);
     setIsLoading(value);
-    console.log(`[EssentialOilForm] customSetIsLoading: isLoading AFTER set: ${value}`);
+    // console.log(`[EssentialOilForm] customSetIsLoading: isLoading AFTER set: ${value}`);
   };
 
   const supabase = createClient();
@@ -100,19 +101,21 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
   });
   
   // Debug form values
-  useEffect(() => {
-    const subscription = form.watch((value) => {
-      console.log('Form values updated:', value);
-      console.log('Plant parts in form:', value.plant_parts);
-    });
+  // useEffect(() => {
+  //   const subscription = form.watch((value) => {
+  //     console.log('Form values updated:', value);
+  //     console.log('Plant parts in form:', value.plant_parts);
+  //   });
     
-    return () => subscription.unsubscribe();
-  }, [form]);
+  //   return () => subscription.unsubscribe();
+  // }, [form]);
 
   // Function to fetch all data needed for the form
   useEffect(() => {
     const fetchRelatedData = async () => {
+      console.log("[EssentialOilForm] fetchRelatedData: STARTING data fetch. Current isLoading:", isLoading);
       customSetIsLoading(true);
+      console.log("[EssentialOilForm] fetchRelatedData: Set isLoading to TRUE. New isLoading:", true);
       try {
         // Fetch multiple entities in parallel
         const [
@@ -126,38 +129,25 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
           usageModesResponse,
           safetyCharacteristicsResponse
         ] = await Promise.all([
-          // Fetch properties
           supabase.from("properties").select("*").order("name"),
-          
-          // Fetch countries
           supabase.from("countries").select("id, name, iso_code_2, iso_code_3").order("name"),
-          
-          // Fetch extraction methods
           supabase.from("extraction_methods").select("*").order("name"),
-          
-          // Fetch aromatic descriptors
           supabase.from("aromatic_descriptors").select("*").order("name"),
-          
-          // Fetch chemical compounds
           supabase.from("chemical_compounds").select("*").order("name"),
-          
-          // Fetch health issues
           supabase.from("health_issues").select("*").order("name"),
-          
-          // Fetch plant parts
           supabase.from("plant_parts").select("*").order("name"),
-          
-          // Fetch usage modes
           supabase.from("usage_modes").select("*").order("name"),
-          
-          // Fetch safety characteristics
           supabase.from("safety_characteristics").select("*").order("name"),
         ]);
+
+        console.log("[EssentialOilForm] fetchRelatedData: Countries Response from Promise.all:", countriesResponse);
+        if (countriesResponse.error) {
+          console.error("[EssentialOilForm] fetchRelatedData: ERROR fetching countries:", countriesResponse.error);
+        }
         
         // Set state with retrieved data
         if (propertiesResponse.data) setProperties(propertiesResponse.data);
         if (countriesResponse.data) {
-          // Map database fields to frontend model
           const mappedCountries = countriesResponse.data.map(country => ({
             id: country.id,
             name: country.name,
@@ -175,15 +165,12 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
         if (usageModesResponse.data) setUsageModes(usageModesResponse.data);
         if (safetyCharacteristicsResponse.data) setSafetyCharacteristics(safetyCharacteristicsResponse.data);
 
-        // If we have initialData, fetch the related entities
         if (initialData?.id) {
-
           // Fetch assigned properties
           const { data: assignedProperties } = await supabase
             .from("essential_oil_properties")
             .select("property_id")
             .eq("essential_oil_id", initialData.id);
-
           if (assignedProperties && assignedProperties.length > 0) {
             const propertyIds = assignedProperties.map(p => p.property_id);
             setSelectedProperties(propertyIds);
@@ -195,7 +182,6 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
             .from("essential_oil_extraction_methods")
             .select("extraction_method_id")
             .eq("essential_oil_id", initialData.id);
-
           if (assignedExtractionMethods && assignedExtractionMethods.length > 0) {
             const methodIds = assignedExtractionMethods.map(m => m.extraction_method_id);
             setSelectedExtractionMethods(methodIds);
@@ -207,7 +193,6 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
             .from("essential_oil_countries")
             .select("country_id")
             .eq("essential_oil_id", initialData.id);
-
           if (assignedCountries && assignedCountries.length > 0) {
             const countryIds = assignedCountries.map(c => c.country_id);
             form.setValue("extraction_countries", countryIds);
@@ -218,60 +203,49 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
             .from("essential_oil_aromatic_descriptors")
             .select("aromatic_descriptor_id")
             .eq("essential_oil_id", initialData.id);
-
           if (assignedAromaticDescriptors && assignedAromaticDescriptors.length > 0) {
             const descriptorIds = assignedAromaticDescriptors.map(d => d.aromatic_descriptor_id);
             setSelectedAromaticDescriptors(descriptorIds);
             form.setValue("aromatic_descriptors", descriptorIds);
           }
           
-          // Fetch assigned health issues
           const { data: assignedHealthIssues } = await supabase
             .from("essential_oil_health_issues")
             .select("health_issue_id")
             .eq("essential_oil_id", initialData.id);
-
           if (assignedHealthIssues && assignedHealthIssues.length > 0) {
             const healthIssueIds = assignedHealthIssues.map(h => h.health_issue_id);
             setSelectedHealthIssues(healthIssueIds);
             form.setValue("health_issues", healthIssueIds);
           }
           
-          // Fetch assigned usage modes
           const { data: assignedUsageModes } = await supabase
             .from("essential_oil_usage_modes")
             .select("usage_mode_id")
             .eq("essential_oil_id", initialData.id);
-
           if (assignedUsageModes && assignedUsageModes.length > 0) {
             const usageModeIds = assignedUsageModes.map(u => u.usage_mode_id);
             setSelectedUsageModes(usageModeIds);
             form.setValue("usage_modes", usageModeIds);
           }
           
-          // Fetch assigned plant parts
           const { data: assignedPlantParts } = await supabase
             .from("essential_oil_plant_parts")
             .select("plant_part_id")
             .eq("essential_oil_id", initialData.id);
-
           if (assignedPlantParts && assignedPlantParts.length > 0) {
             const plantPartIds = assignedPlantParts.map(p => p.plant_part_id);
             setSelectedPlantParts(plantPartIds);
             form.setValue("plant_parts", plantPartIds);
           }
           
-          // Fetch chemical compounds with percentages
           const { data: assignedChemicalCompounds } = await supabase
             .from("essential_oil_chemical_compounds")
             .select("id, chemical_compound_id, percentage, notes, chemical_compounds(id, name)")
             .eq("essential_oil_id", initialData.id);
-
           if (assignedChemicalCompounds && assignedChemicalCompounds.length > 0) {
             const compoundsWithData = assignedChemicalCompounds.map(c => {
-              // Handle the case where chemical_compounds is returned as an array or object
               let compoundName = "Unknown Compound";
-              
               if (c.chemical_compounds) {
                 if (Array.isArray(c.chemical_compounds) && c.chemical_compounds.length > 0) {
                   compoundName = c.chemical_compounds[0].name || "Unknown Compound";
@@ -279,7 +253,6 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
                   compoundName = (c.chemical_compounds as { name?: string }).name || "Unknown Compound";
                 }
               }
-              
               return {
                 id: c.id,
                 compound_id: c.chemical_compound_id,
@@ -292,15 +265,19 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
             form.setValue("chemical_compounds", compoundsWithData);
           }
         }
+        console.log("[EssentialOilForm] fetchRelatedData: Data fetching successful.");
       } catch (error) {
-        console.error("Error fetching related data:", error);
+        console.error("[EssentialOilForm] fetchRelatedData: ERROR fetching related data:", error);
       } finally {
+        console.log("[EssentialOilForm] fetchRelatedData: FINALLY block reached. Setting isLoading to FALSE.");
         customSetIsLoading(false);
+        console.log("[EssentialOilForm] fetchRelatedData: Set isLoading to FALSE. New isLoading:", false);
       }
     };
 
     fetchRelatedData();
-  }, [supabase, initialData, form]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase, initialData, form]); // Added form to dependencies as form.setValue is used
 
   useEffect(() => {
     if (initialData) {
@@ -313,9 +290,8 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
     }
   }, [form, initialData]);
 
-  const handleSubmit = async (values: z.infer<typeof formSchema>) => {
+  const handleFormSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      // Separate basic data from relations
       const basicData = {
         name_english: values.name_english,
         name_scientific: values.name_scientific,
@@ -323,7 +299,6 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
         general_description: values.general_description || "",
       };
       
-      // Store relations in a separate object
       const relations = {
         properties: values.properties || [],
         extraction_methods: values.extraction_methods || [],
@@ -336,7 +311,6 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
         safety_characteristics: values.safety_characteristics || [],
       };
       
-      // Pass both objects to the parent component for handling
       await onSubmit({ basicData, relations });
       
       toast({
@@ -357,7 +331,7 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
     <Card className="w-full">
       <CardContent className="pt-6">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="w-full justify-start mb-6 flex-wrap">
                 <TabsTrigger value="basic">Basic Information</TabsTrigger>
@@ -369,7 +343,6 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
                 <TabsTrigger value="usage">Usage Modes</TabsTrigger>
               </TabsList>
               
-              {/* Basic Information Tab */}
               <TabsContent value="basic" className="space-y-6">
                 <BasicInfoTab
                   control={form.control}
@@ -377,11 +350,10 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
                   selectedPlantParts={selectedPlantParts}
                   setSelectedPlantParts={setSelectedPlantParts}
                   isLoading={isLoading}
-                  setPlantParts={setPlantParts}
+                  setPlantParts={setPlantParts} // Pass setter for dynamic updates
                 />
               </TabsContent>
               
-              {/* Properties Tab */}
               <TabsContent value="properties" className="space-y-6">
                 <PropertiesTab
                   control={form.control}
@@ -393,9 +365,7 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
                 />
               </TabsContent>
               
-              {/* Extraction Methods Tab */}
               <TabsContent value="extraction" className="space-y-6">
-                {console.log("[EssentialOilForm] isLoading before rendering ExtractionTab:", isLoading)}
                 <ExtractionTab
                   control={form.control}
                   setValue={form.setValue}
@@ -410,7 +380,6 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
                 />
               </TabsContent>
               
-              {/* Aromatic Profile Tab */}
               <TabsContent value="aromatic" className="space-y-6">
                 <AromaticTab
                   control={form.control}
@@ -422,7 +391,6 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
                 />
               </TabsContent>
               
-              {/* Chemical Compounds Tab */}
               <TabsContent value="chemical" className="space-y-6">
                 <FormField
                   control={form.control}
@@ -442,7 +410,6 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
                 />
               </TabsContent>
               
-              {/* Health Issues Tab */}
               <TabsContent value="health" className="space-y-6">
                 <HealthIssuesTab
                   control={form.control}
@@ -454,7 +421,6 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
                 />
               </TabsContent>
               
-              {/* Usage Modes Tab */}
               <TabsContent value="usage" className="space-y-6">
                 <UsageModesTab
                   control={form.control}

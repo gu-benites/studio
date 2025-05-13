@@ -153,7 +153,6 @@ export const CountrySelect = React.forwardRef<
               <CommandItem
                 key={option.value}
                 value={option.value} // This value is used by cmdk and passed to onSelect
-                disabled={disabled}
                 // Add a direct onClick for deep diagnosis
                 onClick={() => {
                   console.log(`[CountrySelect] CommandItem direct onClick! Value: ${option.value}, Label: ${option.label}`);

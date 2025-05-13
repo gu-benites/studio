@@ -126,11 +126,14 @@ export default function AuthForm() {
       
       console.log('Starting Google sign-in process')
       
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'; // Fallback for development
+      const redirectUrl = `${siteUrl}/auth/callback`;
+      
       // Simplified approach: Just initiate the OAuth flow and let Supabase handle everything
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: 'http://localhost:9002/auth/callback', // Redirect to our callback handler
+          redirectTo: redirectUrl, // Redirect to our callback handler using env variable
         },
       })
       
