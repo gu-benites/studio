@@ -6,6 +6,9 @@ import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { getItem, setItem, removeItem } from '@/lib/session-storage';
 
+// Import RecipeChoices type
+import type { RecipeChoices } from '@/services/aromarx-api-client';
+
 // Define types for API responses based on 01_api_calls_n_responses.txt
 interface PotentialCause {
   cause_name: string;
@@ -52,6 +55,7 @@ export interface RecipeFormData {
   gender: string | null;
   ageCategory: string | null;
   ageSpecific: string | null; 
+  userLanguage?: string;
   
   potentialCausesResult: PotentialCause[] | null;
   selectedCauses: PotentialCause[] | null;
@@ -66,9 +70,12 @@ export interface RecipeFormData {
   selectedTherapeuticProperties: TherapeuticProperty[] | null; 
   
   suggestedOilsByProperty: Record<string, SuggestedOilsForProperty> | null; 
+  suggestedOilsForProperties?: SuggestedOilsForProperty[]; 
   
   finalSelectedOils: SuggestedOil[] | null; 
+  recipeChoices?: RecipeChoices | null;
   isLoading: boolean; // General loading for form-wide operations, not step transitions
+  error?: string | null;
 }
 
 interface RecipeFormContextType {
@@ -81,6 +88,7 @@ interface RecipeFormContextType {
   // Replaces individual isFetching... states
   isFetchingNextStepData: boolean; 
   setIsFetchingNextStepData: (fetching: boolean) => void; 
+  isFetchingRecipeChoices?: boolean;
 
   //isLoading and setIsLoading are for non-step-transition loading, e.g. propertiesOils internal oil fetching
   isLoading: boolean; 
@@ -92,8 +100,8 @@ interface RecipeFormContextType {
   updateFormValidity: (isValid: boolean) => void;
 
   // To inform LoadingScreen which set of messages to display
-  loadingScreenTargetStepKey: 'causes' | 'symptoms' | 'properties' | null;
-  setLoadingScreenTargetStepKey: (key: 'causes' | 'symptoms' | 'properties' | null) => void;
+  loadingScreenTargetStepKey: 'causes' | 'symptoms' | 'properties' | 'recipe-choices' | null;
+  setLoadingScreenTargetStepKey: (key: 'causes' | 'symptoms' | 'properties' | 'recipe-choices' | null) => void;
 }
 
 const SESSION_STORAGE_KEY = 'recipeFormData';
@@ -121,7 +129,7 @@ export const RecipeFormProvider = ({ children }: { children: ReactNode }) => {
   const [currentStep, setCurrentStepState] = useState<string | null>(null);
   const [isLoading, setIsLoadingState] = useState<boolean>(false); // For general loading, not step transitions
   const [isFetchingNextStepData, setIsFetchingNextStepDataState] = useState<boolean>(false);
-  const [loadingScreenTargetStepKey, setLoadingScreenTargetStepKeyState] = useState<'causes' | 'symptoms' | 'properties' | null>(null);
+  const [loadingScreenTargetStepKey, setLoadingScreenTargetStepKeyState] = useState<'causes' | 'symptoms' | 'properties' | 'recipe-choices' | null>(null);
   const [error, setErrorState] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isFormValid, setIsFormValid] = useState<boolean>(false);
@@ -129,7 +137,7 @@ export const RecipeFormProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const storedData = getItem<RecipeFormData>(SESSION_STORAGE_KEY);
     if (storedData) {
-      setFormDataState(prev => ({...prev, ...storedData, isLoading: false})); 
+      setFormDataState((prev: RecipeFormData) => ({...prev, ...storedData, isLoading: false})); 
     }
     setIsInitialized(true);
   }, []);
@@ -142,7 +150,7 @@ export const RecipeFormProvider = ({ children }: { children: ReactNode }) => {
   }, [formData, isInitialized]);
 
   const updateFormData = useCallback((data: Partial<RecipeFormData>) => {
-    setFormDataState((prevData) => ({
+    setFormDataState((prevData: RecipeFormData) => ({
       ...prevData,
       ...data,
     }));
@@ -166,14 +174,14 @@ export const RecipeFormProvider = ({ children }: { children: ReactNode }) => {
 
   const setIsLoading = useCallback((loading: boolean) => {
     setIsLoadingState(loading);
-    setFormDataState(prev => ({ ...prev, isLoading: loading }));
+    setFormDataState((prev: RecipeFormData) => ({ ...prev, isLoading: loading }));
   }, []);
 
   const setIsFetchingNextStepData = useCallback((fetching: boolean) => {
     setIsFetchingNextStepDataState(fetching);
   }, []);
 
-  const setLoadingScreenTargetStepKey = useCallback((key: 'causes' | 'symptoms' | 'properties' | null) => {
+  const setLoadingScreenTargetStepKey = useCallback((key: 'causes' | 'symptoms' | 'properties' | 'recipe-choices' | null) => {
     setLoadingScreenTargetStepKeyState(key);
   }, []);
 

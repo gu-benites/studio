@@ -1,14 +1,24 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRecipeForm } from '@/contexts/RecipeFormContext';
+import { fetchRecipeChoices } from '@/services/aromarx-api-client';
+import { getSuggestedOils } from '@/services/aromarx-api-client';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button'; 
 import { Loader2, FlaskConical } from 'lucide-react'; 
-import { getSuggestedOils } from '@/services/aromarx-api-client';
 import type { RecipeFormData } from '@/contexts/RecipeFormContext';
+import type { SuggestedOil } from '@/services/aromarx-api-client';
+
+interface SuggestedOilsForProperty {
+  property_id: string;
+  property_name: string; 
+  property_name_in_english: string; 
+  description: string; 
+  suggested_oils: SuggestedOil[];
+}
 import { cn } from '@/lib/utils';
 
 interface TherapeuticProperty {
@@ -21,22 +31,11 @@ interface TherapeuticProperty {
   relevancy: number;
 }
 
-interface SuggestedOil {
-  name_english: string;
-  name_local_language: string;
-  oil_description: string;
-  relevancy: number;
+interface PropertiesOilsStepProps {
+  t: (key: string) => string;
 }
 
-interface SuggestedOilsForProperty {
-  property_id: string;
-  property_name: string; 
-  property_name_in_english: string; 
-  description: string; 
-  suggested_oils: SuggestedOil[];
-}
-
-const PropertiesOilsStep: React.FC = () => {
+const PropertiesOilsStep: React.FC<PropertiesOilsStepProps> = ({ t }) => {
   const router = useRouter();
   const { formData, updateFormData, setCurrentStep, setIsLoading, setError, resetFormData, isLoading: globalIsLoading } = useRecipeForm();
   
@@ -52,10 +51,12 @@ const PropertiesOilsStep: React.FC = () => {
       therapeuticPropertiesCount: therapeuticProperties.length
     });
 
+    // Safely handle potentially null suggestedOilsByProperty
+    const suggestedOilsByProperty = formData.suggestedOilsByProperty || {};
+    
     const propertiesToFetch = therapeuticProperties.filter(prop => {
-      const isAlreadyFetchedWithData = formData.suggestedOilsByProperty &&
-                                   formData.suggestedOilsByProperty[prop.property_id] &&
-                                   formData.suggestedOilsByProperty[prop.property_id].suggested_oils.length > 0;
+      const isAlreadyFetchedWithData = suggestedOilsByProperty[prop.property_id] &&
+                                   suggestedOilsByProperty[prop.property_id].suggested_oils.length > 0;
       const isMarkedAsFetchingInState = fetchingStatus[prop.property_id];
       return !isAlreadyFetchedWithData && !isMarkedAsFetchingInState;
     });
@@ -179,10 +180,12 @@ const PropertiesOilsStep: React.FC = () => {
         refIsBusy: fetchAllOilsInProgress.current
     });
     
+    // Safely handle potentially null suggestedOilsByProperty
+    const suggestedOilsByProperty = formData.suggestedOilsByProperty || {};
+    
     const needsAnyFetching = therapeuticProperties.some(prop => 
-        !(formData.suggestedOilsByProperty && 
-          formData.suggestedOilsByProperty[prop.property_id] &&
-          formData.suggestedOilsByProperty[prop.property_id].suggested_oils.length > 0
+        !(suggestedOilsByProperty[prop.property_id] &&
+          suggestedOilsByProperty[prop.property_id].suggested_oils.length > 0
          ) && !fetchingStatus[prop.property_id]
     );
     
@@ -211,13 +214,97 @@ const PropertiesOilsStep: React.FC = () => {
       fetchingStatus 
     ]);
 
-  const handleSubmitNext = async () => {
+  const handleSubmitNext = async (): Promise<void> => {
     // Placeholder for future navigation to a final recipe display page
     // For now, this might just log or prepare data
     console.log("Final selected oils (to be implemented):", formData.suggestedOilsByProperty);
     // router.push('/create-recipe/final-recipe-summary'); // Example future route
     alert("Próxima etapa: Geração da Receita (Em Desenvolvimento)");
   };
+
+  const handleGenerateSuggestions = async (): Promise<void> => {
+    try {
+      // Validate that all required data is present except for selectedTherapeuticProperties
+      if (!formData.healthConcern || !formData.gender || !formData.ageCategory || !formData.ageSpecific || 
+          !formData.selectedCauses || !formData.selectedSymptoms) {
+        // Prepare a more specific error message
+        const missingFields = [];
+        if (!formData.healthConcern) missingFields.push('Health Concern');
+        if (!formData.gender) missingFields.push('Gender');
+        if (!formData.ageCategory) missingFields.push('Age Category');
+        if (!formData.ageSpecific) missingFields.push('Specific Age');
+        if (!formData.selectedCauses) missingFields.push('Selected Causes');
+        if (!formData.selectedSymptoms) missingFields.push('Selected Symptoms');
+        
+        setError(`Please complete all previous steps. Missing information: ${missingFields.join(', ')}`);
+        return;
+      }
+      
+      // Also check if suggestedOilsByProperty is populated
+      if (!formData.suggestedOilsByProperty || Object.keys(formData.suggestedOilsByProperty).length === 0) {
+        setError('Please wait for suggested oils to load before generating recipe suggestions.');
+        return;
+      }
+      
+      setIsLoading(true);
+      
+      // Auto-select all therapeutic properties if they're not already selected
+      if (!formData.selectedTherapeuticProperties && formData.medicalPropertiesResult?.therapeutic_properties) {
+        // Use all therapeutic properties from the medical properties result
+        updateFormData({ 
+          ...formData, 
+          selectedTherapeuticProperties: formData.medicalPropertiesResult.therapeutic_properties 
+        });
+      }
+      
+      // Use a local variable to ensure we have the updated data with selectedTherapeuticProperties
+      const updatedFormData = {
+        ...formData,
+        selectedTherapeuticProperties: formData.selectedTherapeuticProperties || formData.medicalPropertiesResult?.therapeutic_properties || []
+      };
+      
+      // Prepare suggestedOilsForProperties array if it doesn't exist
+      if (!updatedFormData.suggestedOilsForProperties && updatedFormData.suggestedOilsByProperty) {
+        const suggestedOilsArray = Object.values(updatedFormData.suggestedOilsByProperty);
+        updatedFormData.suggestedOilsForProperties = suggestedOilsArray;
+        updateFormData(updatedFormData);
+      }
+      
+      const choices = await fetchRecipeChoices(updatedFormData);
+      updateFormData({ ...updatedFormData, recipeChoices: choices });
+      setCurrentStep('recipe-choices');
+      router.push('/recipe-choices');
+    } catch (error) {
+      console.error('Failed to fetch recipe choices:', error);
+      setError('Failed to fetch recipe choices. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCheckboxChange = (prop: TherapeuticProperty, oil: SuggestedOil): void => {
+    // ... implementation ...
+  };
+
+  const handleSelectAllForProperty = (prop: TherapeuticProperty): void => {
+    // ... implementation ...
+  };
+
+  // Custom type that extends SuggestedOil with selected property
+  interface ExtendedSuggestedOil extends SuggestedOil {
+    selected?: boolean;
+  }
+
+  const filteredOils = useMemo(() => {
+    // Safely handle potentially null suggestedOilsByProperty
+    const suggestedOilsByProperty = formData.suggestedOilsByProperty || {};
+    
+    return therapeuticProperties.flatMap(prop => {
+      const propertyOils = suggestedOilsByProperty[prop.property_id]?.suggested_oils || [];
+      // Filter oils that are marked as selected (if the property exists)
+      return (propertyOils as ExtendedSuggestedOil[]).filter(oil => oil.selected === true);
+    });
+  }, [therapeuticProperties, formData.suggestedOilsByProperty]);
 
   if (!formData.medicalPropertiesResult && !globalIsLoading) {
     return <p className="px-4 sm:px-6 md:px-0">Carregando propriedades terapêuticas... Se demorar, volte e tente novamente.</p>;
@@ -278,16 +365,16 @@ const PropertiesOilsStep: React.FC = () => {
               
               <div className="mt-3 pt-3 border-t">
                 <h4 className="text-md font-semibold mb-2">Óleos Sugeridos:</h4>
-                {globalIsLoading && (!formData.suggestedOilsByProperty || !formData.suggestedOilsByProperty[prop.property_id]) && (
+                {globalIsLoading && (!(formData.suggestedOilsByProperty || {})[prop.property_id]) && (
                      <div className="flex items-center text-sm text-muted-foreground">
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         Buscando...
                     </div>
                 )}
-                {!globalIsLoading && formData.suggestedOilsByProperty && formData.suggestedOilsByProperty[prop.property_id] ? (
-                  formData.suggestedOilsByProperty[prop.property_id].suggested_oils.length > 0 ? (
+                {!globalIsLoading && (formData.suggestedOilsByProperty || {})[prop.property_id] ? (
+                  (formData.suggestedOilsByProperty || {})[prop.property_id].suggested_oils.length > 0 ? (
                     <ul className="space-y-2">
-                      {formData.suggestedOilsByProperty[prop.property_id].suggested_oils.map(oil => (
+                      {(formData.suggestedOilsByProperty || {})[prop.property_id].suggested_oils.map(oil => (
                         <li key={oil.name_english} className="p-2 border rounded-md bg-background">
                            <div className="font-medium">{oil.name_local_language} ({oil.name_english}) <Badge variant="secondary" className="ml-1">Relevância: {oil.relevancy}/5</Badge></div>
                            <p className="text-xs text-muted-foreground">{oil.oil_description}</p>
@@ -308,6 +395,12 @@ const PropertiesOilsStep: React.FC = () => {
       <button onClick={handleSubmitNext} className="hidden" aria-hidden="true" id="properties-oils-submit">
         Internal Submit Trigger for Layout
       </button>
+      <Button
+        type="button"
+        onClick={handleGenerateSuggestions}
+      >
+        Gerar Sugestões
+      </Button>
     </div>
   );
 };

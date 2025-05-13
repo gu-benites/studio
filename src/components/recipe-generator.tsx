@@ -73,7 +73,7 @@ export const RecipeGenerator: React.FC = () => {
     <div className="flex flex-col items-center justify-center min-h-screen p-4 sm:p-8">
       <div className="w-full max-w-2xl text-center">
         <h1 
-            className="text-4xl sm:text-5xl font-bold mb-3 bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end bg-clip-text text-transparent"
+            className="text-4xl sm:text-5xl font-bold mb-3 bg-gradient-to-r from-aroma-grad-start to-aroma-grad-end bg-clip-text text-transparent leading-[1.2] tracking-tight"
             >
           Qual receita você quer criar hoje?
         </h1>

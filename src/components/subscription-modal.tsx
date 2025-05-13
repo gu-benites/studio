@@ -180,7 +180,7 @@ export const SubscriptionModal: React.FC = () => {
                         <h4 className="font-medium mb-2">Payment Method</h4>
                         <div className="flex items-center justify-between p-4 border rounded-lg">
                             <div className="flex items-center gap-3">
-                                <Image src="https://picsum.photos/seed/visa/40/24" width={40} height={24} alt="Visa card" data-ai-hint="credit card" />
+                                <Image src="/images/visa-card.png" width={40} height={24} alt="Visa card" data-ai-hint="credit card" />
                                 <div>
                                     <p className="font-medium">Visa ending in 1234</p>
                                     <p className="text-sm text-muted-foreground">Expires 12/2025</p>

@@ -12,7 +12,7 @@ interface LoadingStepMessage {
 }
 
 interface LoadingScreenProps {
-  targetStepKey: 'causes' | 'symptoms' | 'properties'; // To determine which set of messages to use
+  targetStepKey: 'causes' | 'symptoms' | 'properties' | 'recipe-choices'; // To determine which set of messages to use
 }
 
 const ageCategoriesMap: Record<string, string> = {

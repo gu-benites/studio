@@ -37,7 +37,7 @@ export const MobileHeader: React.FC = () => {
         size="icon"
         onClick={toggleMobileSidebar}
         aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
-        className="h-9 w-9 hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="h-9 w-9 hover:bg-sidebar-hover hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <PanelLeft className="h-5 w-5" />
       </Button>

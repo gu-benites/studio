@@ -14,15 +14,20 @@ import {
   CreditCard,
   LogOut,
   Beaker, // Added for Chemical Visualizer
+  User as UserIcon
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import * as React from 'react';
+import { useState, useEffect } from 'react';
 
 import { useUIState } from '@/contexts/UIStateContext';
+import { useAuth } from '@/contexts/auth-context';
+import { supabase } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { AppNavItem, AppFooterButton } from '@/components/ui/app-nav-item';
 import { UserAccountMenu } from '@/components/user-account-menu';
 import {
   Tooltip,
@@ -55,7 +60,7 @@ const userMenuItems: NavItem[] = [
 ] as any;
 
 
-const AppSidebar: React.FC = () => {
+const AppSidebar = () => {
   const { 
     isSidebarOpen: contextSidebarOpen,
     isSidebarPinned, 
@@ -67,6 +72,11 @@ const AppSidebar: React.FC = () => {
     openUserAccountMenuSimple, 
     toggleUserAccountMenuSimple, 
   } = useUIState();
+  
+  const { user } = useAuth();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>('User Name');
+  const [userEmail, setUserEmail] = useState<string>('user@example.com');
 
   const pathname = usePathname();
   const [isClientMobile, setIsClientMobile] = React.useState(false);
@@ -85,6 +95,47 @@ const AppSidebar: React.FC = () => {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+  
+  // Fetch user profile data including avatar
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) {
+        // Reset user information when not authenticated
+        setUserName('User Name');
+        setUserEmail('user@example.com');
+        setAvatarUrl(null);
+        return;
+      }
+      
+      try {
+        // Set user name and email from auth
+        const firstName = user.user_metadata?.first_name || '';
+        const lastName = user.user_metadata?.last_name || '';
+        setUserName(firstName && lastName ? `${firstName} ${lastName}` : 'User Name');
+        setUserEmail(user.email || 'user@example.com');
+        
+        // Fetch avatar from profiles table
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('avatar_url')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching profile:', error);
+          return;
+        }
+        
+        if (data?.avatar_url) {
+          setAvatarUrl(data.avatar_url);
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user]);
 
   const currentIsSidebarOpen = hasMounted ? contextSidebarOpen : false;
   const currentIsSidebarPinned = hasMounted ? isSidebarPinned : false;
@@ -128,13 +179,11 @@ const AppSidebar: React.FC = () => {
   
   const sidebarInnerClasses = cn(
     "flex flex-col h-full", 
-    "text-[hsl(var(--app-sidebar-foreground))] border-r border-[hsl(var(--app-sidebar-border))]",
+    "text-sidebar-foreground border-r border-sidebar-border",
     "transition-colors duration-300 ease-in-out", 
-    (isHovering && isDesktopClient && !currentIsSidebarPinned && !currentIsUserAccountMenuExpanded) || (currentIsSidebarPinned || currentIsUserAccountMenuExpanded) ? 
-      'bg-[hsl(var(--app-sidebar-background))]' : 
-      'bg-[hsl(var(--app-sidebar-background))]', // Base background
+    "bg-sidebar", // Base background
     !isClientMobile && !isEffectivelyExpanded && "overflow-x-hidden",
-    (isDesktopClient && isHovering && !currentIsSidebarPinned && !currentIsUserAccountMenuExpanded) ? 'bg-[hsl(var(--app-sidebar-hover-background))]' : '',
+    (isDesktopClient && isHovering && !currentIsSidebarPinned && !currentIsUserAccountMenuExpanded) ? 'bg-sidebar-hover' : '',
   );
 
   const handleAvatarClick = () => {
@@ -151,47 +200,42 @@ const AppSidebar: React.FC = () => {
   };
 
 
+  // Return a placeholder sidebar during initial mount
   if (!hasMounted) { 
     const collapsedSidebarClasses = cn(
       'fixed inset-y-0 left-0 z-40 h-full md:w-[48px]',
-      'flex flex-col bg-[hsl(var(--app-sidebar-background))] text-[hsl(var(--app-sidebar-foreground))] border-r border-[hsl(var(--app-sidebar-border))] shadow-lg'
+      'flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border shadow-lg'
     );
+    
     return (
-      <TooltipProvider delayDuration={0}>
-        <aside className={collapsedSidebarClasses}>
-          <div className={"flex flex-col h-full"}>
-            <div className="flex items-center border-b border-[hsl(var(--app-sidebar-border))] h-[var(--footer-nav-height)] shrink-0 justify-center px-[calc((48px-32px)/2)]">
-              <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))]">
-                <PanelLeft className="h-5 w-5" />
-              </Button>
-            </div>
-            <nav className="flex-grow py-4 space-y-1 px-[calc((48px-32px)/2)] overflow-y-auto overflow-x-hidden">
-              {mainNavItems.map(item => (
-                <div key={item.label}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Link 
-                        href={item.href} 
-                        className="flex justify-center items-center w-8 h-9 p-0 rounded-lg text-[hsl(var(--app-sidebar-foreground))] hover:bg-[hsl(var(--app-sidebar-hover-background))]" 
-                        title={item.label}
-                        onClick={() => {}}
-                      >
-                        <item.icon className="h-4 w-4 shrink-0" />
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" sideOffset={8}><p>{item.label}</p></TooltipContent>
-                  </Tooltip>
+      <aside className={collapsedSidebarClasses}>
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="flex items-center border-b border-sidebar-border h-[var(--footer-nav-height)] shrink-0 justify-center px-[calc((48px-32px)/2)]">
+            <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-sidebar-hover">
+              <PanelLeft className="h-5 w-5" />
+            </Button>
+          </div>
+          
+          {/* Nav placeholder - no tooltips during initial render */}
+          <div className="flex-grow py-4 space-y-1 px-[calc((48px-32px)/2)] overflow-y-auto">
+            {mainNavItems.map(item => (
+              <div key={item.label} className="flex justify-center">
+                <div className="flex justify-center items-center w-8 h-9 rounded-lg text-sidebar-foreground">
+                  <item.icon className="h-4 w-4 shrink-0" />
                 </div>
-              ))}
-            </nav>
-            <div className="mt-auto border-t border-[hsl(var(--app-sidebar-border))] shrink-0">
-              <button className="flex w-full items-center justify-center h-[var(--footer-nav-height)] px-[calc((48px-32px)/2)] hover:bg-[hsl(var(--app-sidebar-hover-background))]">
-                <Image src="https://picsum.photos/seed/useravatar/64/64" alt="User Avatar" width={32} height={32} className="rounded-full shrink-0" data-ai-hint="profile avatar" />
-              </button>
+              </div>
+            ))}
+          </div>
+          
+          {/* Footer */}
+          <div className="mt-auto border-t border-sidebar-border shrink-0">
+            <div className="flex w-full items-center justify-center h-[var(--footer-nav-height)] px-[calc((48px-32px)/2)]">
+              <div className="h-8 w-8 rounded-full bg-muted" />
             </div>
           </div>
-        </aside>
-      </TooltipProvider>
+        </div>
+      </aside>
     );
   }
   
@@ -205,7 +249,6 @@ const AppSidebar: React.FC = () => {
               aria-hidden="true"
           />
       )}
-      <TooltipProvider delayDuration={0}>
       <aside 
         className={sidebarOuterClasses}
         onMouseEnter={handleMouseEnter}
@@ -213,7 +256,7 @@ const AppSidebar: React.FC = () => {
       >
         <div className={sidebarInnerClasses}>
           <div className={cn(
-            "flex items-center border-b border-[hsl(var(--app-sidebar-border))] h-[var(--footer-nav-height)] shrink-0", 
+            "flex items-center border-b border-sidebar-border h-[var(--footer-nav-height)] shrink-0", 
             isEffectivelyExpanded 
               ? "px-3 gap-3" 
               : "justify-center px-[calc((48px-32px)/2)]" 
@@ -224,8 +267,8 @@ const AppSidebar: React.FC = () => {
                 onClick={isClientMobile ? toggleMobileSidebar : toggleDesktopSidebarPin}
                 className={cn(
                     "h-9 w-9 shrink-0", 
-                    "hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))]",
-                    "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--app-sidebar-background))]"
+                    "hover:bg-sidebar-hover",
+                    "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar"
                 )}
                 aria-label={
                   isClientMobile 
@@ -254,96 +297,79 @@ const AppSidebar: React.FC = () => {
             isEffectivelyExpanded ? "px-3" : "px-[calc((48px-32px)/2)]"
             )}>
             {mainNavItems.map((item) => {
-              const navLinkContent = (
-                <Link
-                  href={item.href}
-                  onClick={() => { 
-                    if (isClientMobile && currentIsSidebarOpen) {
-                      closeSidebarCompletely(); 
-                    }
-                  }}
-                  className={cn(
-                    'flex items-center gap-3 rounded-lg text-sm font-medium transition-all',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-[hsl(var(--app-sidebar-background))]',
-                    isEffectivelyExpanded ? 'px-3 py-2.5 w-full' : 'justify-center w-8 h-9 p-0', 
-                    pathname === item.href
-                      ? 'bg-[hsl(var(--app-sidebar-active-background))] text-[hsl(var(--app-sidebar-active-foreground))]'
-                      : 'text-[hsl(var(--app-sidebar-foreground))] hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))]'
-                  )}
-                  title={isEffectivelyExpanded ? undefined : item.label} 
-                >
-                  <item.icon className="h-4 w-4 shrink-0" />
-                  {isEffectivelyExpanded && <span className="truncate">{item.label}</span>}
-                </Link>
-              );
-
+              const isActive = pathname === item.href;
+              const handleNavigate = () => {
+                if (isClientMobile && currentIsSidebarOpen) {
+                  closeSidebarCompletely();
+                }
+              };
+              
               return (
                 <div key={item.label}>
-                  {isEffectivelyExpanded ? (
-                    navLinkContent 
-                  ) : (
-                    <Tooltip>
-                      <TooltipTrigger asChild>{navLinkContent}</TooltipTrigger>
-                      <TooltipContent side="right" sideOffset={8}>
-                        <p>{item.label}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
+                  <AppNavItem 
+                    href={item.href}
+                    icon={item.icon}
+                    label={item.label}
+                    size={isEffectivelyExpanded ? "default" : "icon"}
+                    isActive={isActive}
+                    showTooltip={!isEffectivelyExpanded}
+                    onNavigate={handleNavigate}
+                  />
                 </div>
               );
             })}
           </nav>
         
-          <div className="mt-auto border-t border-[hsl(var(--app-sidebar-border))] shrink-0"> 
+          <div className="mt-auto border-t border-sidebar-border shrink-0"> 
             {currentIsUserAccountMenuExpanded && isEffectivelyExpanded && (
               <UserAccountMenu />
             )}
-             <TooltipProvider delayDuration={(isDesktopClient && !isEffectivelyExpanded && !isHovering) ? 0 : 999999}> {/* Only enable tooltip if collapsed AND not hovering */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={handleAvatarClick}
-                    className={cn(
-                      "flex w-full items-center gap-3 text-left text-sm font-medium transition-colors",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 focus-visible:ring-offset-[hsl(var(--app-sidebar-background))]",
-                      isEffectivelyExpanded ? "p-3 h-[var(--footer-nav-height)]" : "justify-center h-[var(--footer-nav-height)] w-full px-[calc((48px-32px)/2)]", 
-                      currentIsUserAccountMenuExpanded && isEffectivelyExpanded 
-                        ? 'bg-[hsl(var(--app-sidebar-active-background))] text-[hsl(var(--app-sidebar-active-foreground))]'
-                        : 'hover:bg-[hsl(var(--app-sidebar-hover-background))] hover:text-[hsl(var(--app-sidebar-foreground))]'
-                    )}
-                    aria-label="Open user menu" 
-                  >
-                    <Image
-                      src="https://picsum.photos/seed/useravatar/64/64" 
-                      alt="User Avatar"
-                      width={32} 
-                      height={32} 
-                      className="rounded-full shrink-0" 
-                      data-ai-hint="profile avatar"
-                    />
-                    {isEffectivelyExpanded && (
-                      <div className="flex flex-col overflow-hidden">
-                        <span className="truncate">User Name</span>
-                        <span className={cn(
-                          "text-xs truncate",
-                          currentIsUserAccountMenuExpanded && isEffectivelyExpanded ? 'opacity-80' : 'text-muted-foreground'
-                        )}>user@example.com</span>
-                      </div>
-                    )}
-                  </button>
-                </TooltipTrigger>
-                {(isDesktopClient && !isEffectivelyExpanded && !isHovering) && ( // Tooltip conditions
-                   <TooltipContent side="right" sideOffset={8}>
-                     <p>User Name</p>
-                     <p className="text-xs text-muted-foreground">user@example.com</p>
-                   </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
+            <AppFooterButton
+              onClick={handleAvatarClick}
+              size={isEffectivelyExpanded ? "default" : "icon"}
+              variant={currentIsUserAccountMenuExpanded && isEffectivelyExpanded ? "active" : "default"}
+              className={cn(
+                "w-full text-left",
+                isEffectivelyExpanded ? "p-3 h-[var(--footer-nav-height)]" : "h-[var(--footer-nav-height)] px-[calc((48px-32px)/2)]"
+              )}
+              aria-label="Open user menu"
+              showTooltip={isDesktopClient && !isEffectivelyExpanded && !isHovering}
+              tooltipContent={
+                <>
+                  <p>{userName}</p>
+                  <p className="text-xs text-muted-foreground">{userEmail}</p>
+                </>
+              }
+              icon={
+                avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt="User Avatar"
+                    width={32}
+                    height={32}
+                    className="rounded-full shrink-0 object-cover"
+                    data-ai-hint="profile avatar"
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center border shrink-0">
+                    <UserIcon className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                )
+              }
+            >
+              {isEffectivelyExpanded && (
+                <div className="flex flex-col overflow-hidden ml-3">
+                  <span className="truncate">{userName}</span>
+                  <span className={cn(
+                    "text-xs truncate",
+                    currentIsUserAccountMenuExpanded && isEffectivelyExpanded ? 'opacity-80' : 'text-muted-foreground'
+                  )}>{userEmail}</span>
+                </div>
+              )}
+            </AppFooterButton>
           </div>
         </div>
       </aside>
-      </TooltipProvider>
     </>
   );
 };

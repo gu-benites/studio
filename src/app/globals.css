@@ -59,13 +59,13 @@ body {
     --alert-icon-hsl: 30 95% 44%; /* #d97706 */
     /* Note: For --alert-bg and --alert-border, opacity is handled by Tailwind class like bg-alert-bg/80 */
 
-    /* Custom Sidebar Vars - Aligned with new Aroma theme */
-    --app-sidebar-background: 0 0% 100%; /* Card white */
-    --app-sidebar-foreground: 248 16% 33%; /* aroma-text */
-    --app-sidebar-border: 210 14% 90%; /* border */
-    --app-sidebar-hover-background: 210 17% 95%; /* Slightly darker than main background */
-    --app-sidebar-active-background: 253 100% 68%; /* aroma-primary */
-    --app-sidebar-active-foreground: 0 0% 100%; /* white */
+    /* Sidebar Theme Variables */
+    --sidebar-background: 0 0% 100%; /* Card white */
+    --sidebar-foreground: 248 16% 33%; /* aroma-text */
+    --sidebar-border: 210 14% 90%; /* border */
+    --sidebar-hover: 210 17% 95%; /* Slightly darker than main background */
+    --sidebar-active: 253 100% 68%; /* aroma-primary */
+    --sidebar-active-foreground: 0 0% 100%; /* white */
 
     /* Footer Navigation Height */
     --footer-nav-height: 60px; /* Default footer height */
@@ -114,13 +114,13 @@ body {
     --alert-border-hsl: 39 50% 30%;
     --alert-icon-hsl: 30 95% 70%;
 
-    /* Custom Sidebar Vars - Dark Mode */
-    --app-sidebar-background: 240 10% 12%;
-    --app-sidebar-foreground: 210 17% 85%;
-    --app-sidebar-border: 240 5% 25%;
-    --app-sidebar-hover-background: 240 10% 18%;
-    --app-sidebar-active-background: 253 100% 75%;
-    --app-sidebar-active-foreground: 248 16% 10%;
+    /* Sidebar Theme Variables - Dark Mode */
+    --sidebar-background: 240 10% 12%;
+    --sidebar-foreground: 210 17% 85%;
+    --sidebar-border: 240 5% 25%;
+    --sidebar-hover: 240 10% 18%;
+    --sidebar-active: 253 100% 75%;
+    --sidebar-active-foreground: 248 16% 10%;
   }
 }
 

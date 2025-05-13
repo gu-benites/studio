@@ -8,6 +8,7 @@ import { useRecipeForm } from '@/contexts/RecipeFormContext';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { getPotentialSymptoms } from '@/services/aromarx-api-client';
 import type { RecipeFormData } from '@/contexts/RecipeFormContext'; 
 import { cn } from '@/lib/utils';
@@ -33,17 +34,20 @@ const CausesStep: React.FC = () => {
     updateFormValidity 
   } = useRecipeForm();
   
-  const [selectedCausesState, setSelectedCausesState] = useState<PotentialCause[]>(formData.selectedCauses || []);
+  const [selectedCausesState, setSelectedCausesState] = useState<string[]>(formData.selectedCauses?.map(c => c.cause_name) || []);
   const [openAccordionItems, setOpenAccordionItems] = useState<string[]>(formData.selectedCauses?.map(c => c.cause_name) || []);
+  
+  // Ensure potentialCausesResult is not null
+  const potentialCauses = formData.potentialCausesResult || [];
 
   useEffect(() => {
     if (formData.selectedCauses) {
-      const currentSelectedNames = selectedCausesState.map(c => c.cause_name).sort();
+      const currentSelectedNames = selectedCausesState.sort();
       const formSelectedNames = formData.selectedCauses.map(c => c.cause_name).sort();
       if (JSON.stringify(currentSelectedNames) !== JSON.stringify(formSelectedNames)) {
-        setSelectedCausesState(formData.selectedCauses);
+        setSelectedCausesState(formData.selectedCauses.map(c => c.cause_name));
       }
-      const newOpenItems = formData.selectedCauses.map(c => c.cause_name).filter(Boolean) as string[];
+      const newOpenItems = formData.selectedCauses.map(c => c.cause_name).filter(Boolean);
       if (JSON.stringify(openAccordionItems.sort()) !== JSON.stringify(newOpenItems.sort())) {
           setOpenAccordionItems(newOpenItems);
       }
@@ -56,24 +60,24 @@ const CausesStep: React.FC = () => {
     updateFormValidity(selectedCausesState.length > 0);
   }, [selectedCausesState, updateFormValidity]);
 
-  const handleSelectionToggle = useCallback((toggledCause: PotentialCause, newCheckedState: boolean) => {
+  const handleSelectionToggle = useCallback((toggledCause: PotentialCause, isChecked: boolean) => {
     const causeId = toggledCause.cause_name;
-    setSelectedCausesState(prevSelected => {
-      if (newCheckedState) {
-        if (prevSelected.some(c => c.cause_name === causeId)) return prevSelected;
-        return [...prevSelected, toggledCause];
-      } else {
-        return prevSelected.filter(c => c.cause_name !== causeId);
-      }
-    });
+    setSelectedCausesState(prevSelected =>
+      isChecked ? [...prevSelected, causeId] : prevSelected.filter(id => id !== causeId)
+    );
     
-    setOpenAccordionItems(prevOpen => {
-      if (newCheckedState) {
-        return [...new Set([...prevOpen, causeId])]; 
-      } else {
-        return prevOpen.filter(id => id !== causeId);
-      }
-    });
+    if (isChecked) {
+      setOpenAccordionItems(prevOpen => [...new Set([...prevOpen, causeId])]);  
+    } else {
+      // Only close if it was open due to this item
+      setOpenAccordionItems(prevOpen => prevOpen.filter(id => id !== causeId)); 
+    }
+  }, []);
+
+  const handleTriggerClick = useCallback((causeId: string) => {
+    setOpenAccordionItems(prevOpen =>
+      prevOpen.includes(causeId) ? prevOpen.filter(id => id !== causeId) : [...prevOpen, causeId]
+    );
   }, []);
 
 
@@ -84,8 +88,11 @@ const CausesStep: React.FC = () => {
         setError("Por favor, selecione ao menos uma causa.");
         return;
     }
-
-    updateFormData({ selectedCauses: selectedCausesState });
+    
+    // Ensure potentialCausesResult is not null
+    const potentialCauses = formData.potentialCausesResult || [];
+    const selectedCauses = potentialCauses.filter(cause => selectedCausesState.includes(cause.cause_name));
+    updateFormData({ selectedCauses });
 
     setIsFetchingNextStepData(true); 
     setLoadingScreenTargetStepKey('symptoms');
@@ -104,7 +111,7 @@ const CausesStep: React.FC = () => {
         gender: formData.gender,
         ageCategory: formData.ageCategory,
         ageSpecific: formData.ageSpecific,
-        selectedCauses: selectedCausesState,
+        selectedCauses: selectedCauses,
       };
       const potentialSymptoms = await getPotentialSymptoms(apiPayload);
       updateFormData({ potentialSymptomsResult: potentialSymptoms });
@@ -118,72 +125,79 @@ const CausesStep: React.FC = () => {
     }
   };
 
-  if (!formData.potentialCausesResult) {
+  if (!formData.potentialCausesResult || formData.potentialCausesResult.length === 0) {
     return <p className="px-4 sm:px-6 md:px-0">Carregando causas... Se demorar, volte e tente novamente.</p>;
   }
 
   return (
     <form id="current-step-form" onSubmit={handleSubmitCauses} className="space-y-0">
-      <Accordion
-        type="multiple"
-        value={openAccordionItems}
-        onValueChange={setOpenAccordionItems}
-        className="w-full md:space-y-2"
-      >
-        {formData.potentialCausesResult.map((cause) => {
-          const causeId = cause.cause_name;
-          const isChecked = selectedCausesState.some(c => c.cause_name === causeId);
-          return (
-            <AccordionItem
-              value={causeId}
-              key={causeId}
-              className={cn(
-                "transition-colors",
-                "border-b border-border last:border-b-0",
-                "md:border md:rounded-lg md:first:rounded-t-lg md:last:rounded-b-lg md:overflow-hidden",
-                isChecked ? "bg-primary/10" : "bg-background md:bg-card"
-              )}
-            >
-              <AccordionTrigger
-                onClick={() => handleSelectionToggle(cause, !isChecked)}
+      <div className="w-full md:space-y-2">
+        <Accordion
+          type="multiple"
+          value={openAccordionItems}
+          onValueChange={setOpenAccordionItems}
+          className="w-full rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden"
+        >
+          {potentialCauses.map((cause, index) => {
+            const causeId = cause.cause_name;
+            const isChecked = selectedCausesState.includes(causeId);
+            return (
+              <AccordionItem
+                value={causeId}
+                key={causeId}
                 className={cn(
-                  "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 transition-colors",
-                  isChecked ? "hover:bg-primary/15" : "hover:bg-muted/50",
-                  "focus-visible:ring-offset-background md:focus-visible:ring-offset-card"
+                  "transition-colors",
+                  index !== 0 && "border-t", 
+                  isChecked ? "bg-primary/10" : "bg-card"
                 )}
               >
-                <div className="flex items-center space-x-3 flex-1 min-w-0">
-                  <Switch
-                    id={`cause-switch-${causeId}`}
-                    checked={isChecked}
-                    onCheckedChange={(checked) => {
-                      handleSelectionToggle(cause, checked);
-                    }}
-                    className="shrink-0 h-6 w-11 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input [&>span]:h-5 [&>span]:w-5 [&>span[data-state=checked]]:translate-x-5 [&>span[data-state=unchecked]]:translate-x-0"
-                    aria-labelledby={`cause-label-${causeId}`}
-                    onClick={(e) => e.stopPropagation()} 
-                  />
-                  <Label
-                    htmlFor={`cause-switch-${causeId}`}
-                    id={`cause-label-${causeId}`}
-                    className="font-medium text-base cursor-pointer flex-1 truncate"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        handleSelectionToggle(cause, !isChecked);
-                    }}
-                  >
-                    {cause.cause_name}
-                  </Label>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-4 pb-4 pt-1 space-y-1 bg-background/50 md:bg-card">
-                <p className="text-sm text-muted-foreground">{cause.cause_suggestion}</p>
-                <p className="text-xs text-muted-foreground/80">{cause.explanation}</p>
-              </AccordionContent>
-            </AccordionItem>
-          );
-        })}
-      </Accordion>
+                {/* Custom header layout */}
+                <AccordionPrimitive.Header className="flex">
+                  <div className={cn(
+                    "flex w-full items-center justify-between px-4 py-3 text-left transition-colors",
+                    isChecked ? "hover:bg-primary/15" : "hover:bg-muted/50"
+                  )}>
+                    <div className="flex items-center space-x-3 flex-1 min-w-0">
+                      <Switch
+                        id={`cause-switch-${causeId}`}
+                        checked={isChecked}
+                        onCheckedChange={(checked) => handleSelectionToggle(cause, checked)}
+                        className="shrink-0 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input"
+                        aria-labelledby={`cause-label-${causeId}`}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <AccordionTrigger
+                        onClick={() => handleTriggerClick(causeId)}
+                        className={cn(
+                          "p-0 flex-1 text-left hover:no-underline",
+                          "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card"
+                        )}
+                        showChevron={false}
+                      >
+                        <Label
+                          htmlFor={`cause-switch-${causeId}`}
+                          id={`cause-label-${causeId}`}
+                          className="font-medium text-base cursor-pointer flex-1 truncate"
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent AccordionTrigger's onClick
+                            handleSelectionToggle(cause, !isChecked);
+                          }}
+                        >
+                          {cause.cause_name}
+                        </Label>
+                      </AccordionTrigger>
+                    </div>
+                  </div>
+                </AccordionPrimitive.Header>
+                <AccordionContent className="px-4 pb-4 pt-1 space-y-1 bg-card/50">
+                  <p className="text-sm text-muted-foreground">{cause.cause_suggestion}</p>
+                  <p className="text-xs text-muted-foreground/80">{cause.explanation}</p>
+                </AccordionContent>
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
+      </div>
     </form>
   );
 };

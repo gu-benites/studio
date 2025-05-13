@@ -1,0 +1,110 @@
+flowchart TD
+    Start([User Visits App]) --> LandingPage[Landing Page]
+    
+    %% Initial user path decision
+    LandingPage --> GuestAccess{Guest or Registered?}
+    GuestAccess -->|Guest| FreeTools[Access Free Tools]
+    GuestAccess -->|Registered| Login[Login]
+    LandingPage -->|Admin| AdminLogin[Admin Login]
+    
+    %% Guest user path
+    FreeTools --> GuestCTA[View Premium Features CTA]
+    GuestCTA --> SignUpPrompt[Sign Up Prompt]
+    SignUpPrompt -->|Skip| ContinueAsGuest[Continue as Guest]
+    SignUpPrompt -->|Sign Up| Registration[Registration Form]
+    
+    %% Registration path
+    Registration --> NewAccount[New Registered Account]
+    NewAccount --> RegisteredDashboard[Registered User Dashboard]
+    
+    %% Registered user without paid plan
+    Login --> CheckSubscription{Has Paid Plan?}
+    CheckSubscription -->|No| RegisteredDashboard
+    RegisteredDashboard --> ViewRegisteredTools[Access Free + Registered Tools]
+    RegisteredDashboard --> ViewPricingPlans[View Pricing Plans]
+    
+    %% Subscription flow
+    ViewPricingPlans --> BillingToggle[Monthly/Annual Billing Toggle]
+    BillingToggle --> SelectPlan[Select Plan]
+    SelectPlan --> BillingCycle{Billing Cycle?}
+    BillingCycle -->|Monthly| MonthlyCheckout[Monthly Checkout Screen]
+    BillingCycle -->|Annual| AnnualCheckout[Annual Checkout Screen]
+    
+    MonthlyCheckout --> StripePayment[Stripe Payment Form]
+    AnnualCheckout --> StripePayment
+    
+    StripePayment --> ProcessPayment{Payment Successful?}
+    ProcessPayment -->|No| PaymentFailure[Payment Failure Screen]
+    PaymentFailure --> RetryPayment[Retry Payment]
+    RetryPayment --> StripePayment
+    
+    ProcessPayment -->|Yes| PaymentConfirmation[Payment Confirmation]
+    PaymentConfirmation --> UpdateAccountStatus[Update to Premium Account]
+    UpdateAccountStatus --> StoreBillingCycle[Store Monthly/Annual Billing Cycle]
+    StoreBillingCycle --> PremiumDashboard[Premium User Dashboard]
+    
+    %% Premium user path
+    CheckSubscription -->|Yes| PremiumDashboard
+    PremiumDashboard --> AccessAllFeatures[Access All Features]
+    PremiumDashboard --> ManageSubscription[Manage Subscription]
+    
+    %% Subscription management
+    ManageSubscription --> BillingPortal[Customer Billing Portal]
+    BillingPortal --> ViewBillingHistory[View Billing History]
+    BillingPortal --> UpdatePaymentMethod[Update Payment Method]
+    BillingPortal --> ChangePlan{Change Plan?}
+    BillingPortal --> ToggleBillingCycle{Change Billing Cycle?}
+    
+    ToggleBillingCycle -->|Monthly to Annual| SwitchToAnnual[Switch to Annual Plan]
+    ToggleBillingCycle -->|Annual to Monthly| SwitchToMonthly[Switch to Monthly Plan]
+    SwitchToAnnual --> ProcessCycleChange[Process Immediate Proration]
+    SwitchToMonthly --> ScheduleCycleChange[Schedule for End of Annual Period]
+    
+    ChangePlan -->|Upgrade| SelectNewPlan[Select New Plan]
+    SelectNewPlan --> ProcessUpgrade[Process Upgrade]
+    ProcessUpgrade --> ProrateCharges[Prorate Charges]
+    ProrateCharges --> UpdatedSubscription[Updated Subscription]
+    
+    ChangePlan -->|Downgrade| SelectDowngrade[Select Downgrade Plan]
+    SelectDowngrade --> ProcessDowngrade[Process Downgrade]
+    ProcessDowngrade --> ScheduleChange[Schedule Change for End of Billing Period]
+    ScheduleChange --> FutureUpdate[Future Update to Account]
+    
+    ChangePlan -->|Cancel| CancellationFlow[Cancellation Flow]
+    CancellationFlow --> CancellationSurvey[Cancellation Survey]
+    CancellationSurvey --> OfferDiscounts[Offer Retention Discounts]
+    OfferDiscounts --> FinalizeCancel{Accept Discount?}
+    FinalizeCancel -->|Yes| ContinueSubscription[Continue with Discount]
+    FinalizeCancel -->|No| ProcessCancellation[Process Cancellation]
+    ProcessCancellation --> SetExpiryDate[Set Expiry Date for End of Period]
+    SetExpiryDate --> DowngradeAccount[Downgrade to Registered User]
+    
+    %% Admin path
+    AdminLogin --> AdminDashboard[Admin Dashboard]
+    AdminDashboard --> ManageUsers[Manage Users]
+    AdminDashboard --> ViewAnalytics[View Payment Analytics]
+    AdminDashboard --> ManagePayments[Manage Payments & Refunds]
+    AdminDashboard --> ViewWebhooks[View Webhook Events]
+    AdminDashboard --> ConfigureStripe[Configure Stripe Settings]
+    
+    %% Webhook handling (background process)
+    subgraph Webhooks [Stripe Webhook Processing]
+        StripeEvents[Stripe Events] --> EventProcessor[Event Processor]
+        EventProcessor --> SubscriptionEvents{Event Type}
+        SubscriptionEvents -->|Payment Succeeded| UpdatePaymentStatus[Update Payment Status]
+        SubscriptionEvents -->|Payment Failed| SendFailureNotification[Send Failure Notification]
+        SubscriptionEvents -->|Subscription Updated| UpdateSubscriptionDetails[Update Subscription Details]
+        SubscriptionEvents -->|Subscription Canceled| DeactivateAccount[Deactivate Premium Access]
+    end
+    
+    classDef guest fill:#f9f9f9,stroke:#333,stroke-width:1px;
+    classDef registered fill:#d4edda,stroke:#155724,stroke-width:1px;
+    classDef premium fill:#cce5ff,stroke:#004085,stroke-width:1px;
+    classDef admin fill:#f8d7da,stroke:#721c24,stroke-width:1px;
+    classDef payment fill:#fff3cd,stroke:#856404,stroke-width:1px;
+    
+    class GuestAccess,FreeTools,GuestCTA,SignUpPrompt,ContinueAsGuest guest;
+    class Registration,NewAccount,RegisteredDashboard,ViewRegisteredTools,ViewPricingPlans,Login registered;
+    class SelectPlan,CheckoutScreen,StripePayment,ProcessPayment,PaymentFailure,RetryPayment,PaymentConfirmation payment;
+    class UpdateAccountStatus,PremiumDashboard,AccessAllFeatures,ManageSubscription,BillingPortal,ViewBillingHistory,UpdatePaymentMethod premium;
+    class AdminLogin,AdminDashboard,ManageUsers,ViewAnalytics,ManagePayments,ViewWebhooks,ConfigureStripe admin;

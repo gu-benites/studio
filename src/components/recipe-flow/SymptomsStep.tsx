@@ -8,6 +8,7 @@ import { useRecipeForm } from '@/contexts/RecipeFormContext';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { getMedicalProperties } from '@/services/aromarx-api-client';
 import type { RecipeFormData } from '@/contexts/RecipeFormContext';
 import { cn } from '@/lib/utils';
@@ -80,6 +81,12 @@ const SymptomsStep: React.FC = () => {
     });
   }, []);
 
+  const handleTriggerClick = useCallback((symptomId: string) => {
+    setOpenAccordionItems(prevOpen =>
+      prevOpen.includes(symptomId) ? prevOpen.filter(id => id !== symptomId) : [...prevOpen, symptomId]
+    );
+  }, []);
+
 
   const handleSubmitSymptoms = async (event?: React.FormEvent<HTMLFormElement>) => {
     if (event) event.preventDefault();
@@ -131,9 +138,9 @@ const SymptomsStep: React.FC = () => {
         type="multiple"
         value={openAccordionItems}
         onValueChange={setOpenAccordionItems}
-        className="w-full md:space-y-2" 
+        className="w-full rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden"
       >
-        {formData.potentialSymptomsResult.map((symptom) => {
+        {formData.potentialSymptomsResult.map((symptom, index) => {
           const symptomId = symptom.symptom_name;
           const isChecked = selectedSymptomsState.some(s => s.symptom_name === symptomId);
           return (
@@ -142,44 +149,49 @@ const SymptomsStep: React.FC = () => {
               key={symptomId}
               className={cn(
                 "transition-colors",
-                "border-b border-border last:border-b-0", 
-                "md:border md:rounded-lg md:first:rounded-t-lg md:last:rounded-b-lg md:overflow-hidden",
-                isChecked ? "bg-primary/10" : "bg-background md:bg-card"
+                index !== 0 && "border-t", 
+                isChecked ? "bg-primary/10" : "bg-card"
               )}
             >
-              <AccordionTrigger
-                onClick={() => handleSelectionToggle(symptom, !isChecked)}
-                className={cn(
-                  "flex w-full items-center justify-between px-4 py-3 text-left hover:no-underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 transition-colors",
-                  isChecked ? "hover:bg-primary/15" : "hover:bg-muted/50",
-                   "focus-visible:ring-offset-background md:focus-visible:ring-offset-card"
-                )}
-              >
-                <div className="flex items-center space-x-3 flex-1 min-w-0">
-                  <Switch
-                    id={`symptom-switch-${symptomId}`}
-                    checked={isChecked}
-                    onCheckedChange={(checked) => {
-                      handleSelectionToggle(symptom, checked);
-                    }}
-                    className="shrink-0 h-4 w-8 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input [&>span]:h-3 [&>span]:w-3 [&>span[data-state=checked]]:translate-x-4 [&>span[data-state=unchecked]]:translate-x-0"
-                    aria-labelledby={`symptom-label-${symptomId}`}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <Label
-                    htmlFor={`symptom-switch-${symptomId}`}
-                    id={`symptom-label-${symptomId}`}
-                    className="font-medium text-base cursor-pointer flex-1 truncate"
-                     onClick={(e) => {
-                        e.stopPropagation(); 
-                        handleSelectionToggle(symptom, !isChecked); 
-                    }}
-                  >
-                    {symptom.symptom_name}
-                  </Label>
+              {/* Custom header layout */}
+              <AccordionPrimitive.Header className="flex">
+                <div className={cn(
+                  "flex w-full items-center justify-between px-4 py-3 text-left transition-colors",
+                  isChecked ? "hover:bg-primary/15" : "hover:bg-muted/50"
+                )}>
+                  <div className="flex items-center space-x-3 flex-1 min-w-0">
+                    <Switch
+                      id={`symptom-switch-${symptomId}`}
+                      checked={isChecked}
+                      onCheckedChange={(checked) => handleSelectionToggle(symptom, checked)}
+                      className="shrink-0 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input"
+                      aria-labelledby={`symptom-label-${symptomId}`}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <AccordionTrigger
+                      onClick={() => handleTriggerClick(symptomId)}
+                      className={cn(
+                        "p-0 flex-1 text-left hover:no-underline",
+                        "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card"
+                      )}
+                      showChevron={false}
+                    >
+                      <Label
+                        htmlFor={`symptom-switch-${symptomId}`}
+                        id={`symptom-label-${symptomId}`}
+                        className="font-medium text-base cursor-pointer flex-1 truncate"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent AccordionTrigger's onClick
+                          handleSelectionToggle(symptom, !isChecked);
+                        }}
+                      >
+                        {symptom.symptom_name}
+                      </Label>
+                    </AccordionTrigger>
+                  </div>
                 </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-4 pb-4 pt-1 space-y-1 bg-background/50 md:bg-card">
+              </AccordionPrimitive.Header>
+              <AccordionContent className="px-4 pb-4 pt-1 space-y-1 bg-card/50">
                 <p className="text-sm text-muted-foreground">{symptom.symptom_suggestion}</p>
                 <p className="text-xs text-muted-foreground/80">{symptom.explanation}</p>
               </AccordionContent>

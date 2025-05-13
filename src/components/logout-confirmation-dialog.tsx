@@ -12,8 +12,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import React from 'react';
 
-export const LogoutConfirmationDialog: React.FC = () => {
+function LogoutConfirmationDialog() {
   const { isLogoutModalOpen, setLogoutModalOpen } = useUIState();
 
   const handleLogout = () => {
@@ -41,4 +42,6 @@ export const LogoutConfirmationDialog: React.FC = () => {
       </AlertDialogContent>
     </AlertDialog>
   );
-};
+}
+
+export default LogoutConfirmationDialog;

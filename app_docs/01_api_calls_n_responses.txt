@@ -467,4 +467,170 @@ curl --location '.env BASE_URL' \
 
 ---
 
-*Note: Further steps like `CreateRecipe` should be added here following the same format.*
+## Step: RecipeChoices
+
+### Request Body:
+
+```json
+{
+  "health_concern": "dor de cabeça",
+  "gender": "female",
+  "age_category": "teenager",
+  "age_specific": "15",
+  "selected_causes": [
+    {
+      "id": "cause-postura-inadequada",
+      "cause_name": "Postura inadequada",
+      "cause_suggestion": "Maus hábitos de postura ao estudar, usar celular ou assistir televisão, levando à tensão muscular.",
+      "explanation": "Músculos tensos do pescoço e ombros devido à má postura podem favorecer dores de cabeça em jovens adolescentes."
+    }
+  ],
+  "selected_symptoms": [
+    {
+      "symptom_name": "Dores no pescoço e ombros"
+    },
+    {
+      "symptom_name": "Dor de cabeça tensionada"
+    }
+  ],
+  "therapeutic_properties": [
+    {
+      "property_id": "63b857de-7554-4d84-b81f-8bec911c86c9",
+      "property_name": "Relaxante Muscular",
+      "property_name_in_english": "Muscle Relaxant",
+      "description": "Auxilia a aliviar a tensão muscular no pescoço e ombros que está ligada à postura inadequada, contribuindo para a diminuição da dor e promovendo relaxamento.",
+      "causes_addressed": "Postura inadequada",
+      "symptoms_addressed": "Dores no pescoço e ombros",
+      "relevancy": 5
+    },
+    {
+      "property_id": "2e0faab8-0a38-49e5-95bc-9a8611117da0",
+      "property_name": "Vasodilatador",
+      "property_name_in_english": "Vasodilator",
+      "description": "Promove a dilatação dos vasos sanguíneos, que pode ajudar a aliviar a pressão e a dor associadas a dores de cabeça.",
+      "causes_addressed": "Tensão e estresse",
+      "symptoms_addressed": "Dor de cabeça tensionada",
+      "relevancy": 4
+    }
+  ],
+  "suggested_oils_for_properties": [
+    {
+      "property_id": "63b857de-7554-4d84-b81f-8bec911c86c9",
+      "property_name": "Relaxante Muscular",
+      "property_name_in_english": "Muscle Relaxant",
+      "description": "Auxilia a aliviar a tensão muscular no pescoço e ombros que está ligada à postura inadequada, contribuindo para a diminuição da dor e promovendo relaxamento.",
+      "suggested_oils": [
+        {
+          "name_english": "Lavender",
+          "name_local_language": "Lavanda",
+          "oil_description": "A lavanda é conhecida por suas propriedades relaxantes musculares e calmantes, ajudando a aliviar tensões no pescoço e ombros.",
+          "relevancy": 5
+        },
+        {
+          "name_english": "Marjoram",
+          "name_local_language": "Manjerona",
+          "oil_description": "A manjerona possui propriedades analgésicas e relaxantes musculares, sendo eficaz para aliviar dores e tensões nos músculos do pescoço e ombros.",
+          "relevancy": 4
+        }
+      ]
+    },
+    {
+      "property_id": "2e0faab8-0a38-49e5-95bc-9a8611117da0",
+      "property_name": "Vasodilatador",
+      "property_name_in_english": "Vasodilator",
+      "description": "Promove a dilatação dos vasos sanguíneos, que pode ajudar a aliviar a pressão e a dor associadas a dores de cabeça.",
+      "suggested_oils": [
+        {
+          "name_english": "Peppermint",
+          "name_local_language": "Hortelã-pimenta",
+          "oil_description": "A hortelã-pimenta tem efeito refrescante e pode ajudar a dilatar os vasos sanguíneos, aliviando dores de cabeça tensionais.",
+          "relevancy": 5
+        },
+        {
+          "name_english": "Rosemary",
+          "name_local_language": "Alecrim",
+          "oil_description": "O alecrim melhora a circulação sanguínea e pode ajudar a aliviar dores de cabeça relacionadas à tensão muscular.",
+          "relevancy": 4
+        }
+      ]
+    }
+  ],
+  "step": "RecipeChoices",
+  "user_language": "PT_BR"
+}
+```
+
+### Response Payload:
+
+```json
+{
+  "choices": [
+    {
+      "title": "Blend Relaxante para Alívio de Dor de Cabeça",
+      "description": "Uma combinação de óleos essenciais para aliviar a tensão muscular e promover o relaxamento, ajudando a reduzir dores de cabeça tensionais.",
+      "steps": [
+        "Dilua 2 gotas de Lavanda, 1 gota de Hortelã-pimenta e 1 gota de Manjerona em 1 colher de sopa de óleo carreador (como óleo de coco fracionado ou jojoba).",
+        "Aplique a mistura nas têmporas, nuca e ombros com movimentos circulares suaves.",
+        "Respire profundamente o aroma para benefícios adicionais.",
+        "Repita a aplicação a cada 3-4 horas conforme necessário."
+      ],
+      "oils": [
+        {
+          "name_english": "Lavender",
+          "name_local_language": "Lavanda",
+          "oil_description": "A lavanda é conhecida por suas propriedades relaxantes musculares e calmantes, ajudando a aliviar tensões no pescoço e ombros.",
+          "relevancy": 5
+        },
+        {
+          "name_english": "Peppermint",
+          "name_local_language": "Hortelã-pimenta",
+          "oil_description": "A hortelã-pimenta tem efeito refrescante e pode ajudar a dilatar os vasos sanguíneos, aliviando dores de cabeça tensionais.",
+          "relevancy": 5
+        },
+        {
+          "name_english": "Marjoram",
+          "name_local_language": "Manjerona",
+          "oil_description": "A manjerona possui propriedades analgésicas e relaxantes musculares, sendo eficaz para aliviar dores e tensões nos músculos do pescoço e ombros.",
+          "relevancy": 4
+        }
+      ],
+      "time_of_day": "evening"
+    },
+    {
+      "title": "Blend Circulatório para Alívio de Dor de Cabeça",
+      "description": "Uma mistura de óleos essenciais focada em melhorar a circulação e promover vasodilatação para aliviar dores de cabeça.",
+      "steps": [
+        "Dilua 2 gotas de Hortelã-pimenta, 1 gota de Alecrim e 1 gota de Lavanda em 1 colher de sopa de óleo carreador.",
+        "Aplique na testa, têmporas e atrás das orelhas com movimentos suaves.",
+        "Para intensificar o efeito, coloque 3-4 gotas da mesma mistura em um difusor e mantenha no ambiente por 30 minutos.",
+        "Use quando sentir os primeiros sinais de dor de cabeça."
+      ],
+      "oils": [
+        {
+          "name_english": "Peppermint",
+          "name_local_language": "Hortelã-pimenta",
+          "oil_description": "A hortelã-pimenta tem efeito refrescante e pode ajudar a dilatar os vasos sanguíneos, aliviando dores de cabeça tensionais.",
+          "relevancy": 5
+        },
+        {
+          "name_english": "Rosemary",
+          "name_local_language": "Alecrim",
+          "oil_description": "O alecrim melhora a circulação sanguínea e pode ajudar a aliviar dores de cabeça relacionadas à tensão muscular.",
+          "relevancy": 4
+        },
+        {
+          "name_english": "Lavender",
+          "name_local_language": "Lavanda",
+          "oil_description": "A lavanda é conhecida por suas propriedades relaxantes musculares e calmantes, ajudando a aliviar tensões no pescoço e ombros.",
+          "relevancy": 5
+        }
+      ],
+      "time_of_day": "morning"
+    }
+  ]
+}
+```
+
+### Important Note:
+
+The RecipeChoices step automatically uses ALL therapeutic properties from the medicalPropertiesResult without requiring user selection. When the "Gerar Sugestões" button is clicked in the PropertiesOilsStep, the system will automatically set all therapeutic properties as selected and include them in the API request.

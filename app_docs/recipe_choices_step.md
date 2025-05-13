@@ -96,22 +96,39 @@ The UI will transition with a **loading screen**, and the new step will be displ
 
 * [ ] Add a **“Generate Suggestions”** button
 
-* [ ] On click:
+* [x] On click:
 
   ```ts
-  setIsFetchingRecipeChoices(true);
-  setCurrentStep("recipe-choices");
-  navigate("/create-recipe/recipe-choices");
-
+  setIsLoading(true);
+  
+  // Auto-select all therapeutic properties if they're not already selected
+  if (!formData.selectedTherapeuticProperties && formData.medicalPropertiesResult?.therapeutic_properties) {
+    updateFormData({ 
+      ...formData, 
+      selectedTherapeuticProperties: formData.medicalPropertiesResult.therapeutic_properties 
+    });
+  }
+  
+  // Use updated form data with all therapeutic properties
+  const updatedFormData = {
+    ...formData,
+    selectedTherapeuticProperties: formData.selectedTherapeuticProperties || 
+                                   formData.medicalPropertiesResult?.therapeutic_properties || []
+  };
+  
   try {
-    const data = await fetchRecipeChoices(formData);
-    setRecipeChoices(data);
+    const choices = await fetchRecipeChoices(updatedFormData);
+    updateFormData({ ...updatedFormData, recipeChoices: choices });
+    setCurrentStep('recipe-choices');
+    router.push('/recipe-choices');
+  } catch (error) {
+    setError('Failed to fetch recipe choices. Please try again.');
   } finally {
-    setIsFetchingRecipeChoices(false);
+    setIsLoading(false);
   }
   ```
 
-* [ ] Ensure `formData` includes all selected info + suggested oils for each property
+* [x] Automatically use all therapeutic properties without requiring user selection
 
 ---
 

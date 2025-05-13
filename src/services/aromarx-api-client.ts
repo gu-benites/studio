@@ -2,6 +2,19 @@
 import type { RecipeFormData } from '@/contexts/RecipeFormContext';
 
 // Define types for API responses based on 01_api_calls_n_responses.txt
+
+// Recipe Choices Types
+export interface RecipeChoice {
+  title: string;
+  steps: string[];
+  oils: SuggestedOil[];
+  description?: string;
+  time_of_day?: 'morning' | 'afternoon' | 'evening' | 'night';
+}
+
+export interface RecipeChoices {
+  choices: RecipeChoice[];
+}
 interface PotentialCause {
   cause_name: string;
   cause_suggestion: string;
@@ -26,7 +39,7 @@ interface TherapeuticProperty {
   relevancy: number;
 }
 
-interface SuggestedOil {
+export interface SuggestedOil {
   name_english: string;
   name_local_language: string;
   oil_description: string;
@@ -89,7 +102,8 @@ type ApiRequestPayload =
   | PotentialCausesPayload 
   | PotentialSymptomsPayload 
   | MedicalPropertiesPayload 
-  | SuggestedOilsPayload;
+  | SuggestedOilsPayload
+  | RecipeChoicesPayload;
 
 // Internal API proxy endpoint
 const INTERNAL_API_PROXY_URL = '/api/aromarx';
@@ -308,3 +322,110 @@ export const getSuggestedOils = async (
       suggested_oils: [] 
     };
 };
+
+// Type for the expected content structure for fetchRecipeChoices
+interface RecipeChoicesPayload {
+  health_concern: string;
+  gender: string;
+  age_category: string;
+  age_specific: string;
+  selected_causes: NonNullable<RecipeFormData['selectedCauses']>;
+  selected_symptoms: NonNullable<RecipeFormData['selectedSymptoms']>;
+  therapeutic_properties: NonNullable<RecipeFormData['selectedTherapeuticProperties']>;
+  suggested_oils_for_properties: SuggestedOilsForProperty[];
+  step: 'RecipeChoices';
+  user_language: string;
+}
+
+export const fetchRecipeChoices = async (
+  data: RecipeFormData
+): Promise<RecipeChoices> => {
+  if (!data.healthConcern || !data.gender || !data.ageCategory || !data.ageSpecific || 
+      !data.selectedCauses || !data.selectedSymptoms || !data.selectedTherapeuticProperties) {
+    throw new Error('Missing required data for fetchRecipeChoices');
+  }
+
+  // Create a proper RecipeChoicesPayload that includes all therapeutic properties
+  const payload: RecipeChoicesPayload = {
+    health_concern: data.healthConcern,
+    gender: data.gender,
+    age_category: data.ageCategory,
+    age_specific: data.ageSpecific,
+    selected_causes: data.selectedCauses,
+    selected_symptoms: data.selectedSymptoms,
+    therapeutic_properties: data.selectedTherapeuticProperties,
+    suggested_oils_for_properties: data.suggestedOilsForProperties || [],
+    step: 'RecipeChoices',
+    user_language: data.userLanguage || 'PT_BR'
+  };
+
+  try {
+    // Fetch recipe choices using all therapeutic properties
+    const result = await fetchFromInternalApi<RecipeChoices>(payload);
+    
+    // If we get valid results, return them directly
+    if (result && result.choices && Array.isArray(result.choices)) {
+      return result;
+    }
+    
+    // Fallback: If the API doesn't return proper choices, construct them from the therapeutic properties
+    // and their suggested oils
+    const fallbackChoices: RecipeChoices = {
+      choices: []
+    };
+    
+    // Process each therapeutic property and its suggested oils
+    if (data.selectedTherapeuticProperties && data.suggestedOilsForProperties) {
+      // Map each property to potential recipe choices
+      data.selectedTherapeuticProperties.forEach((property) => {
+        // Find the suggested oils for this property
+        const oilsForProperty = data.suggestedOilsForProperties?.find(
+          item => item.property_id === property.property_id
+        );
+        
+        if (oilsForProperty && oilsForProperty.suggested_oils.length > 0) {
+          // Create a recipe choice for this property
+          fallbackChoices.choices.push({
+            title: `${property.property_name} Support`,
+            description: property.description,
+            steps: [
+              `Apply the selected oils diluted in a carrier oil.`,
+              `Use as needed for ${data.healthConcern} concerns.`,
+              `Best used to address: ${property.causes_addressed || 'various causes'}.`,
+              `Helps with symptoms: ${property.symptoms_addressed || 'various symptoms'}.`
+            ],
+            oils: oilsForProperty.suggested_oils,
+            time_of_day: determineTimeOfDay(property.property_name)
+          });
+        }
+      });
+    }
+    
+    return fallbackChoices.choices.length > 0 ? fallbackChoices : {
+      choices: [{
+        title: `Support for ${data.healthConcern}`,
+        steps: [`Consult with an aromatherapy professional for personalized advice.`],
+        oils: [],
+        description: `Custom blend for ${data.healthConcern}`
+      }]
+    };
+  } catch (error) {
+    console.error('Error fetching recipe choices:', error);
+    throw error;
+  }
+};
+
+// Helper function to determine appropriate time of day based on property
+function determineTimeOfDay(propertyName: string): 'morning' | 'afternoon' | 'evening' | 'night' {
+  const lowerCaseName = propertyName.toLowerCase();
+  
+  if (lowerCaseName.includes('energiz') || lowerCaseName.includes('stimulat') || lowerCaseName.includes('focus')) {
+    return 'morning';
+  } else if (lowerCaseName.includes('calm') || lowerCaseName.includes('relax') || lowerCaseName.includes('sleep')) {
+    return 'night';
+  } else if (lowerCaseName.includes('digest')) {
+    return 'afternoon';
+  }
+  
+  return 'morning'; // Default
+}
