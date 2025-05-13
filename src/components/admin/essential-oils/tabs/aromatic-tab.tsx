@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -21,32 +20,31 @@ import { useState } from "react";
 import { AromaticDescriptor } from "../essential-oil-form-types";
 
 interface AromaticTabProps {
-  control: any;
-  aromaticDescriptors: AromaticDescriptor[];
-  selectedAromaticDescriptors: string[];
-  setSelectedAromaticDescriptors: (selected: string[]) => void;
+  control: any; // Control object from react-hook-form
+  aromaticDescriptors: AromaticDescriptor[]; // List of all available aromatic descriptors
   isLoading: boolean;
-  setAromaticDescriptors: (descriptors: AromaticDescriptor[]) => void;
+  setAromaticDescriptors: (descriptors: AromaticDescriptor[]) => void; // Function to update the list of all descriptors
 }
 
 export function AromaticTab({
   control,
   aromaticDescriptors,
-  selectedAromaticDescriptors,
-  setSelectedAromaticDescriptors,
   isLoading,
   setAromaticDescriptors
 }: AromaticTabProps) {
   const supabase = createClient();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [newDescriptorName, setNewDescriptorName] = useState("");
-  const [newDescriptorDesc, setNewDescriptorDesc] = useState("");
+  // const [newDescriptorDesc, setNewDescriptorDesc] = useState(""); // Assuming no description for aromatic_descriptors
 
   return (
     <FormField
       control={control}
-      name="aromatic_descriptors"
+      name="aromatic_descriptors" // This name must match the key in your form schema
       render={({ field }) => {
+        // `field.value` will be an array of selected descriptor IDs
+        // `field.onChange` will be the function to update react-hook-form's state
+
         const handleAddAromaticDescriptor = async () => {
           if (!newDescriptorName.trim()) {
             toast({
@@ -61,13 +59,10 @@ export function AromaticTab({
             const { data, error } = await supabase
               .from('aromatic_descriptors')
               .insert({ 
-                // The table 'aromatic_descriptors' has a column 'descriptor', not 'name'.
-                // However, our AromaticDescriptor type uses 'name'. We need to map correctly here.
-                // For consistency, let's assume the Supabase table column is 'descriptor'.
                 descriptor: newDescriptorName.trim(), 
-                // description: newDescriptorDesc.trim() || null // Assuming there's no description column in the lookup table
+                // description: newDescriptorDesc.trim() || null // Uncomment if description exists
               })
-              .select('id, descriptor') // Select 'descriptor'
+              .select('id, descriptor') // Select 'descriptor' (actual column name)
               .single();
               
             if (error) throw error;
@@ -75,14 +70,17 @@ export function AromaticTab({
             if (data) {
               const newDescriptorEntry: AromaticDescriptor = {
                 id: data.id,
-                name: data.descriptor, // Map 'descriptor' back to 'name' for our type
-                description: null // Or data.description if it exists
+                name: data.descriptor, // Map 'descriptor' to 'name' for our type
+                description: null // Assuming no description column for now
               };
               
+              // Update the global list of descriptors available for selection
               setAromaticDescriptors((prevDescriptors) => [...prevDescriptors, newDescriptorEntry]);
-              const newSelected = [...selectedAromaticDescriptors, data.id];
-              setSelectedAromaticDescriptors(newSelected);
-              field.onChange(newSelected); // Directly update RHF field value
+              
+              // Add the new descriptor's ID to the currently selected ones for this essential oil
+              const currentSelectedFormValue = Array.isArray(field.value) ? field.value : [];
+              const newSelectedFormValue = [...currentSelectedFormValue, data.id];
+              field.onChange(newSelectedFormValue); // Update react-hook-form state
               
               toast({
                 title: "Success",
@@ -90,7 +88,7 @@ export function AromaticTab({
               });
               
               setNewDescriptorName("");
-              setNewDescriptorDesc("");
+              // setNewDescriptorDesc(""); // Uncomment if description exists
               setIsPopoverOpen(false);
             }
           } catch (error: any) {
@@ -112,11 +110,8 @@ export function AromaticTab({
                     label: descriptor.name, // Use 'name' from our AromaticDescriptor type
                     value: descriptor.id,
                   }))}
-                  selected={selectedAromaticDescriptors}
-                  onChange={(selected) => {
-                    setSelectedAromaticDescriptors(selected);
-                    field.onChange(selected);
-                  }}
+                  selected={Array.isArray(field.value) ? field.value : []} // Use field.value from RHF
+                  onChange={field.onChange} // Use field.onChange from RHF
                   placeholder="Select aromatic descriptors..."
                   disabled={isLoading}
                 />

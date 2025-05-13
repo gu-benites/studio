@@ -67,7 +67,7 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
   const [selectedExtractionMethods, setSelectedExtractionMethods] = useState<string[]>([]);
   const [selectedAromaticDescriptors, setSelectedAromaticDescriptors] = useState<string[]>([]);
   const [selectedChemicalCompounds, setSelectedChemicalCompounds] = useState<ChemicalCompoundEntry[]>([]);
-  const [selectedHealthIssues, setSelectedHealthIssues] = useState<string[]>([]);
+  // Removed selectedHealthIssues state and its setter, as HealthIssuesTab will use RHF field state.
   const [selectedPlantParts, setSelectedPlantParts] = useState<string[]>([]);
   const [selectedUsageModes, setSelectedUsageModes] = useState<string[]>([]);
   const [selectedSafetyCharacteristics, setSelectedSafetyCharacteristics] = useState<string[]>([]);
@@ -97,7 +97,7 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
       plant_parts: [],
       aromatic_descriptors: [],
       chemical_compounds: [],
-      health_issues: [],
+      health_issues: [], // react-hook-form will manage this array of IDs
       usage_modes: [],
       safety_characteristics: [],
     },
@@ -210,14 +210,14 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
             form.setValue("aromatic_descriptors", descriptorIds);
           }
           
-          const { data: assignedHealthIssues } = await supabase
+          const { data: assignedHealthIssuesData } = await supabase
             .from("essential_oil_health_issues") 
             .select("health_issue_id")
             .eq("essential_oil_id", initialData.id);
-          if (assignedHealthIssues && assignedHealthIssues.length > 0) {
-            const healthIssueIds = assignedHealthIssues.map(h => h.health_issue_id);
-            setSelectedHealthIssues(healthIssueIds);
-            form.setValue("health_issues", healthIssueIds);
+          if (assignedHealthIssuesData && assignedHealthIssuesData.length > 0) {
+            const healthIssueIds = assignedHealthIssuesData.map(h => h.health_issue_id);
+            // setSelectedHealthIssues(healthIssueIds); // No longer needed for this tab
+            form.setValue("health_issues", healthIssueIds); // Set RHF value
           }
           
           const { data: assignedUsageModes } = await supabase
@@ -328,7 +328,7 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
           typical_percentage: cc.typical_percentage,
           notes: cc.notes,
         })) || [],
-        health_issues: values.health_issues || [],
+        health_issues: values.health_issues || [], // This will now be an array of IDs from RHF
         usage_modes: values.usage_modes || [],
         safety_characteristics: values.safety_characteristics || [],
       };
@@ -371,11 +371,10 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
               <TabsContent value="basic" className="space-y-6">
                 <BasicInfoTab
                   control={form.control}
-                  plantParts={plantParts}
-                  selectedPlantParts={selectedPlantParts}
-                  setSelectedPlantParts={setSelectedPlantParts}
+                  plantParts={plantParts} // Pass the list of all available plant parts
+                  // selectedPlantParts and setSelectedPlantParts are managed by RHF now for this field
                   isLoading={isLoading}
-                  setPlantParts={setPlantParts}
+                  setPlantParts={setPlantParts} // To update the global list if a new one is added
                 />
               </TabsContent>
               
@@ -383,8 +382,7 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
                 <PropertiesTab
                   control={form.control}
                   properties={properties}
-                  selectedProperties={selectedProperties}
-                  setSelectedProperties={setSelectedProperties}
+                  // selectedProperties and setSelectedProperties are managed by RHF
                   isLoading={isLoading}
                   setProperties={setProperties}
                 />
@@ -396,8 +394,7 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
                   setValue={form.setValue}
                   getValues={form.getValues}
                   extractionMethods={extractionMethods}
-                  selectedExtractionMethods={selectedExtractionMethods}
-                  setSelectedExtractionMethods={setSelectedExtractionMethods}
+                  // selectedExtractionMethods and setSelectedExtractionMethods are managed by RHF
                   countries={countries}
                   isLoading={isLoading}
                   setExtractionMethods={setExtractionMethods}
@@ -409,8 +406,7 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
                 <AromaticTab
                   control={form.control}
                   aromaticDescriptors={aromaticDescriptors}
-                  selectedAromaticDescriptors={selectedAromaticDescriptors}
-                  setSelectedAromaticDescriptors={setSelectedAromaticDescriptors}
+                  // selectedAromaticDescriptors and setSelectedAromaticDescriptors are managed by RHF
                   isLoading={isLoading}
                   setAromaticDescriptors={setAromaticDescriptors}
                 />
@@ -442,11 +438,10 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
               <TabsContent value="health" className="space-y-6">
                 <HealthIssuesTab
                   control={form.control}
-                  healthIssues={healthIssues}
-                  selectedHealthIssues={selectedHealthIssues}
-                  setSelectedHealthIssues={setSelectedHealthIssues}
+                  healthIssues={healthIssues} // Pass the list of all available health issues
+                  // selectedHealthIssues and setSelectedHealthIssues are managed by RHF via FormField
                   isLoading={isLoading}
-                  setHealthIssues={setHealthIssues}
+                  setHealthIssues={setHealthIssues} // To update the global list
                 />
               </TabsContent>
               
@@ -454,8 +449,7 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
                 <UsageModesTab
                   control={form.control}
                   usageModes={usageModes}
-                  selectedUsageModes={selectedUsageModes}
-                  setSelectedUsageModes={setSelectedUsageModes}
+                  // selectedUsageModes and setSelectedUsageModes are managed by RHF
                   isLoading={isLoading}
                   setUsageModes={setUsageModes}
                 />
@@ -464,8 +458,7 @@ const EssentialOilForm = ({ initialData, onSubmit, isSubmitting }: EssentialOilF
                 <SafetyTab
                   control={form.control}
                   safetyCharacteristics={safetyCharacteristics}
-                  selectedSafetyCharacteristics={selectedSafetyCharacteristics}
-                  setSelectedSafetyCharacteristics={setSelectedSafetyCharacteristics}
+                  // selectedSafetyCharacteristics and setSelectedSafetyCharacteristics are managed by RHF
                   isLoading={isLoading}
                   setSafetyCharacteristics={setSafetyCharacteristics}
                 />

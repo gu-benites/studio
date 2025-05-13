@@ -1,4 +1,3 @@
-
 // src/components/admin/essential-oils/tabs/safety-tab.tsx
 "use client";
 
@@ -16,25 +15,21 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { MultiSelect } from "@/components/ui/multi-select";
-import { Plus } from "lucide-react"; // Removed AlertTriangle as it's not used directly here
+import { Plus } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { createClient } from "@/lib/supabase/client";
 import { SafetyCharacteristic } from "../essential-oil-form-types";
 
 interface SafetyTabProps {
-  control: any;
-  safetyCharacteristics: SafetyCharacteristic[];
-  selectedSafetyCharacteristics: string[];
-  setSelectedSafetyCharacteristics: (selected: string[]) => void;
+  control: any; // Control object from react-hook-form
+  safetyCharacteristics: SafetyCharacteristic[]; // List of all available safety characteristics
   isLoading: boolean;
-  setSafetyCharacteristics: (characteristics: SafetyCharacteristic[]) => void;
+  setSafetyCharacteristics: (characteristics: SafetyCharacteristic[]) => void; // Function to update the list
 }
 
 export function SafetyTab({
   control,
   safetyCharacteristics,
-  selectedSafetyCharacteristics,
-  setSelectedSafetyCharacteristics,
   isLoading,
   setSafetyCharacteristics
 }: SafetyTabProps) {
@@ -47,8 +42,11 @@ export function SafetyTab({
   return (
     <FormField
       control={control}
-      name="safety_characteristics"
+      name="safety_characteristics" // This name must match the key in your form schema
       render={({ field }) => {
+        // `field.value` will be an array of selected characteristic IDs
+        // `field.onChange` will be the function to update react-hook-form's state
+
         const handleAddSafetyCharacteristic = async () => {
           if (!newSafetyCharacteristicName.trim()) {
             toast({
@@ -65,7 +63,7 @@ export function SafetyTab({
               .insert({ 
                 name: newSafetyCharacteristicName.trim(), 
                 description: newSafetyCharacteristicDesc.trim() || null,
-                severity_level: newSeverityLevel ?? null,
+                severity_level: newSeverityLevel ?? null, // Use null if undefined
               })
               .select('id, name, description, severity_level')
               .single();
@@ -80,10 +78,13 @@ export function SafetyTab({
                 severity_level: data.severity_level
               };
               
+              // Update the global list of safety characteristics available for selection
               setSafetyCharacteristics((prevChars) => [...prevChars, newCharacteristic]);
-              const newSelected = [...selectedSafetyCharacteristics, data.id];
-              setSelectedSafetyCharacteristics(newSelected);
-              field.onChange(newSelected); // Directly update RHF field value
+              
+              // Add the new characteristic's ID to the currently selected ones
+              const currentSelectedFormValue = Array.isArray(field.value) ? field.value : [];
+              const newSelectedFormValue = [...currentSelectedFormValue, data.id];
+              field.onChange(newSelectedFormValue); // Update react-hook-form state
               
               toast({
                 title: "Success",
@@ -114,11 +115,8 @@ export function SafetyTab({
                     label: char.name + (char.severity_level ? ` (Severity: ${char.severity_level})` : ''),
                     value: char.id,
                   }))}
-                  selected={selectedSafetyCharacteristics}
-                  onChange={(selected) => {
-                    setSelectedSafetyCharacteristics(selected);
-                    field.onChange(selected);
-                  }}
+                  selected={Array.isArray(field.value) ? field.value : []} // Use field.value from RHF
+                  onChange={field.onChange} // Use field.onChange from RHF
                   placeholder="Select safety characteristics..."
                   disabled={isLoading}
                 />
@@ -148,7 +146,7 @@ export function SafetyTab({
                       <Input
                           type="number"
                           placeholder="Severity level (optional, 1-3)"
-                          value={newSeverityLevel === undefined ? '' : newSeverityLevel}
+                          value={newSeverityLevel === undefined ? '' : newSeverityLevel.toString()}
                           onChange={(e) => {
                               const val = parseInt(e.target.value);
                               setNewSeverityLevel(isNaN(val) ? undefined : Math.max(1, Math.min(3, val)));

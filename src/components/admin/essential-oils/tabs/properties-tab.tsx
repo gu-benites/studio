@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -21,19 +20,15 @@ import { createClient } from "@/lib/supabase/client";
 import { Property } from "../essential-oil-form-types";
 
 interface PropertiesTabProps {
-  control: any;
-  properties: Property[];
-  selectedProperties: string[];
-  setSelectedProperties: (selected: string[]) => void;
+  control: any; // Control object from react-hook-form
+  properties: Property[]; // List of all available properties
   isLoading: boolean;
-  setProperties: (properties: Property[]) => void;
+  setProperties: (properties: Property[]) => void; // Function to update the list of all properties
 }
 
 export function PropertiesTab({
   control,
   properties,
-  selectedProperties,
-  setSelectedProperties,
   isLoading,
   setProperties
 }: PropertiesTabProps) {
@@ -45,8 +40,11 @@ export function PropertiesTab({
   return (
     <FormField
       control={control}
-      name="properties"
+      name="properties" // This name must match the key in your form schema
       render={({ field }) => {
+        // `field.value` will be an array of selected property IDs
+        // `field.onChange` will be the function to update react-hook-form's state
+
         const handleAddProperty = async () => {
           if (!newPropertyName.trim()) {
             toast({
@@ -76,10 +74,13 @@ export function PropertiesTab({
                 description: data.description
               };
               
-              setProperties((prevProperties) => [...prevProperties, newPropertyEntry]);
-              const newSelected = [...selectedProperties, data.id];
-              setSelectedProperties(newSelected);
-              field.onChange(newSelected); // Directly update RHF field value
+              // Update the global list of properties available for selection
+              setProperties((prevGlobalProperties) => [...prevGlobalProperties, newPropertyEntry]);
+              
+              // Add the new property's ID to the currently selected ones for this essential oil
+              const currentSelectedFormValue = Array.isArray(field.value) ? field.value : [];
+              const newSelectedFormValue = [...currentSelectedFormValue, data.id];
+              field.onChange(newSelectedFormValue); // Update react-hook-form state
               
               toast({
                 title: "Success",
@@ -109,11 +110,8 @@ export function PropertiesTab({
                     label: property.name,
                     value: property.id,
                   }))}
-                  selected={selectedProperties}
-                  onChange={(selected) => {
-                    setSelectedProperties(selected);
-                    field.onChange(selected);
-                  }}
+                  selected={Array.isArray(field.value) ? field.value : []} // Use field.value from RHF
+                  onChange={field.onChange} // Use field.onChange from RHF
                   placeholder="Select properties..."
                   disabled={isLoading}
                 />

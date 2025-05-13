@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -21,19 +20,15 @@ import { createClient } from "@/lib/supabase/client";
 import { HealthIssue } from "../essential-oil-form-types";
 
 interface HealthIssuesTabProps {
-  control: any;
-  healthIssues: HealthIssue[];
-  selectedHealthIssues: string[];
-  setSelectedHealthIssues: (selected: string[]) => void;
+  control: any; // Control object from react-hook-form
+  healthIssues: HealthIssue[]; // List of all available health issues
   isLoading: boolean;
-  setHealthIssues: (issues: HealthIssue[]) => void;
+  setHealthIssues: (issues: HealthIssue[]) => void; // Function to update the list of all health issues in the parent
 }
 
 export function HealthIssuesTab({
   control,
   healthIssues,
-  selectedHealthIssues,
-  setSelectedHealthIssues,
   isLoading,
   setHealthIssues
 }: HealthIssuesTabProps) {
@@ -45,8 +40,11 @@ export function HealthIssuesTab({
   return (
     <FormField
       control={control}
-      name="health_issues"
+      name="health_issues" // This name must match the key in your form schema
       render={({ field }) => {
+        // `field.value` will be an array of selected health issue IDs
+        // `field.onChange` will be the function to update react-hook-form's state
+
         const handleAddHealthIssue = async () => {
           if (!newHealthIssueName.trim()) {
             toast({
@@ -76,10 +74,13 @@ export function HealthIssuesTab({
                 description: data.description
               };
               
-              setHealthIssues((prevIssues) => [...prevIssues, newHealthIssueEntry]);
-              const newSelected = [...selectedHealthIssues, data.id];
-              setSelectedHealthIssues(newSelected);
-              field.onChange(newSelected); // Directly update RHF field value
+              // Update the global list of health issues available for selection
+              setHealthIssues((prevGlobalIssues) => [...prevGlobalIssues, newHealthIssueEntry]);
+              
+              // Add the new health issue's ID to the currently selected ones for this essential oil
+              const currentSelectedFormValue = Array.isArray(field.value) ? field.value : [];
+              const newSelectedFormValue = [...currentSelectedFormValue, data.id];
+              field.onChange(newSelectedFormValue); // Update react-hook-form state
               
               toast({
                 title: "Success",
@@ -109,11 +110,8 @@ export function HealthIssuesTab({
                     label: issue.name,
                     value: issue.id,
                   }))}
-                  selected={selectedHealthIssues}
-                  onChange={(selected) => {
-                    setSelectedHealthIssues(selected);
-                    field.onChange(selected);
-                  }}
+                  selected={Array.isArray(field.value) ? field.value : []} // Use field.value from RHF
+                  onChange={field.onChange} // Use field.onChange from RHF
                   placeholder="Select health issues..."
                   disabled={isLoading}
                 />

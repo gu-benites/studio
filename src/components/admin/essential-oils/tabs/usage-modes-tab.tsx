@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -21,19 +20,15 @@ import { createClient } from "@/lib/supabase/client";
 import { UsageMode } from "../essential-oil-form-types";
 
 interface UsageModesTabProps {
-  control: any;
-  usageModes: UsageMode[];
-  selectedUsageModes: string[];
-  setSelectedUsageModes: (selected: string[]) => void;
+  control: any; // Control object from react-hook-form
+  usageModes: UsageMode[]; // List of all available usage modes
   isLoading: boolean;
-  setUsageModes: (modes: UsageMode[]) => void;
+  setUsageModes: (modes: UsageMode[]) => void; // Function to update the list of all usage modes
 }
 
 export function UsageModesTab({
   control,
   usageModes,
-  selectedUsageModes,
-  setSelectedUsageModes,
   isLoading,
   setUsageModes
 }: UsageModesTabProps) {
@@ -45,8 +40,11 @@ export function UsageModesTab({
   return (
     <FormField
       control={control}
-      name="usage_modes"
+      name="usage_modes" // This name must match the key in your form schema
       render={({ field }) => {
+        // `field.value` will be an array of selected usage mode IDs
+        // `field.onChange` will be the function to update react-hook-form's state
+
         const handleAddUsageMode = async () => {
           if (!newUsageModeName.trim()) {
             toast({
@@ -63,6 +61,7 @@ export function UsageModesTab({
               .insert({ 
                 name: newUsageModeName.trim(), 
                 description: newUsageModeDesc.trim() || null 
+                // icon_svg is not handled in this simplified popover form
               })
               .select('id, name, description, icon_svg')
               .single();
@@ -77,10 +76,13 @@ export function UsageModesTab({
                 icon_svg: data.icon_svg
               };
               
+              // Update the global list of usage modes available for selection
               setUsageModes((prevModes) => [...prevModes, newUsageModeEntry]);
-              const newSelected = [...selectedUsageModes, data.id];
-              setSelectedUsageModes(newSelected);
-              field.onChange(newSelected); // Directly update RHF field value
+              
+              // Add the new usage mode's ID to the currently selected ones for this essential oil
+              const currentSelectedFormValue = Array.isArray(field.value) ? field.value : [];
+              const newSelectedFormValue = [...currentSelectedFormValue, data.id];
+              field.onChange(newSelectedFormValue); // Update react-hook-form state
               
               toast({
                 title: "Success",
@@ -110,11 +112,8 @@ export function UsageModesTab({
                     label: mode.name,
                     value: mode.id,
                   }))}
-                  selected={selectedUsageModes}
-                  onChange={(selected) => {
-                    setSelectedUsageModes(selected);
-                    field.onChange(selected);
-                  }}
+                  selected={Array.isArray(field.value) ? field.value : []} // Use field.value from RHF
+                  onChange={field.onChange} // Use field.onChange from RHF
                   placeholder="Select usage modes..."
                   disabled={isLoading}
                 />
@@ -141,6 +140,7 @@ export function UsageModesTab({
                         value={newUsageModeDesc}
                         onChange={(e) => setNewUsageModeDesc(e.target.value)}
                       />
+                      {/* SVG icon input can be added here if needed */}
                       <Button 
                         size="sm" 
                         className="w-full" 
