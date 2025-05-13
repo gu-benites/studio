@@ -1,6 +1,8 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import type { Database } from '@/types/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,7 +12,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 });
     }
     
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = cookies();
+    const supabase = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+          // For read-only operations in this route, set/remove might not be strictly necessary
+          // but are good to include for completeness if Supabase client internally uses them.
+          set(name: string, value: string, options: CookieOptions) {
+            // API routes typically don't set cookies on behalf of Supabase auth unless it's an auth flow.
+            // If needed, you'd use response.cookies.set(...) on a NextResponse object.
+            // cookieStore.set({ name, value, ...options }) // This won't persist for the client
+          },
+          remove(name: string, options: CookieOptions) {
+            // cookieStore.set({ name, value: '', ...options }) // This won't persist for the client
+          },
+        },
+      }
+    );
     
     // Fallback to standard text search if mode is 'text' or if OPENAI_API_KEY is not set
     if (mode !== 'semantic' || !process.env.OPENAI_API_KEY) {

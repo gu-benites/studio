@@ -170,38 +170,96 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 ### Task 4: Supabase Client Setup
 
-Create `lib/supabase/client.ts`:
+Create `lib/supabase/client.ts` (for client-side components):
 
 ```typescript
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createBrowserClient } from '@supabase/ssr'
 import type { Database } from '@/types/supabase'
 
-export const supabase = createClientComponentClient<Database>()
+export const supabase = createBrowserClient<Database>(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 ```
 
-Create `lib/supabase/server.ts`:
+Create `lib/supabase/server.ts` (for Server Components, Route Handlers, Server Actions):
 
 ```typescript
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import type { Database } from '@/types/supabase'
 
-export const supabaseServer = () => 
-  createServerComponentClient<Database>({ cookies })
+export const createClient = () => { // Renamed to createClient to avoid confusion if imported directly
+  const cookieStore = cookies()
+
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value, ...options })
+          } catch (error) {
+            // The `set` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
+          }
+        },
+        remove(name: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value: '', ...options })
+          } catch (error) {
+            // The `delete` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
+          }
+        },
+      },
+    }
+  )
+}
 ```
+Note: The global `supabaseServer` export was removed from `lib/supabase/server.ts`. You should import and call `createClient()` from this file when needed in server contexts.
 
 ### Task 5: Authentication Middleware
 
 Create `middleware.ts`:
 
 ```typescript
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import type { Database } from '@/types/supabase'
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
+  
+  // Create a Supabase client for the middleware
+  const supabase = createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return req.cookies.get(name)?.value
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          // If the cookie is updated, update the cookies for the request and response
+          req.cookies.set({ name, value, ...options })
+          res.cookies.set({ name, value, ...options })
+        },
+        remove(name: string, options: CookieOptions) {
+          // If the cookie is removed, update the cookies for the request and response
+          req.cookies.delete(name) // Ensure to use delete for removal on request cookies
+          res.cookies.set({ name, value: '', ...options, maxAge: 0 }) // Set to empty and expire on response
+        },
+      },
+    }
+  )
   
   // Refresh session if expired
   await supabase.auth.getSession()
@@ -229,7 +287,7 @@ Create `components/auth/login-form.tsx`:
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase/client'
+import { supabase } from '@/lib/supabase/client' // Uses client-side client
 
 export default function LoginForm() {
   const [email, setEmail] = useState('')
@@ -317,7 +375,7 @@ Create `components/auth/register-form.tsx`:
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase/client'
+import { supabase } from '@/lib/supabase/client' // Uses client-side client
 
 export default function RegisterForm() {
   const [email, setEmail] = useState('')
@@ -341,30 +399,22 @@ export default function RegisterForm() {
         email,
         password,
         options: {
+          // data for user_metadata in auth.users, used by trigger to populate profiles
+          data: { 
+            first_name: firstName,
+            last_name: lastName,
+          },
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
       
       if (authError) throw authError
       
-      if (authData?.user) {
-        // 2. Create the user profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: authData.user.id,
-              first_name: firstName,
-              last_name: lastName,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            },
-          ])
-        
-        if (profileError) throw profileError
-        
-        setMessage('Registration successful! Please check your email for verification.')
-      }
+      // Profile creation is handled by DB trigger.
+      
+      setMessage('Registration successful! Please check your email for verification.')
+      // Optionally, redirect or update UI
+      
     } catch (error: any) {
       setError(error.message || 'An error occurred during registration')
     } finally {
@@ -462,18 +512,45 @@ export default function RegisterForm() {
 Create `app/auth/callback/route.ts`:
 
 ```typescript
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import type { Database } from '@/types/supabase'
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
-
+  
   if (code) {
     const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+          set(name: string, value: string, options: CookieOptions) {
+            try {
+              cookieStore.set({ name, value, ...options })
+            } catch (error) {
+              // The `set` method was called from a Server Component.
+            }
+          },
+          remove(name: string, options: CookieOptions) {
+            try {
+              cookieStore.set({ name, value: '', ...options })
+            } catch (error) {
+              // The `delete` method was called from a Server Component.
+            }
+          },
+        },
+      }
+    )
+    
+    // Exchange the code for a session
     await supabase.auth.exchangeCodeForSession(code)
   }
 
@@ -490,7 +567,7 @@ Create `contexts/auth-context.tsx`:
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase/client'
+import { supabase } from '@/lib/supabase/client' // Uses client-side client
 import type { User, Session } from '@supabase/supabase-js'
 
 type AuthContextType = {
@@ -576,7 +653,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.push('/login?redirect=' + encodeURIComponent(window.location.pathname))
+      router.push('/auth/login?redirect=' + encodeURIComponent(window.location.pathname))
     }
   }, [user, isLoading, router])
 
@@ -602,8 +679,8 @@ Create `components/recipe/guest-check.tsx`:
 import { useAuth } from '@/contexts/auth-context'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import LoginForm from '../auth/login-form'
-import RegisterForm from '../auth/register-form'
+import LoginForm from '../auth/login-form' // Adjust path if needed
+import RegisterForm from '../auth/register-form' // Adjust path if needed
 
 export default function GuestCheck({ onContinue }: { onContinue: () => void }) {
   const { user } = useAuth()
@@ -612,9 +689,16 @@ export default function GuestCheck({ onContinue }: { onContinue: () => void }) {
   const router = useRouter()
 
   // If user is already logged in, continue to next step
+  useEffect(() => {
+    if (user) {
+      onContinue(); // Or directly call the logic for the next step
+    }
+  }, [user, onContinue]);
+
   if (user) {
-    return null
+    return null; // Or a loading indicator while onContinue might be processing
   }
+
 
   if (showAuth) {
     return (
@@ -685,11 +769,13 @@ export default function GuestCheck({ onContinue }: { onContinue: () => void }) {
 
 ### 1. Installation
 ```bash
-# Install Supabase SSR package (replaces deprecated auth-helpers-nextjs)
-npm install @supabase/ssr @supabase/supabase-js
+# Install Supabase SSR package
+npm install @supabase/ssr 
+# @supabase/supabase-js is usually a peer dependency or direct dependency
+npm install @supabase/supabase-js 
 ```
 
-> **Note**: The `@supabase/auth-helpers-nextjs` package is now deprecated. Use `@supabase/ssr` instead as recommended by Supabase.
+> **Note**: Ensure `@supabase/auth-helpers-nextjs` is removed if fully migrating to `@supabase/ssr` to avoid confusion, or ensure versions are compatible.
 
 ### 2. Environment Configuration
 - Create `.env.local` file
@@ -700,57 +786,110 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 ### 3. Supabase Client Setup
-- Create `/lib/supabase/client.ts`
-- Configure client-side Supabase instance
+- Create `/lib/supabase/client.ts` (for Client Components)
 ```typescript
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createBrowserClient } from '@supabase/ssr'
+import type { Database } from '@/types/supabase' // Your generated DB types
 
-export const supabase = createClientComponentClient()
+export const supabase = createBrowserClient<Database>(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 ```
 
-### 4. Server-Side Authentication
-- Create `/lib/supabase/server.ts`
-- Configure server-side Supabase instance
+- Create `/lib/supabase/server.ts` (for Server Components, Route Handlers, Server Actions)
 ```typescript
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import type { Database } from '@/types/supabase' // Your generated DB types
 
-export const supabaseServer = () => 
-  createServerComponentClient({ cookies })
-```
-
-### 5. Authentication Middleware
-- Create `/middleware.ts`
-- Protect routes and handle authentication state
-```typescript
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
-  
-  // Add authentication checks here
-  return res
+export const createClient = () => { // Function to create client instance
+  const cookieStore = cookies()
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          try { cookieStore.set({ name, value, ...options }) } catch (error) {}
+        },
+        remove(name: string, options: CookieOptions) {
+          try { cookieStore.set({ name, value: '', ...options }) } catch (error) {}
+        },
+      },
+    }
+  )
 }
 ```
 
-### 6. Authentication Components
+### 4. Authentication Middleware
+- Create `/middleware.ts`
+- Protect routes and handle authentication state
+```typescript
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import type { Database } from '@/types/supabase' // Your generated DB types
+
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next()
+  const supabase = createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) { return req.cookies.get(name)?.value },
+        set(name: string, value: string, options: CookieOptions) {
+          req.cookies.set({ name, value, ...options })
+          res.cookies.set({ name, value, ...options })
+        },
+        remove(name: string, options: CookieOptions) {
+          req.cookies.delete(name)
+          res.cookies.set({ name, value: '', ...options, maxAge: 0 })
+        },
+      },
+    }
+  )
+  await supabase.auth.getSession() // Refreshes session if needed
+  return res
+}
+
+// Configure matcher for middleware
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * Feel free to modify this pattern to include more paths.
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Add specific protected routes like:
+    // '/account/:path*',
+    // '/admin/:path*',
+  ],
+}
+```
+
+### 5. Authentication Components
 - Create login, signup, and logout components
 - Implement magic link, social login, and password-based authentication
 
-### 7. Protected Routes
+### 6. Protected Routes
 - Use server-side authentication checks
 - Redirect unauthenticated users
 - Implement role-based access control
 
-### 8. Error Handling
+### 7. Error Handling
 - Implement comprehensive error handling
 - Create user-friendly error messages
 - Log authentication errors securely
 
-### 9. Testing
+### 8. Testing
 - Unit tests for authentication flows
 - Integration tests for protected routes
 - Security vulnerability testing
@@ -769,534 +908,46 @@ export async function middleware(req: NextRequest) {
 - Protect against common vulnerabilities (CSRF, XSS)
 
 ## Recommended Next Steps
-1. Configure Supabase Auth Providers
-2. Set up user profiles
-3. Implement password reset
-4. Add multi-factor authentication
+1. Configure Supabase Auth Providers (Google, etc.) in your Supabase dashboard.
+2. Set up user profiles table and RLS as outlined previously.
+3. Implement password reset functionality (`resetPasswordForEmail`, `updateUser`).
+4. Add multi-factor authentication if required.
 
 ## Potential Challenges
-- Handling authentication state
-- Managing server vs. client-side sessions
-- Implementing secure password reset
+- Handling authentication state consistently between client and server.
+- Managing server vs. client-side sessions correctly with `@supabase/ssr`.
+- Implementing secure password reset flows.
 
 ## Implementation Log
 
-### 2025-05-09: Initial Authentication Components
+### 2025-05-09: Initial Authentication Components & Supabase SSR Update
 
-#### 1. Created AuthForm Component
-Implemented a combined login and registration form in `src/components/auth/auth-form.tsx` with the following features:
-- Toggle between login and registration modes
-- Form validation
-- Error handling
-- Success messages
-- Integration with Supabase Auth
-- Profile creation on registration
+#### 1. Created/Updated AuthForm, ProtectedRoute, GuestCheck Components
+- `src/components/auth/auth-form.tsx`: Combined login/registration with Supabase Auth.
+- `src/components/auth/protected-route.tsx`: Route protection.
+- `src/components/auth/guest-check.tsx`: Guest/Login prompt.
+- `src/components/auth/reset-password-form.tsx`: Password reset request form.
+- `src/components/auth/update-password-form.tsx`: Update password form.
 
-```tsx
-// Key implementation details from auth-form.tsx
-export default function AuthForm() {
-  const [mode, setMode] = useState<'login' | 'register'>('login')
-  // ... state management
+#### 2. Updated Supabase Client Implementation to use `@supabase/ssr`
+- `src/lib/supabase/client.ts`: Updated to use `createBrowserClient`.
+- `src/lib/supabase/server.ts`: Updated to use `createServerClient`.
+- `middleware.ts`: Updated to use `createServerClient` with appropriate cookie handling for middleware.
 
-  const handleLogin = async (e: React.FormEvent) => {
-    // ... login logic with Supabase
-  }
+#### 3. Created Auth Pages and Callback Handler
+- `src/app/auth/login/page.tsx`
+- `src/app/auth/register/page.tsx`
+- `src/app/auth/reset-password/page.tsx`
+- `src/app/auth/update-password/page.tsx`
+- `src/app/auth/callback/route.ts`: Handles OAuth and email verification redirects.
 
-  const handleRegister = async (e: React.FormEvent) => {
-    // ... registration logic with Supabase and profile creation
-  }
+#### Current Issues and Next Steps (from previous state)
 
-  // ... UI rendering with conditional fields based on mode
-}
-```
-
-#### 2. Created ProtectedRoute Component
-Implemented a component to protect routes that require authentication in `src/components/auth/protected-route.tsx`:
-- Redirects unauthenticated users
-- Shows loading state
-- Only renders children when authenticated
-
-```tsx
-export default function ProtectedRoute({ children, redirectTo = '/auth/login' }) {
-  const { user, isLoading } = useAuth()
-  // ... authentication check and redirection logic
-  return user ? <>{children}</> : null
-}
-```
-
-#### 3. Created GuestCheck Component
-Implemented a component to prompt users to log in or continue as a guest in `src/components/auth/guest-check.tsx`:
-- Option to login/register
-- Option to continue as guest
-- Integration with AuthForm
-
-```tsx
-export default function GuestCheck({ onContinue }) {
-  // ... state management
-  return (
-    // ... UI with options to login/register or continue as guest
-  )
-}
-```
-
-#### Next Steps
-1. ✅ Update Supabase client files to use the new `@supabase/ssr` package
-2. Create auth callback handler for OAuth flows
-3. Create login and register pages
-4. Implement password reset functionality
-5. Test authentication flow end-to-end
-
-### 2025-05-09: Updated Supabase Client Implementation
-
-#### 1. Updated Client-Side Supabase Client
-Updated the client-side Supabase client in `src/lib/supabase/client.ts` to use the new `@supabase/ssr` package instead of the deprecated `@supabase/auth-helpers-nextjs` package:
-
-```typescript
-// Before
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import type { Database } from '@/types/supabase'
-
-export const supabase = createClientComponentClient<Database>()
-
-// After
-import { createBrowserClient } from '@supabase/ssr'
-import type { Database } from '@/types/supabase'
-
-export const supabase = createBrowserClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-```
-
-#### 2. Updated Server-Side Supabase Client
-Updated the server-side Supabase client in `src/lib/supabase/server.ts` to use the new `@supabase/ssr` package:
-
-```typescript
-// Before
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
-import type { Database } from '@/types/supabase'
-
-export const supabaseServer = () => 
-  createServerComponentClient<Database>({ cookies })
-
-// After
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-import type { Database } from '@/types/supabase'
-
-export const supabaseServer = () => {
-  return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name) {
-          try {
-            const cookieStore = cookies()
-            return cookieStore.get(name)?.value
-          } catch (error) {
-            console.error('Error getting cookie:', error)
-            return undefined
-          }
-        },
-        set(name, value, options) {
-          try {
-            const cookieStore = cookies()
-            cookieStore.set(name, value, options)
-          } catch (error) {
-            console.error('Error setting cookie:', error)
-          }
-        },
-        remove(name, options) {
-          try {
-            const cookieStore = cookies()
-            cookieStore.delete(name)
-          } catch (error) {
-            console.error('Error removing cookie:', error)
-          }
-        },
-      },
-    }
-  )
-}
-```
-
-#### 3. Updated Authentication Middleware
-Updated the authentication middleware in `middleware.ts` to use the new `@supabase/ssr` package:
-
-```typescript
-// Before
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
-  
-  // Refresh session if expired
-  await supabase.auth.getSession()
-  
-  return res
-}
-
-// After
-import { createServerClient } from '@supabase/ssr'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import type { Database } from '@/types/supabase'
-
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
-  
-  // Create a Supabase client for the middleware
-  const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name) {
-          return req.cookies.get(name)?.value
-        },
-        set(name, value, options) {
-          // If the cookie is updated, update the cookies for the request and response
-          req.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-          res.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-        },
-        remove(name, options) {
-          // If the cookie is removed, update the cookies for the request and response
-          req.cookies.delete(name)
-          res.cookies.delete(name)
-        },
-      },
-    }
-  )
-  
-  // Refresh session if expired
-  await supabase.auth.getSession()
-  
-  return res
-}
-```
-
-#### 4. Created Login Page
-Created a login page in `src/app/auth/login/page.tsx` that uses the AuthForm component:
-
-```tsx
-import AuthForm from '@/components/auth/auth-form'
-
-export const metadata = {
-  title: 'Login - AromaChat',
-  description: 'Login to your AromaChat account',
-}
-
-export default function LoginPage() {
-  return (
-    <div className="container flex items-center justify-center min-h-[calc(100vh-4rem)] py-12">
-      <AuthForm />
-    </div>
-  )
-}
-```
-
-### 2025-05-09: Password Reset Functionality
-
-#### 1. Created Reset Password Form Component
-Implemented a form component for requesting a password reset in `src/components/auth/reset-password-form.tsx`:
-
-```tsx
-export default function ResetPasswordForm() {
-  const [email, setEmail] = useState('')
-  // ... state management
-
-  const handleResetPassword = async (e: React.FormEvent) => {
-    // ... password reset logic
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/update-password`,
-    })
-    // ... error handling and user feedback
-  }
-
-  // ... form UI
-}
-```
-
-#### 2. Created Update Password Form Component
-Implemented a form component for updating the password after reset in `src/components/auth/update-password-form.tsx`:
-
-```tsx
-export default function UpdatePasswordForm() {
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  // ... state management
-
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    // ... password validation
-    const { error } = await supabase.auth.updateUser({
-      password,
-    })
-    // ... error handling and redirection
-  }
-
-  // ... form UI
-}
-```
-
-#### Current Issues and Next Steps
-
-1. **Directory Creation Issues**: We're experiencing issues creating directories in the project structure. This is likely due to permission issues or the way the file system is mounted in the development environment.
-
-2. **TypeScript Errors**: We've addressed some TypeScript errors related to the cookie handling in the server-side Supabase client, but there may still be some issues that need to be resolved for proper type checking.
-
+1. **Directory Creation Issues**: Assumed resolved by user creating files.
+2. **TypeScript Errors**: Addressed by ensuring correct types and Supabase client usage.
 3. **Next Steps**:
-   - Create the auth callback handler for OAuth flows
-   - Create the register page
-   - Create the reset-password and update-password pages to use our form components
-   - Test the authentication flow end-to-end
-   - Integrate the authentication flow with the recipe creation process
-   - Implement profile management functionality
-
-## Complete Implementation Guide
-
-This section provides a step-by-step guide to complete the Supabase authentication implementation for the AromaChat application.
-
-### 1. Install Required Dependencies
-
-```bash
-npm install @supabase/ssr @supabase/supabase-js
+   - Integrate the authentication flow with the recipe creation process.
+   - Implement profile management functionality in `/account/profile`.
+   - Test authentication flow end-to-end.
 ```
 
-### 2. Create Directory Structure
-
-Create the following directory structure for the authentication components and pages:
-
-```
-src/
-├── components/
-│   └── auth/
-│       ├── auth-form.tsx           # Combined login/register form
-│       ├── protected-route.tsx     # Route protection component
-│       ├── guest-check.tsx         # Guest check component for recipe flow
-│       ├── reset-password-form.tsx # Password reset request form
-│       └── update-password-form.tsx # Update password form
-├── app/
-│   └── auth/
-│       ├── login/
-│       │   └── page.tsx            # Login page
-│       ├── register/
-│       │   └── page.tsx            # Register page
-│       ├── reset-password/
-│       │   └── page.tsx            # Reset password page
-│       ├── update-password/
-│       │   └── page.tsx            # Update password page
-│       └── callback/
-│           └── route.ts            # Auth callback handler
-```
-
-### 3. Create Auth Pages
-
-#### Login Page (`src/app/auth/login/page.tsx`)
-
-```tsx
-import AuthForm from '@/components/auth/auth-form'
-
-export const metadata = {
-  title: 'Login - AromaChat',
-  description: 'Login to your AromaChat account',
-}
-
-export default function LoginPage() {
-  return (
-    <div className="container flex items-center justify-center min-h-[calc(100vh-4rem)] py-12">
-      <AuthForm />
-    </div>
-  )
-}
-```
-
-#### Register Page (`src/app/auth/register/page.tsx`)
-
-```tsx
-import AuthForm from '@/components/auth/auth-form'
-
-export const metadata = {
-  title: 'Register - AromaChat',
-  description: 'Create a new AromaChat account',
-}
-
-export default function RegisterPage() {
-  return (
-    <div className="container flex items-center justify-center min-h-[calc(100vh-4rem)] py-12">
-      <AuthForm />
-    </div>
-  )
-}
-```
-
-#### Reset Password Page (`src/app/auth/reset-password/page.tsx`)
-
-```tsx
-import ResetPasswordForm from '@/components/auth/reset-password-form'
-
-export const metadata = {
-  title: 'Reset Password - AromaChat',
-  description: 'Reset your AromaChat account password',
-}
-
-export default function ResetPasswordPage() {
-  return (
-    <div className="container flex items-center justify-center min-h-[calc(100vh-4rem)] py-12">
-      <ResetPasswordForm />
-    </div>
-  )
-}
-```
-
-#### Update Password Page (`src/app/auth/update-password/page.tsx`)
-
-```tsx
-import UpdatePasswordForm from '@/components/auth/update-password-form'
-
-export const metadata = {
-  title: 'Update Password - AromaChat',
-  description: 'Update your AromaChat account password',
-}
-
-export default function UpdatePasswordPage() {
-  return (
-    <div className="container flex items-center justify-center min-h-[calc(100vh-4rem)] py-12">
-      <UpdatePasswordForm />
-    </div>
-  )
-}
-```
-
-### 4. Create Auth Callback Handler
-
-Create the auth callback handler to handle OAuth and email verification redirects:
-
-```typescript
-// src/app/auth/callback/route.ts
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import type { Database } from '@/types/supabase'
-
-export async function GET(request: NextRequest) {
-  const requestUrl = new URL(request.url)
-  const code = requestUrl.searchParams.get('code')
-  
-  if (code) {
-    const cookieStore = cookies()
-    const supabase = createServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-          set(name: string, value: string, options: { [key: string]: any } = {}) {
-            cookieStore.set(name, value, options)
-          },
-          remove(name: string, options: { [key: string]: any } = {}) {
-            cookieStore.set(name, '', { ...options, maxAge: 0 })
-          },
-        },
-      }
-    )
-    
-    // Exchange the code for a session
-    await supabase.auth.exchangeCodeForSession(code)
-  }
-
-  // URL to redirect to after sign in process completes
-  return NextResponse.redirect(requestUrl.origin)
-}
-```
-
-### 5. Integrate Authentication with Recipe Flow
-
-To integrate the authentication flow with the recipe creation process, use the `GuestCheck` component at the beginning of the recipe flow:
-
-```tsx
-// Example usage in a recipe flow component
-import { useState } from 'react'
-import { useAuth } from '@/contexts/auth-context'
-import GuestCheck from '@/components/auth/guest-check'
-
-export default function RecipeFlow() {
-  const [showGuestCheck, setShowGuestCheck] = useState(true)
-  const { user } = useAuth()
-  
-  const handleContinueAsGuest = () => {
-    setShowGuestCheck(false)
-  }
-  
-  if (!user && showGuestCheck) {
-    return <GuestCheck onContinue={handleContinueAsGuest} />
-  }
-  
-  return (
-    // Recipe flow content
-    <div>
-      {/* Recipe flow steps */}
-    </div>
-  )
-}
-```
-
-### 6. Protect Routes
-
-Use the `ProtectedRoute` component to protect routes that require authentication:
-
-```tsx
-// Example usage in a protected page
-import ProtectedRoute from '@/components/auth/protected-route'
-
-export default function AccountPage() {
-  return (
-    <ProtectedRoute>
-      <div>
-        {/* Protected content */}
-        <h1>Account Settings</h1>
-        {/* ... */}
-      </div>
-    </ProtectedRoute>
-  )
-}
-```
-
-### 7. Testing the Authentication Flow
-
-To test the authentication flow:
-
-1. Start the development server: `npm run dev`
-2. Navigate to `/auth/login` to test the login functionality
-3. Navigate to `/auth/register` to test the registration functionality
-4. Test the password reset flow by clicking "Forgot password?" on the login page
-5. Test protected routes by trying to access `/account` or other protected routes
-6. Test the guest check by starting the recipe flow
-
-### 8. Troubleshooting
-
-#### Common Issues:
-
-1. **Cookie Handling**: If you encounter issues with cookie handling in the server-side Supabase client, ensure that you're properly implementing the cookie methods according to the Supabase SSR package requirements.
-
-2. **TypeScript Errors**: If you encounter TypeScript errors related to the cookie handling, make sure you're properly typing the parameters and handling the Promise<ReadonlyRequestCookies> issues.
-
-3. **Directory Creation**: If you encounter issues creating directories in the project structure, try creating them manually through the file explorer or terminal before creating the files.
-
-4. **Auth Callback**: If the auth callback isn't working correctly, check that the route.ts file is properly set up and that the URL in the resetPasswordForEmail method matches your application's URL structure.
-```
