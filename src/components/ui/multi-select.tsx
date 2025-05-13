@@ -8,9 +8,9 @@ import {
   Command,
   CommandEmpty,
   CommandGroup,
-  CommandInput,
+  // CommandInput, // Removed CommandInput
   CommandItem,
-  CommandList, // Added import
+  CommandList,
 } from '@/components/ui/command';
 import {
   Popover,
@@ -18,7 +18,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
-import { Check, X, ChevronsUpDown } from 'lucide-react'; // Added Check and ChevronsUpDown
+import { Check, X, ChevronsUpDown } from 'lucide-react';
 
 export interface MultiSelectOption {
   label: string;
@@ -26,14 +26,14 @@ export interface MultiSelectOption {
 }
 
 interface MultiSelectProps {
-  options: MultiSelectOption[]; // Expect normalized options
-  selected: string[]; // Expect an array of selected string values (IDs)
-  onChange: (selectedValues: string[]) => void; // Expect a function that takes an array of string values
+  options: MultiSelectOption[];
+  selected: string[];
+  onChange: (selectedValues: string[]) => void;
   placeholder?: string;
   className?: string;
   disabled?: boolean;
-  mode?: 'multiple' | 'single'; // 'single' is effectively a regular select
-  allowClear?: boolean; // Relevant for single mode
+  mode?: 'multiple' | 'single';
+  allowClear?: boolean;
   popoverContentClassName?: string;
 }
 
@@ -49,7 +49,7 @@ export function MultiSelect({
   popoverContentClassName
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
-  const [searchQuery, setSearchQuery] = React.useState("");
+  // const [searchQuery, setSearchQuery] = React.useState(""); // Search query state removed
 
   const handleValueChange = (valueToToggle: string) => {
     if (disabled) return;
@@ -66,7 +66,7 @@ export function MultiSelect({
   };
   
   const handleRemoveBadge = (valueToRemove: string, event: React.MouseEvent) => {
-    event.stopPropagation(); // Prevent popover from opening/closing
+    event.stopPropagation();
     if (disabled) return;
     onChange(selected.filter(v => v !== valueToRemove));
   };
@@ -77,13 +77,14 @@ export function MultiSelect({
     onChange([]);
   }
 
-  const filteredOptions = React.useMemo(() => {
-    return searchQuery
-      ? options.filter((option) =>
-          option.label.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      : options;
-  }, [searchQuery, options]);
+  // Since search is removed, filteredOptions is now just options
+  // const filteredOptions = React.useMemo(() => {
+  //   return searchQuery
+  //     ? options.filter((option) =>
+  //         option.label.toLowerCase().includes(searchQuery.toLowerCase())
+  //       )
+  //     : options;
+  // }, [searchQuery, options]);
   
   const selectedOptionsToDisplay = selected
     .map(value => options.find(opt => opt.value === value))
@@ -98,7 +99,7 @@ export function MultiSelect({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between min-h-[2.5rem] h-auto whitespace-normal group", // h-10 equivalent
+            "w-full justify-between min-h-[2.5rem] h-auto whitespace-normal group",
             selected.length > 0 ? "text-left" : "text-muted-foreground",
             className
           )}
@@ -110,13 +111,12 @@ export function MultiSelect({
                   key={option.value}
                   variant="secondary"
                   className="rounded-sm px-1.5 py-0.5 font-normal text-xs"
-                  
                 >
                   {option.label}
                   {(mode === 'multiple' || (mode === 'single' && allowClear)) && (
                     <button
                       aria-label={`Remove ${option.label}`}
-                      onMouseDown={(e) => e.preventDefault()} // Prevents Popover from closing on click
+                      onMouseDown={(e) => e.preventDefault()}
                       onClick={(e) => handleRemoveBadge(option.value, e)}
                       className="ml-1 rounded-full outline-none ring-offset-background focus:ring-1 focus:ring-ring focus:ring-offset-1 disabled:pointer-events-none"
                       disabled={disabled}
@@ -130,7 +130,7 @@ export function MultiSelect({
               <span className="text-sm">{placeholder}</span>
             )}
           </div>
-           {selected.length > 0 && allowClear && mode === 'multiple' && (
+           {selected.length > 0 && allowClear && mode === 'multiple' && !disabled && (
             <X
               className="ml-2 h-4 w-4 shrink-0 opacity-50 hover:opacity-100 text-muted-foreground cursor-pointer group-hover:opacity-100"
               onClick={handleClearAll}
@@ -145,26 +145,29 @@ export function MultiSelect({
         align="start"
       >
         <Command>
-          <CommandInput
+          {/* CommandInput removed as per request */}
+          {/* <CommandInput
             placeholder="Search..."
             value={searchQuery}
             onValueChange={setSearchQuery}
             disabled={disabled}
             className="h-9"
-          />
+          /> */}
           <CommandList>
             <CommandEmpty>No options found.</CommandEmpty>
             <CommandGroup className="max-h-[200px] overflow-auto">
-              {filteredOptions.map((option) => (
+              {/* Display all options since search is removed */}
+              {options.map((option) => (
                 <CommandItem
                   key={option.value}
-                  value={option.value} // This value is used by cmdk for filtering/selection
-                  disabled={disabled}
-                  onSelect={(currentValue) => { // currentValue is option.value
+                  value={option.value}
+                  // removed disabled={disabled} to ensure items are selectable
+                  // the handleValueChange function already checks for the disabled state of the component
+                  onSelect={(currentValue) => {
                     if (disabled) return;
                     handleValueChange(currentValue);
-                    if(mode === 'single') setOpen(false); // Close on select for single mode
-                    setSearchQuery(""); // Reset search query on select
+                    if(mode === 'single') setOpen(false);
+                    // setSearchQuery(""); // No longer needed
                   }}
                   className="cursor-pointer"
                 >
