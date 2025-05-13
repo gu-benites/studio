@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -37,126 +38,127 @@ export function PropertiesTab({
   setProperties
 }: PropertiesTabProps) {
   const supabase = createClient();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [newPropertyName, setNewPropertyName] = useState("");
   const [newPropertyDesc, setNewPropertyDesc] = useState("");
-
-  const handleAddProperty = async () => {
-    if (!newPropertyName.trim()) {
-      toast({
-        title: "Error",
-        description: "Property name is required",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    try {
-      const { data, error } = await supabase
-        .from('properties')
-        .insert({ 
-          name: newPropertyName.trim(), 
-          description: newPropertyDesc.trim() || null 
-        })
-        .select('id, name, description')
-        .single();
-        
-      if (error) throw error;
-      
-      if (data) {
-        // Ensure the new property has all required properties
-        const newProperty: Property = {
-          id: data.id,
-          name: data.name,
-          description: data.description
-        };
-        
-        setProperties([...properties, newProperty]);
-        const newSelected = [...selectedProperties, data.id];
-        setSelectedProperties(newSelected);
-        
-        toast({
-          title: "Success",
-          description: "Property added successfully",
-        });
-        
-        // Clear form and close popover
-        setNewPropertyName("");
-        setNewPropertyDesc("");
-        setIsOpen(false);
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to add property",
-        variant: "destructive",
-      });
-    }
-  };
 
   return (
     <FormField
       control={control}
       name="properties"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>Properties</FormLabel>
-          <div className="flex items-center gap-2">
-            <FormControl className="flex-1">
-              <MultiSelect
-                options={properties.map(property => ({
-                  label: property.name,
-                  value: property.id,
-                }))}
-                selected={selectedProperties}
-                onChange={(selected) => {
-                  setSelectedProperties(selected);
-                  field.onChange(selected);
-                }}
-                placeholder="Select properties..."
-                disabled={isLoading}
-              />
-            </FormControl>
-            <Popover open={isOpen} onOpenChange={setIsOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="icon" className="flex-shrink-0">
-                  <Plus className="h-4 w-4" />
-                  <span className="sr-only">Add Property</span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80">
-                <div className="space-y-4">
-                  <h4 className="font-medium">Add New Property</h4>
-                  <div className="grid gap-2">
-                    <Input 
-                      placeholder="Enter property name" 
-                      value={newPropertyName}
-                      onChange={(e) => setNewPropertyName(e.target.value)}
-                    />
-                    <Textarea 
-                      placeholder="Enter property description (optional)" 
-                      className="min-h-[80px]" 
-                      value={newPropertyDesc}
-                      onChange={(e) => setNewPropertyDesc(e.target.value)}
-                    />
-                    <Button 
-                      size="sm" 
-                      className="w-full" 
-                      onClick={handleAddProperty}
-                    >
-                      Add Property
-                    </Button>
+      render={({ field }) => {
+        const handleAddProperty = async () => {
+          if (!newPropertyName.trim()) {
+            toast({
+              title: "Error",
+              description: "Property name is required",
+              variant: "destructive",
+            });
+            return;
+          }
+          
+          try {
+            const { data, error } = await supabase
+              .from('properties')
+              .insert({ 
+                name: newPropertyName.trim(), 
+                description: newPropertyDesc.trim() || null 
+              })
+              .select('id, name, description')
+              .single();
+              
+            if (error) throw error;
+            
+            if (data) {
+              const newPropertyEntry: Property = {
+                id: data.id,
+                name: data.name,
+                description: data.description
+              };
+              
+              setProperties((prevProperties) => [...prevProperties, newPropertyEntry]);
+              const newSelected = [...selectedProperties, data.id];
+              setSelectedProperties(newSelected);
+              field.onChange(newSelected); // Directly update RHF field value
+              
+              toast({
+                title: "Success",
+                description: "Property added successfully and selected.",
+              });
+              
+              setNewPropertyName("");
+              setNewPropertyDesc("");
+              setIsPopoverOpen(false);
+            }
+          } catch (error: any) {
+            toast({
+              title: "Error",
+              description: error.message || "Failed to add property",
+              variant: "destructive",
+            });
+          }
+        };
+
+        return (
+          <FormItem>
+            <FormLabel>Properties</FormLabel>
+            <div className="flex items-center gap-2">
+              <FormControl className="flex-1">
+                <MultiSelect
+                  options={properties.map(property => ({
+                    label: property.name,
+                    value: property.id,
+                  }))}
+                  selected={selectedProperties}
+                  onChange={(selected) => {
+                    setSelectedProperties(selected);
+                    field.onChange(selected);
+                  }}
+                  placeholder="Select properties..."
+                  disabled={isLoading}
+                />
+              </FormControl>
+              <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="icon" className="flex-shrink-0">
+                    <Plus className="h-4 w-4" />
+                    <span className="sr-only">Add Property</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80">
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Add New Property</h4>
+                    <div className="grid gap-2">
+                      <Input 
+                        placeholder="Enter property name" 
+                        value={newPropertyName}
+                        onChange={(e) => setNewPropertyName(e.target.value)}
+                      />
+                      <Textarea 
+                        placeholder="Enter property description (optional)" 
+                        className="min-h-[80px]" 
+                        value={newPropertyDesc}
+                        onChange={(e) => setNewPropertyDesc(e.target.value)}
+                      />
+                      <Button 
+                        size="sm" 
+                        className="w-full" 
+                        onClick={handleAddProperty}
+                      >
+                        Add Property
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-          <FormDescription>
-            Select the therapeutic properties of this essential oil.
-          </FormDescription>
-          <FormMessage />
-        </FormItem>
-      )}
+                </PopoverContent>
+              </Popover>
+            </div>
+            <FormDescription>
+              Select the therapeutic properties of this essential oil.
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        );
+      }}
     />
   );
 }
