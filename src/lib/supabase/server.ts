@@ -1,4 +1,4 @@
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import type { Database } from '@/types/supabase'
 
@@ -11,13 +11,13 @@ export const createClient = () => {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        async get(name) {
+        async get(name: string) {
           // Use a synchronous approach to get cookies
           const cookieList = cookies()
           const cookie = cookieList.get(name)
           return cookie?.value
         },
-        set(name, value, options) {
+        set(name: string, value: string, options: CookieOptions) {
           try {
             const cookieList = cookies()
             cookieList.set(name, value, options)
@@ -25,7 +25,7 @@ export const createClient = () => {
             // This will throw in middleware, but we can safely ignore it for now
           }
         },
-        remove(name, options) {
+        remove(name: string, options: CookieOptions) {
           try {
             const cookieList = cookies()
             cookieList.set(name, '', { ...options, maxAge: 0 })
@@ -40,3 +40,4 @@ export const createClient = () => {
 
 // For backward compatibility with existing code
 export const supabaseServer = createClient
+

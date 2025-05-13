@@ -24,7 +24,7 @@ export async function POST() {
             // For explicit clearing, we'll do it on the response object below.
           },
           remove(name: string, options: CookieOptions) {
-            // Similar to set, this would apply to a response object for explicit clearing.
+            // Similar to set, this would apply to a response object.
           },
         },
       }
@@ -59,7 +59,7 @@ export async function POST() {
     }
     
     const cookieBaseName = `sb-${projectRef}-auth-token`;
-    const cookieOptions = { 
+    const cookieOptions: CookieOptions = { 
       expires: new Date(0),
       path: '/',
       secure: process.env.NODE_ENV === 'production',
@@ -90,3 +90,4 @@ export async function POST() {
     }, { status: 500 })
   }
 }
+

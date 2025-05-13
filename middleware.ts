@@ -1,4 +1,4 @@
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Database } from '@/types/supabase'
@@ -15,7 +15,7 @@ export async function middleware(req: NextRequest) {
         get(name) {
           return req.cookies.get(name)?.value
         },
-        set(name, value, options) {
+        set(name, value, options: CookieOptions) {
           // If the cookie is updated, update the cookies for the request and response
           req.cookies.set({
             name,
@@ -28,7 +28,7 @@ export async function middleware(req: NextRequest) {
             ...options,
           })
         },
-        remove(name, options) {
+        remove(name, options: CookieOptions) {
           // If the cookie is removed, update the cookies for the request and response
           req.cookies.delete(name)
           res.cookies.delete(name)
@@ -53,3 +53,4 @@ export const config = {
     '/(api|_next|_vercel|.*\\..*)(.*)',
   ],
 }
+
