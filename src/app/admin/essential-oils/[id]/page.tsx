@@ -56,177 +56,113 @@ export default function EssentialOilDetailsPage() {
         
       if (updateError) throw new Error(`Error updating essential oil: ${updateError.message}`);
 
-      // Process all relations in a transaction if available or sequentially
-      // Delete existing relationships and create new ones for each relation type
+      // Process all relations
       
       // 1. Handle properties
+      await supabase.from("essential_oil_properties").delete().eq("essential_oil_id", id);
       if (relations.properties && relations.properties.length > 0) {
-        // Delete existing relations
-        await supabase
-          .from("essential_oil_properties")
-          .delete()
-          .eq("essential_oil_id", id);
-          
-        // Insert new relations
         const propertyRelations = relations.properties.map((propertyId: string) => ({
-          essential_oil_id: id,
-          property_id: propertyId
+          essential_oil_id: id, property_id: propertyId
         }));
-        
-        const { error: propertiesError } = await supabase
-          .from("essential_oil_properties")
-          .insert(propertyRelations);
-          
-        if (propertiesError) throw new Error(`Error updating properties: ${propertiesError.message}`);
+        const { error } = await supabase.from("essential_oil_properties").insert(propertyRelations);
+        if (error) throw new Error(`Error updating properties: ${error.message}`);
       }
       
       // 2. Handle extraction methods
+      await supabase.from("essential_oil_extraction_methods").delete().eq("essential_oil_id", id);
       if (relations.extraction_methods && relations.extraction_methods.length > 0) {
-        // Delete existing relations
-        await supabase
-          .from("essential_oil_extraction_methods")
-          .delete()
-          .eq("essential_oil_id", id);
-          
-        // Insert new relations
         const methodRelations = relations.extraction_methods.map((methodId: string) => ({
-          essential_oil_id: id,
-          extraction_method_id: methodId
+          essential_oil_id: id, extraction_method_id: methodId
         }));
-        
-        const { error: methodsError } = await supabase
-          .from("essential_oil_extraction_methods")
-          .insert(methodRelations);
-          
-        if (methodsError) throw new Error(`Error updating extraction methods: ${methodsError.message}`);
+        const { error } = await supabase.from("essential_oil_extraction_methods").insert(methodRelations);
+        if (error) throw new Error(`Error updating extraction methods: ${error.message}`);
       }
       
       // 3. Handle countries
+      await supabase.from("essential_oil_extraction_countries").delete().eq("essential_oil_id", id);
       if (relations.extraction_countries && relations.extraction_countries.length > 0) {
-        // Delete existing relations
-        await supabase
-          .from("essential_oil_countries")
-          .delete()
-          .eq("essential_oil_id", id);
-          
-        // Insert new relations
         const countryRelations = relations.extraction_countries.map((countryId: string) => ({
-          essential_oil_id: id,
-          country_id: countryId
+          essential_oil_id: id, country_id: countryId
         }));
-        
-        const { error: countriesError } = await supabase
-          .from("essential_oil_countries")
-          .insert(countryRelations);
-          
-        if (countriesError) throw new Error(`Error updating countries: ${countriesError.message}`);
+        const { error } = await supabase.from("essential_oil_extraction_countries").insert(countryRelations);
+        if (error) throw new Error(`Error updating countries: ${error.message}`);
       }
       
       // 4. Handle plant parts
+      await supabase.from("essential_oil_plant_parts").delete().eq("essential_oil_id", id);
       if (relations.plant_parts && relations.plant_parts.length > 0) {
-        // Delete existing relations
-        await supabase
-          .from("essential_oil_plant_parts")
-          .delete()
-          .eq("essential_oil_id", id);
-          
-        // Insert new relations
         const plantPartRelations = relations.plant_parts.map((partId: string) => ({
-          essential_oil_id: id,
-          plant_part_id: partId
+          essential_oil_id: id, plant_part_id: partId
         }));
-        
-        const { error: plantPartsError } = await supabase
-          .from("essential_oil_plant_parts")
-          .insert(plantPartRelations);
-          
-        if (plantPartsError) throw new Error(`Error updating plant parts: ${plantPartsError.message}`);
+        const { error } = await supabase.from("essential_oil_plant_parts").insert(plantPartRelations);
+        if (error) throw new Error(`Error updating plant parts: ${error.message}`);
       }
       
       // 5. Handle aromatic descriptors
+      await supabase.from("essential_oil_aromatic_descriptors").delete().eq("essential_oil_id", id);
       if (relations.aromatic_descriptors && relations.aromatic_descriptors.length > 0) {
-        // Delete existing relations
-        await supabase
-          .from("essential_oil_aromatic_descriptors")
-          .delete()
-          .eq("essential_oil_id", id);
-          
-        // Insert new relations
         const descriptorRelations = relations.aromatic_descriptors.map((descriptorId: string) => ({
-          essential_oil_id: id,
-          aromatic_descriptor_id: descriptorId
+          essential_oil_id: id, descriptor_id: descriptorId // Corrected from aromatic_descriptor_id to descriptor_id
         }));
-        
-        const { error: descriptorsError } = await supabase
-          .from("essential_oil_aromatic_descriptors")
-          .insert(descriptorRelations);
-          
-        if (descriptorsError) throw new Error(`Error updating aromatic descriptors: ${descriptorsError.message}`);
+        const { error } = await supabase.from("essential_oil_aromatic_descriptors").insert(descriptorRelations);
+        if (error) throw new Error(`Error updating aromatic descriptors: ${error.message}`);
       }
       
       // 6. Handle health issues
+      await supabase.from("essential_oil_health_issues").delete().eq("essential_oil_id", id);
       if (relations.health_issues && relations.health_issues.length > 0) {
-        // Delete existing relations
-        await supabase
-          .from("essential_oil_health_issues")
-          .delete()
-          .eq("essential_oil_id", id);
-          
-        // Insert new relations
         const healthIssueRelations = relations.health_issues.map((issueId: string) => ({
-          essential_oil_id: id,
-          health_issue_id: issueId
+          essential_oil_id: id, health_issue_id: issueId
         }));
-        
-        const { error: healthIssuesError } = await supabase
-          .from("essential_oil_health_issues")
-          .insert(healthIssueRelations);
-          
-        if (healthIssuesError) throw new Error(`Error updating health issues: ${healthIssuesError.message}`);
+        const { error } = await supabase.from("essential_oil_health_issues").insert(healthIssueRelations);
+        if (error) throw new Error(`Error updating health issues: ${error.message}`);
       }
       
       // 7. Handle usage modes
+      await supabase.from("essential_oil_usage_modes").delete().eq("essential_oil_id", id);
       if (relations.usage_modes && relations.usage_modes.length > 0) {
-        // Delete existing relations
-        await supabase
-          .from("essential_oil_usage_modes")
-          .delete()
-          .eq("essential_oil_id", id);
-          
-        // Insert new relations
         const usageModeRelations = relations.usage_modes.map((modeId: string) => ({
-          essential_oil_id: id,
-          usage_mode_id: modeId
+          essential_oil_id: id, usage_mode_id: modeId
         }));
-        
-        const { error: usageModesError } = await supabase
-          .from("essential_oil_usage_modes")
-          .insert(usageModeRelations);
-          
-        if (usageModesError) throw new Error(`Error updating usage modes: ${usageModesError.message}`);
+        const { error } = await supabase.from("essential_oil_usage_modes").insert(usageModeRelations);
+        if (error) throw new Error(`Error updating usage modes: ${error.message}`);
       }
       
       // 8. Handle chemical compounds
+      console.log("[EditPage] Relations for chemical_compounds to be processed:", JSON.stringify(relations.chemical_compounds, null, 2));
+      await supabase.from("essential_oil_chemical_compounds").delete().eq("essential_oil_id", id);
       if (relations.chemical_compounds && relations.chemical_compounds.length > 0) {
-        // Delete existing relations
-        await supabase
-          .from("essential_oil_chemical_compounds")
-          .delete()
-          .eq("essential_oil_id", id);
-          
-        // Insert new relations
         const chemicalCompoundRelations = relations.chemical_compounds.map((compound: any) => ({
           essential_oil_id: id,
           chemical_compound_id: compound.compound_id,
-          percentage: compound.percentage || null,
+          min_percentage: compound.min_percentage === undefined ? null : compound.min_percentage,
+          max_percentage: compound.max_percentage === undefined ? null : compound.max_percentage,
+          typical_percentage: compound.typical_percentage === undefined ? null : compound.typical_percentage,
           notes: compound.notes || null
         }));
         
+        console.log("[EditPage] Attempting to insert chemicalCompoundRelations:", JSON.stringify(chemicalCompoundRelations, null, 2));
         const { error: compoundsError } = await supabase
           .from("essential_oil_chemical_compounds")
           .insert(chemicalCompoundRelations);
           
-        if (compoundsError) throw new Error(`Error updating chemical compounds: ${compoundsError.message}`);
+        if (compoundsError) {
+            console.error("[EditPage] Supabase error inserting chemical compounds:", compoundsError);
+            throw new Error(`Error updating chemical compounds: ${compoundsError.message}`);
+        }
+        console.log("[EditPage] Chemical compounds relations inserted successfully.");
+      } else {
+        console.log("[EditPage] No chemical compounds to link or all were removed.");
+      }
+
+      // 9. Handle safety characteristics
+      await supabase.from("essential_oil_safety").delete().eq("essential_oil_id", id);
+      if (relations.safety_characteristics && relations.safety_characteristics.length > 0) {
+        const safetyRelations = relations.safety_characteristics.map((charId: string) => ({
+          essential_oil_id: id, safety_characteristic_id: charId
+        }));
+        const { error } = await supabase.from("essential_oil_safety").insert(safetyRelations);
+        if (error) throw new Error(`Error updating safety characteristics: ${error.message}`);
       }
       
       toast({
