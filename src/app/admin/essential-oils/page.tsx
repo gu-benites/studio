@@ -15,8 +15,8 @@ export default function EssentialOilsAdminPage() {
     try {
       const supabase = createClient();
       const { data, error } = await supabase
-        .from('essential_oils')
-        .select('*')
+        .from('v_essential_oil_full_details')
+        .select('id, name_english, name_scientific, name_portuguese, general_description')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
