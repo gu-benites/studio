@@ -378,39 +378,397 @@ export function OilForm({ oilId, onClose }: { oilId?: string; onClose: () => voi
         <div>
           <Label>Name (Portuguese)</Label>
           <Input
-            value={formData.name_portuguese}
+            value={formData.name_portuguese || ''}
             onChange={(e) => handleChange('name_portuguese', e.target.value)}
           />
         </div>
         <div>
           <Label>General Description</Label>
           <Textarea
-            value={formData.general_description}
+            value={formData.general_description || ''}
             onChange={(e) => handleChange('general_description', e.target.value)}
           />
         </div>
       </div>
 
-      <div className="space-y-4">
-        <Label>Internal Use Status</Label>
-        <Select
-          value={formData.internal_use_status_id}
-          onValueChange={(value) => handleChange('internal_use_status_id', value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select status" />
-          </SelectTrigger>
-          <SelectContent>
-            {options.internalUseStatuses.map((status) => (
-              <SelectItem key={status.id} value={status.id}>
-                {status.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="space-y-2">
+          <Label>Internal Use Status</Label>
+          <Select
+            value={formData.internal_use_status_id || ''}
+            onValueChange={(value) => handleChange('internal_use_status_id', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              {options.internalUseStatuses.map((status) => (
+                <SelectItem key={status.id} value={status.id}>
+                  {status.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Dilution Recommendation</Label>
+          <Select
+            value={formData.dilution_recommendation_id || ''}
+            onValueChange={(value) => handleChange('dilution_recommendation_id', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select recommendation" />
+            </SelectTrigger>
+            <SelectContent>
+              {options.dilutionRecommendations.map((rec) => (
+                <SelectItem key={rec.id} value={rec.id}>
+                  {rec.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Phototoxicity Status</Label>
+          <Select
+            value={formData.phototoxicity_status_id || ''}
+            onValueChange={(value) => handleChange('phototoxicity_status_id', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              {options.phototoxicityStatuses.map((status) => (
+                <SelectItem key={status.id} value={status.id}>
+                  {status.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      {/* Similar sections for other dropdowns */}
+      <div className="space-y-4">
+        <Label>Application Methods</Label>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {options.applicationMethods.map((method) => (
+            <div key={method.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={`app-method-${method.id}`}
+                checked={formData.application_methods?.includes(method.id)}
+                onCheckedChange={(checked) => {
+                  const newMethods = checked
+                    ? [...(formData.application_methods || []), method.id]
+                    : (formData.application_methods || []).filter(id => id !== method.id);
+                  handleChange('application_methods', newMethods);
+                }}
+              />
+              <Label htmlFor={`app-method-${method.id}`} className="text-sm">
+                {method.name}
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <Label>Therapeutic Properties</Label>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {options.therapeuticProperties.map((prop) => (
+            <div key={prop.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={`therapeutic-${prop.id}`}
+                checked={formData.therapeutic_properties?.includes(prop.id)}
+                onCheckedChange={(checked) => {
+                  const newProps = checked
+                    ? [...(formData.therapeutic_properties || []), prop.id]
+                    : (formData.therapeutic_properties || []).filter(id => id !== prop.id);
+                  handleChange('therapeutic_properties', newProps);
+                }}
+              />
+              <Label htmlFor={`therapeutic-${prop.id}`} className="text-sm">
+                {prop.property_name}
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <Label>Health Benefits</Label>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {options.healthBenefits.map((benefit) => (
+            <div key={benefit.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={`benefit-${benefit.id}`}
+                checked={formData.health_benefits?.includes(benefit.id)}
+                onCheckedChange={(checked) => {
+                  const newBenefits = checked
+                    ? [...(formData.health_benefits || []), benefit.id]
+                    : (formData.health_benefits || []).filter(id => id !== benefit.id);
+                  handleChange('health_benefits', newBenefits);
+                }}
+              />
+              <Label htmlFor={`benefit-${benefit.id}`} className="text-sm">
+                {benefit.benefit_name}
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <Label>Energetic & Emotional Properties</Label>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {options.energeticProperties.map((prop) => (
+            <div key={prop.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={`energetic-${prop.id}`}
+                checked={formData.energetic_emotional_properties?.includes(prop.id)}
+                onCheckedChange={(checked) => {
+                  const newProps = checked
+                    ? [...(formData.energetic_emotional_properties || []), prop.id]
+                    : (formData.energetic_emotional_properties || []).filter(id => id !== prop.id);
+                  handleChange('energetic_emotional_properties', newProps);
+                }}
+              />
+              <Label htmlFor={`energetic-${prop.id}`} className="text-sm">
+                {prop.property_name}
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <Label>Chakras</Label>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {options.chakras.map((chakra) => (
+            <div key={chakra.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={`chakra-${chakra.id}`}
+                checked={formData.chakras?.includes(chakra.id)}
+                onCheckedChange={(checked) => {
+                  const newChakras = checked
+                    ? [...(formData.chakras || []), chakra.id]
+                    : (formData.chakras || []).filter(id => id !== chakra.id);
+                  handleChange('chakras', newChakras);
+                }}
+              />
+              <Label htmlFor={`chakra-${chakra.id}`} className="text-sm">
+                {chakra.chakra_name}
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <Label>Extraction Methods</Label>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {options.extractionMethods.map((method) => (
+            <div key={method.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={`extraction-${method.id}`}
+                checked={formData.extraction_methods?.includes(method.id)}
+                onCheckedChange={(checked) => {
+                  const newMethods = checked
+                    ? [...(formData.extraction_methods || []), method.id]
+                    : (formData.extraction_methods || []).filter(id => id !== method.id);
+                  handleChange('extraction_methods', newMethods);
+                }}
+              />
+              <Label htmlFor={`extraction-${method.id}`} className="text-sm">
+                {method.method_name}
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <Label>Countries of Origin</Label>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {options.countries.map((country) => (
+            <div key={country.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={`country-${country.id}`}
+                checked={formData.extraction_countries?.includes(country.id)}
+                onCheckedChange={(checked) => {
+                  const newCountries = checked
+                    ? [...(formData.extraction_countries || []), country.id]
+                    : (formData.extraction_countries || []).filter(id => id !== country.id);
+                  handleChange('extraction_countries', newCountries);
+                }}
+              />
+              <Label htmlFor={`country-${country.id}`} className="text-sm">
+                {country.country_name}
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <Label>Plant Parts</Label>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {options.plantParts.map((part) => (
+            <div key={part.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={`part-${part.id}`}
+                checked={formData.plant_parts?.includes(part.id)}
+                onCheckedChange={(checked) => {
+                  const newParts = checked
+                    ? [...(formData.plant_parts || []), part.id]
+                    : (formData.plant_parts || []).filter(id => id !== part.id);
+                  handleChange('plant_parts', newParts);
+                }}
+              />
+              <Label htmlFor={`part-${part.id}`} className="text-sm">
+                {part.part_name}
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <Label>Aroma Scents</Label>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {options.scents.map((scent) => (
+            <div key={scent.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={`scent-${scent.id}`}
+                checked={formData.aroma_scents?.includes(scent.id)}
+                onCheckedChange={(checked) => {
+                  const newScents = checked
+                    ? [...(formData.aroma_scents || []), scent.id]
+                    : (formData.aroma_scents || []).filter(id => id !== scent.id);
+                  handleChange('aroma_scents', newScents);
+                }}
+              />
+              <Label htmlFor={`scent-${scent.id}`} className="text-sm">
+                {scent.scent_name}
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <Label>Pregnancy & Nursing Safety</Label>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+          {options.pregnancyStatuses.map((status) => (
+            <div key={status.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={`pregnancy-${status.id}`}
+                checked={formData.pregnancy_nursing_status?.includes(status.id)}
+                onCheckedChange={(checked) => {
+                  const newStatuses = checked
+                    ? [...(formData.pregnancy_nursing_status || []), status.id]
+                    : (formData.pregnancy_nursing_status || []).filter(id => id !== status.id);
+                  handleChange('pregnancy_nursing_status', newStatuses);
+                }}
+              />
+              <Label htmlFor={`pregnancy-${status.id}`} className="text-sm">
+                {status.status_description}
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <Label>Pet Safety</Label>
+        {options.pets.map((pet) => {
+          const petSafety = formData.pet_safety?.find(p => p.pet_id === pet.id);
+          return (
+            <div key={pet.id} className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id={`pet-${pet.id}`}
+                  checked={!!petSafety}
+                  onCheckedChange={(checked) => {
+                    let newPetSafety = [...(formData.pet_safety || [])];
+                    if (checked) {
+                      if (!newPetSafety.find(p => p.pet_id === pet.id)) {
+                        newPetSafety.push({ pet_id: pet.id, safety_notes: '' });
+                      }
+                    } else {
+                      newPetSafety = newPetSafety.filter(p => p.pet_id !== pet.id);
+                    }
+                    handleChange('pet_safety', newPetSafety);
+                  }}
+                />
+                <Label htmlFor={`pet-${pet.id}`}>{pet.animal_name}</Label>
+              </div>
+              {petSafety && (
+                <div className="ml-6">
+                  <Label htmlFor={`pet-notes-${pet.id}`} className="text-sm">Safety Notes</Label>
+                  <Textarea
+                    id={`pet-notes-${pet.id}`}
+                    value={petSafety.safety_notes || ''}
+                    onChange={(e) => {
+                      const newPetSafety = formData.pet_safety?.map(p => 
+                        p.pet_id === pet.id ? { ...p, safety_notes: e.target.value } : p
+                      ) || [];
+                      handleChange('pet_safety', newPetSafety);
+                    }}
+                    className="h-20"
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="space-y-4">
+        <Label>Child Safety</Label>
+        {options.ageRanges.map((ageRange) => {
+          const childSafety = formData.child_safety?.find(c => c.age_range_id === ageRange.id);
+          return (
+            <div key={ageRange.id} className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id={`age-${ageRange.id}`}
+                  checked={!!childSafety}
+                  onCheckedChange={(checked) => {
+                    let newChildSafety = [...(formData.child_safety || [])];
+                    if (checked) {
+                      if (!newChildSafety.find(c => c.age_range_id === ageRange.id)) {
+                        newChildSafety.push({ age_range_id: ageRange.id, safety_notes: '' });
+                      }
+                    } else {
+                      newChildSafety = newChildSafety.filter(c => c.age_range_id !== ageRange.id);
+                    }
+                    handleChange('child_safety', newChildSafety);
+                  }}
+                />
+                <Label htmlFor={`age-${ageRange.id}`}>{ageRange.range_description}</Label>
+              </div>
+              {childSafety && (
+                <div className="ml-6">
+                  <Label htmlFor={`age-notes-${ageRange.id}`} className="text-sm">Safety Notes</Label>
+                  <Textarea
+                    id={`age-notes-${ageRange.id}`}
+                    value={childSafety.safety_notes || ''}
+                    onChange={(e) => {
+                      const newChildSafety = formData.child_safety?.map(c => 
+                        c.age_range_id === ageRange.id ? { ...c, safety_notes: e.target.value } : c
+                      ) || [];
+                      handleChange('child_safety', newChildSafety);
+                    }}
+                    className="h-20"
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
 
       <div className="flex justify-end space-x-4">
         <Button variant="outline" onClick={onClose}>
