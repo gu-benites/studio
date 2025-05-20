@@ -1,11 +1,22 @@
-CREATE TABLE IF NOT EXISTS "public"."chemical_compounds" (
+-- Enable required extensions
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "extensions";
+CREATE EXTENSION IF NOT EXISTS "vector" WITH SCHEMA "extensions";
+
+-- Drop existing tables if they exist to avoid conflicts
+DROP TABLE IF EXISTS "public"."profiles" CASCADE;
+DROP TABLE IF EXISTS "public"."essential_oils" CASCADE;
+DROP TABLE IF EXISTS "public"."chemical_compounds" CASCADE;
+
+-- Create tables
+CREATE TABLE "public"."chemical_compounds" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
     "name" "text" NOT NULL,
     "description" "text",
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "bubble_uid" "text",
     "pubchem_compound_id" "text",
-    "carbon_structure" "text"
+    "carbon_structure" "text",
+    CONSTRAINT "chemical_compounds_pkey" PRIMARY KEY ("id")
 );
 
 
@@ -178,11 +189,17 @@ CREATE TABLE IF NOT EXISTS "public"."eo_pregnancy_nursing_statuses" (
 ALTER TABLE "public"."eo_pregnancy_nursing_statuses" OWNER TO "postgres";
 
 
-CREATE TABLE IF NOT EXISTS "public"."eo_therapeutic_properties" (
+CREATE TABLE "public"."eo_therapeutic_properties" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
     "property_name" "text" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "property_name_portuguese" "text",
+    "description_portuguese" "text",
+    "description" "text",
+    CONSTRAINT "eo_therapeutic_properties_pkey" PRIMARY KEY ("id"),
+    CONSTRAINT "eo_therapeutic_properties_property_name_key" UNIQUE ("property_name")
+);
 );
 
 
@@ -341,21 +358,29 @@ CREATE TABLE IF NOT EXISTS "public"."essential_oil_therapeutic_properties" (
 ALTER TABLE "public"."essential_oil_therapeutic_properties" OWNER TO "postgres";
 
 
-CREATE TABLE IF NOT EXISTS "public"."essential_oils" (
+CREATE TABLE "public"."essential_oils" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
     "name_english" "text" NOT NULL,
-    "name_scientific" "text" NOT NULL,
-    "name_portuguese" "text" NOT NULL,
+    "name_scientific" "text",
+    "name_portuguese" "text",
     "general_description" "text",
     "embedding" "extensions"."vector"(1536),
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "bubble_uid" "text",
-    "names_concatenated" "text" GENERATED ALWAYS AS ((((("name_english" || ' | '::"text") || "name_scientific") || ' | '::"text") || "name_portuguese")) STORED,
+    "names_concatenated" "text",
     "image_url" "text",
     "internal_use_status_id" "uuid",
     "dilution_recommendation_id" "uuid",
-    "phototoxicity_status_id" "uuid"
+    "phototoxicity_status_id" "uuid",
+    CONSTRAINT "essential_oils_pkey" PRIMARY KEY ("id"),
+    CONSTRAINT "essential_oils_dilution_recommendation_id_fkey" FOREIGN KEY ("dilution_recommendation_id") 
+        REFERENCES "public"."eo_dilution_recommendations"("id") ON DELETE SET NULL,
+    CONSTRAINT "essential_oils_internal_use_status_id_fkey" FOREIGN KEY ("internal_use_status_id") 
+        REFERENCES "public"."eo_internal_use_statuses"("id") ON DELETE SET NULL,
+    CONSTRAINT "essential_oils_phototoxicity_status_id_fkey" FOREIGN KEY ("phototoxicity_status_id") 
+        REFERENCES "public"."eo_phototoxicity_statuses"("id") ON DELETE SET NULL
+);
 );
 
 
@@ -366,30 +391,74 @@ COMMENT ON TABLE "public"."essential_oils" IS 'Essential oils table. Multiple en
 
 
 
-CREATE TABLE IF NOT EXISTS "public"."profiles" (
+CREATE TABLE "public"."profiles" (
     "id" "uuid" NOT NULL,
     "first_name" "text",
     "last_name" "text",
     "gender" "text",
     "age_category" "text",
     "specific_age" integer,
-    "language" "text" DEFAULT 'en'::"text",
+    "language" "text",
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "avatar_url" "text",
-    "role" "text" DEFAULT 'user'::"text" NOT NULL,
+    "role" "text" DEFAULT 'user'::text,
     "stripe_customer_id" "text",
     "subscription_status" "text",
     "subscription_tier" "text",
     "subscription_period" "text",
     "subscription_start_date" timestamp with time zone,
     "subscription_end_date" timestamp with time zone,
-    CONSTRAINT "profiles_role_check" CHECK (("role" = ANY (ARRAY['user'::"text", 'premium'::"text", 'admin'::"text"]))),
-    CONSTRAINT "profiles_subscription_period_check" CHECK (("subscription_period" = ANY (ARRAY['monthly'::"text", 'annual'::"text", NULL::"text"])))
+    CONSTRAINT "profiles_pkey" PRIMARY KEY ("id"),
+    CONSTRAINT "profiles_id_fkey" FOREIGN KEY ("id") 
+        REFERENCES "auth"."users"("id") ON DELETE CASCADE
 );
 
-
 ALTER TABLE "public"."profiles" OWNER TO "postgres";
+
+-- Add indexes for better performance
+CREATE INDEX IF NOT EXISTS "essential_oils_name_english_idx" ON "public"."essential_oils" ("name_english");
+CREATE INDEX IF NOT EXISTS "essential_oils_embedding_idx" ON "public"."essential_oils" USING hnsw ("embedding" vector_cosine_ops);
+
+-- Enable Row Level Security
+ALTER TABLE "public"."profiles" ENABLE ROW LEVEL SECURITY;
+
+-- Create RLS policies
+CREATE POLICY "Public profiles are viewable by everyone." ON "public"."profiles" 
+    FOR SELECT USING (true);
+
+CREATE POLICY "Users can update their own profile." ON "public"."profiles"
+    FOR UPDATE USING ("auth"."uid"() = "id");
+
+-- Create a function to update timestamps
+CREATE OR REPLACE FUNCTION "public"."update_updated_at_column"()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;   
+END;
+$$ LANGUAGE plpgsql;
+
+-- Apply the update trigger to all tables with updated_at
+DO $$
+DECLARE
+    t record;
+BEGIN
+    FOR t IN 
+        SELECT table_schema, table_name 
+        FROM information_schema.columns 
+        WHERE column_name = 'updated_at' 
+        AND table_schema = 'public'
+    LOOP
+        EXECUTE format('DROP TRIGGER IF EXISTS update_%s_updated_at ON %I.%I', 
+                      t.table_name, t.table_schema, t.table_name);
+        EXECUTE format('CREATE TRIGGER update_%s_updated_at
+                      BEFORE UPDATE ON %I.%I
+                      FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()',
+                      t.table_name, t.table_schema, t.table_name);
+    END LOOP;
+END;
+$$;
 
 CREATE TABLE IF NOT EXISTS "public"."usage_instructions" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
@@ -402,42 +471,7 @@ CREATE TABLE IF NOT EXISTS "public"."usage_instructions" (
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
 );
 
-
 ALTER TABLE "public"."usage_instructions" OWNER TO "postgres";
-
-
-CREATE OR REPLACE VIEW "public"."v_essential_oil_full_details" AS
-SELECT
-    NULL::"uuid" AS "id",
-    NULL::"text" AS "name_english",
-    NULL::"text" AS "name_scientific",
-    NULL::"text" AS "name_portuguese",
-    NULL::"text" AS "general_description",
-    NULL::"extensions"."vector"(1536) AS "embedding",
-    NULL::timestamp with time zone AS "created_at",
-    NULL::timestamp with time zone AS "updated_at",
-    NULL::"text" AS "bubble_uid",
-    NULL::"text" AS "names_concatenated",
-    NULL::"text" AS "image_url",
-    NULL::"uuid" AS "internal_use_status_id",
-    NULL::"uuid" AS "dilution_recommendation_id",
-    NULL::"uuid" AS "phototoxicity_status_id",
-    NULL::"uuid"[] AS "application_methods",
-    NULL::"jsonb" AS "pet_safety",
-    NULL::"jsonb" AS "child_safety",
-    NULL::"uuid"[] AS "pregnancy_nursing_status",
-    NULL::"uuid"[] AS "therapeutic_properties",
-    NULL::"uuid"[] AS "health_benefits",
-    NULL::"uuid"[] AS "energetic_emotional_properties",
-    NULL::"uuid"[] AS "chakras",
-    NULL::"uuid"[] AS "extraction_methods",
-    NULL::"uuid"[] AS "extraction_countries",
-    NULL::"uuid"[] AS "plant_parts",
-    NULL::"uuid"[] AS "aroma_scents";
-
-
-ALTER TABLE "public"."v_essential_oil_full_details" OWNER TO "postgres";
-
 
 CREATE OR REPLACE VIEW "public"."v_essential_oil_full_details" WITH ("security_invoker"='on') AS
  SELECT "eo"."id",
