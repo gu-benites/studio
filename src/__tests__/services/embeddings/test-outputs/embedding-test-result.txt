@@ -1,0 +1,11 @@
+[2025-05-21T03:39:07.687Z] 🚀 Starting embedding generation test...
+[2025-05-21T03:39:07.733Z] 🔍 Test term: "lavaandaer"
+[2025-05-21T03:39:07.739Z] 🔄 Generating embedding...
+[2025-05-21T03:39:08.841Z] ✅ Embedding generated successfully!
+[2025-05-21T03:39:08.846Z] 📊 Model used: text-embedding-3-small
+[2025-05-21T03:39:08.851Z] 📏 Vector dimensions: 1536
+[2025-05-21T03:39:08.857Z] 🔢 First 5 values: [0.02245115302503109, -0.039017822593450546, 0.007733322214335203, -0.006212501786649227, -0.028441661968827248]
+[2025-05-21T03:39:08.862Z] 📝 Usage - Prompt tokens: 4, Total tokens: 4
+[2025-05-21T03:39:08.870Z] 💾 Full embedding vector saved to: C:\Users\conta\cursor\studio-1\src\__tests__\services\embeddings\test-outputs\embedding-vector.json
+[2025-05-21T03:39:08.877Z] 🧪 Running assertions...
+[2025-05-21T03:39:08.889Z] 🎉 All tests passed!

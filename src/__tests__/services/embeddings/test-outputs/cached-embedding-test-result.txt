@@ -1,0 +1,13 @@
+fix i[2025-05-21T03:13:35.486Z] 🚀 Starting cached embedding test...
+[2025-05-21T03:13:35.515Z] 🔍 Test term: "lavender"
+[2025-05-21T03:13:35.520Z] 🔄 Generating embedding (first call)...
+[2025-05-21T03:13:36.083Z] ✅ First call completed in 554ms
+[2025-05-21T03:13:36.161Z] 📊 Model used: text-embedding-3-small
+[2025-05-21T03:13:36.185Z] 📏 Vector dimensions: 1536
+[2025-05-21T03:13:36.197Z] 🔢 First 5 values: [0.004298799205571413, -0.022053824737668037, 0.003462450345978141, -0.051952023059129715, -0.0010780927259474993]
+[2025-05-21T03:13:36.230Z] 📝 Usage - Prompt tokens: 2, Total tokens: 2
+[2025-05-21T03:13:36.348Z] 
+🔄 Getting embedding (second call - should use cache)...
+[2025-05-21T03:13:36.359Z] ✅ Second call completed in 0ms
+[2025-05-21T03:13:36.365Z] ⏱️  First call: 554ms, Second call: 0ms
+[2025-05-21T03:13:36.379Z] 🎉 Cached embedding test passed!

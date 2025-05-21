@@ -10,6 +10,7 @@ export function createOpenAIClient() {
     apiKey: process.env.OPENAI_API_KEY,
     organization: process.env.OPENAI_ORGANIZATION,
     baseURL: process.env.OPENAI_API_BASE_URL,
+    dangerouslyAllowBrowser: process.env.NODE_ENV === 'test', // Allow in test environment
   });
 }
 
