@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 Technical Stack Documentation
 
 ## Core Technologies
