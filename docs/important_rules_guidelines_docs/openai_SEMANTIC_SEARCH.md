@@ -6,10 +6,30 @@ This document outlines the implementation of a semantic search system for essent
 
 The system enables users to search for essential oils using natural language queries. It leverages:
 
-- **OpenAI's text-embedding-ada-002** for generating vector embeddings
+- **OpenAI's text-embedding-3-small** (1536 dimensions) for generating vector embeddings
 - **PostgreSQL with pgvector** for vector similarity search
 - **Redis** for caching embeddings and search results
 - **Next.js API Routes** for the backend API
+
+## Testing
+
+### Test File: `semantic-embedding-gen.test.ts`
+
+This test verifies the embedding generation functionality:
+
+1. Generates embeddings for test terms using `text-embedding-3-small` model
+2. Validates the response structure including:
+   - Model version
+   - Embedding dimensions (1536)
+   - Token usage metrics
+3. Includes comprehensive logging:
+   - Writes detailed test output to `test-outputs/embedding-test-result.txt`
+   - Saves full embedding vectors to `test-outputs/embedding-vector.json`
+4. Validates:
+   - Response structure
+   - Embedding dimensions (1536 for text-embedding-3-small)
+   - Token usage metrics
+   - Model versions
 
 ## Database Schema
 
